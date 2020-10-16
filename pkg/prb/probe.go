@@ -14,6 +14,7 @@ type Probe struct {
 	ticker  *time.Ticker
 	checker chk.Checker
 	ch      chan *Tick
+	done    chan struct{}
 }
 
 // NewProbe with period and checker.
@@ -22,25 +23,31 @@ func NewProbe(name string, period time.Duration, checker chk.Checker) *Probe {
 }
 
 // Start the probe.
-func (p *Probe) Start(ctx context.Context) chan *Tick {
+func (p *Probe) Start() <-chan *Tick {
+	p.done = make(chan struct{})
 	p.ch = make(chan *Tick)
 	p.ticker = time.NewTicker(p.period)
 
-	go p.start(ctx)
+	go p.start()
 
 	return p.ch
 }
 
-func (p *Probe) start(ctx context.Context) {
-	defer close(p.ch)
-	defer p.ticker.Stop()
+// Stop the probe.
+func (p *Probe) Stop() {
+	p.ticker.Stop()
+	p.done <- struct{}{}
+	close(p.done)
+	close(p.ch)
+}
 
+func (p *Probe) start() {
 	for {
 		select {
-		case <-ctx.Done():
+		case <-p.done:
 			return
 		case <-p.ticker.C:
-			p.ch <- NewTick(p.name, p.checker.Check(ctx))
+			p.ch <- NewTick(p.name, p.checker.Check(context.Background()))
 		}
 	}
 }

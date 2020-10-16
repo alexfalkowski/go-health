@@ -1,7 +1,6 @@
 package svr
 
 import (
-	"context"
 	"errors"
 	"sync"
 	"time"
@@ -38,8 +37,7 @@ func NewServer() Server {
 type server struct {
 	registry    map[string]*prb.Probe
 	subscribers []*sub.Subscriber
-	ctx         context.Context
-	cancel      context.CancelFunc
+	done        chan struct{}
 	ticks       chan *prb.Tick
 	wg          *sync.WaitGroup
 }
@@ -69,14 +67,14 @@ func (s *server) Start() error {
 
 	s.wg = &sync.WaitGroup{}
 	s.ticks = make(chan *prb.Tick)
-	s.ctx, s.cancel = context.WithCancel(context.Background())
+	s.done = make(chan struct{})
 
-	chs := []chan *prb.Tick{}
+	chs := []<-chan *prb.Tick{}
 
 	for _, p := range s.registry {
 		s.wg.Add(1)
 
-		chs = append(chs, p.Start(s.ctx))
+		chs = append(chs, p.Start())
 	}
 
 	s.mergeChannels(chs)
@@ -91,28 +89,37 @@ func (s *server) Stop() error {
 		return ErrNoRegistrations
 	}
 
-	s.cancel()
+	s.done <- struct{}{}
+
 	s.wg.Wait()
+
+	close(s.done)
+
+	for _, p := range s.registry {
+		p.Stop()
+	}
 
 	close(s.ticks)
 
 	return nil
 }
 
-func (s *server) mergeChannels(chs []chan *prb.Tick) {
+func (s *server) mergeChannels(chs []<-chan *prb.Tick) {
 	for _, ch := range chs {
 		go s.sendTick(ch)
 	}
 }
 
-func (s *server) sendTick(ch chan *prb.Tick) {
+func (s *server) sendTick(ch <-chan *prb.Tick) {
 	defer s.wg.Done()
 
 	for {
 		select {
+		case <-s.done:
+			return
 		case t, ok := <-ch:
 			if !ok {
-				return
+				continue
 			}
 
 			s.ticks <- t
@@ -124,7 +131,7 @@ func (s *server) sendToSubscribers() {
 	for t := range s.ticks {
 		for _, sub := range s.subscribers {
 			if sub.HasName(t.Name()) {
-				sub.Channel() <- t.Error()
+				sub.Send(t.Error())
 			}
 		}
 	}

@@ -11,9 +11,14 @@ type Subscriber struct {
 	ch    chan error
 }
 
-// Channel of the subscriber.
-func (s *Subscriber) Channel() chan error {
+// Receive from the subscriber.
+func (s *Subscriber) Receive() <-chan error {
 	return s.ch
+}
+
+// Send err to subscriber.
+func (s *Subscriber) Send(err error) {
+	s.ch <- err
 }
 
 // HasName of probe.
