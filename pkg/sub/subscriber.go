@@ -1,4 +1,4 @@
-package svr
+package sub
 
 // NewSubscriber for multiple probes.
 func NewSubscriber(names []string) *Subscriber {

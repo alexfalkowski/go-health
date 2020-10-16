@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/alexfalkowski/go-health/pkg/chk"
+	"github.com/alexfalkowski/go-health/pkg/sub"
 )
 
 var (
@@ -19,7 +20,7 @@ var (
 // Server will maintain all the probes and start and stop them.
 type Server interface {
 	Register(string, time.Duration, chk.Checker) error
-	Subscribe(...string) *Subscriber
+	Subscribe(...string) *sub.Subscriber
 	Start() error
 	Stop() error
 }
@@ -27,14 +28,14 @@ type Server interface {
 // NewServer for health.
 func NewServer() Server {
 	registry := make(map[string]*Probe)
-	subscribers := []*Subscriber{}
+	subscribers := []*sub.Subscriber{}
 
 	return &server{registry: registry, subscribers: subscribers}
 }
 
 type server struct {
 	registry    map[string]*Probe
-	subscribers []*Subscriber
+	subscribers []*sub.Subscriber
 	ctx         context.Context
 	cancel      context.CancelFunc
 	ticks       chan *ProbeTick
@@ -50,8 +51,8 @@ func (s *server) Register(name string, period time.Duration, checker chk.Checker
 	return nil
 }
 
-func (s *server) Subscribe(names ...string) *Subscriber {
-	sub := NewSubscriber(names)
+func (s *server) Subscribe(names ...string) *sub.Subscriber {
+	sub := sub.NewSubscriber(names)
 
 	s.subscribers = append(s.subscribers, sub)
 
