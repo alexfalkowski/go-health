@@ -159,7 +159,7 @@ func TestInvalidObserver(t *testing.T) {
 
 			Convey("Then I should have error from the probe", func() {
 				// Sleep for a period to make sure we get a result.
-				time.Sleep(defaultPeriod())
+				time.Sleep(2 * time.Second)
 
 				So(ob.Error(), ShouldBeError)
 			})

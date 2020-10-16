@@ -6,7 +6,7 @@ import (
 
 // NewSubscriber for multiple probes.
 func NewSubscriber(names []string) *Subscriber {
-	return &Subscriber{names, make(chan *prb.Tick)}
+	return &Subscriber{names, make(chan *prb.Tick, 1)}
 }
 
 // Subscriber subscribes to multiple probes.

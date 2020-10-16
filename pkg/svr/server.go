@@ -71,8 +71,8 @@ func (s *Server) Start() error {
 	}
 
 	s.wg = &sync.WaitGroup{}
-	s.ticks = make(chan *prb.Tick)
-	s.done = make(chan struct{})
+	s.ticks = make(chan *prb.Tick, 1)
+	s.done = make(chan struct{}, 1)
 
 	chs := []<-chan *prb.Tick{}
 

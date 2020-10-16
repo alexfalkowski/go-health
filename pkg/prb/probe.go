@@ -24,8 +24,8 @@ func NewProbe(name string, period time.Duration, checker chk.Checker) *Probe {
 
 // Start the probe.
 func (p *Probe) Start() <-chan *Tick {
-	p.done = make(chan struct{})
-	p.ch = make(chan *Tick)
+	p.done = make(chan struct{}, 1)
+	p.ch = make(chan *Tick, 1)
 	p.ticker = time.NewTicker(p.period)
 
 	go p.start()
