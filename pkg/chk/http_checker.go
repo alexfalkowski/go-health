@@ -45,7 +45,7 @@ func (c *httpChecker) Check(ctx context.Context) error {
 		return ErrInvalidStatusCode
 	}
 
-	return nil
+	return ctx.Err()
 }
 
 func (c *httpChecker) isValidStatusCode(sc int) bool {

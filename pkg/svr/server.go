@@ -117,11 +117,7 @@ func (s *server) sendTick(ch <-chan *prb.Tick) {
 		select {
 		case <-s.done:
 			return
-		case t, ok := <-ch:
-			if !ok {
-				continue
-			}
-
+		case t := <-ch:
 			s.ticks <- t
 		}
 	}
