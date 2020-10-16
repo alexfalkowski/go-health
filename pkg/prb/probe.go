@@ -7,6 +7,11 @@ import (
 	"github.com/alexfalkowski/go-health/pkg/chk"
 )
 
+// NewProbe with period and checker.
+func NewProbe(name string, period time.Duration, checker chk.Checker) *Probe {
+	return &Probe{name: name, period: period, checker: checker}
+}
+
 // Probe is a periodic checker.
 type Probe struct {
 	name    string
@@ -15,11 +20,6 @@ type Probe struct {
 	checker chk.Checker
 	ch      chan *Tick
 	done    chan struct{}
-}
-
-// NewProbe with period and checker.
-func NewProbe(name string, period time.Duration, checker chk.Checker) *Probe {
-	return &Probe{name: name, period: period, checker: checker}
 }
 
 // Start the probe.
