@@ -36,12 +36,12 @@ func (p *Probe) Start() <-chan *Tick {
 // Stop the probe.
 func (p *Probe) Stop() {
 	p.ticker.Stop()
-	p.done <- struct{}{}
 	close(p.done)
-	close(p.ch)
 }
 
 func (p *Probe) start() {
+	defer close(p.ch)
+
 	for {
 		select {
 		case <-p.done:

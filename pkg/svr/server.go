@@ -95,11 +95,9 @@ func (s *Server) Stop() error {
 		return ErrNoRegistrations
 	}
 
-	s.done <- struct{}{}
+	close(s.done)
 
 	s.wg.Wait()
-
-	close(s.done)
 
 	for _, p := range s.registry {
 		p.Stop()

@@ -116,7 +116,7 @@ func TestInvalidCodeHTTPChecker(t *testing.T) {
 		server := svr.NewServer()
 		defer server.Stop() // nolint:errcheck
 
-		name := "httpstat"
+		name := "httpstat400"
 		checker := chk.NewHTTPChecker("https://httpstat.us/400", defaultTimeout(), nil)
 
 		_ = server.Register(name, defaultPeriod(), checker)
@@ -143,7 +143,7 @@ func TestTimeoutHTTPChecker(t *testing.T) {
 		server := svr.NewServer()
 		defer server.Stop() // nolint:errcheck
 
-		name := "httpstat"
+		name := "httpstat200"
 		checker := chk.NewHTTPChecker("https://httpstat.us/200?sleep=6000", defaultTimeout(), nil)
 
 		_ = server.Register(name, defaultPeriod(), checker)
@@ -170,7 +170,7 @@ func TestInvalidObserver(t *testing.T) {
 		server := svr.NewServer()
 		defer server.Stop() // nolint:errcheck
 
-		name := "httpstat"
+		name := "httpstat400"
 		checker := chk.NewHTTPChecker("https://httpstat.us/400", defaultTimeout(), nil)
 
 		_ = server.Register(name, defaultPeriod(), checker)
@@ -186,7 +186,7 @@ func TestInvalidObserver(t *testing.T) {
 
 			Convey("Then I should have error from the probe", func() {
 				// Sleep for a period to make sure we get a result.
-				time.Sleep(2 * time.Second)
+				time.Sleep(1750 * time.Millisecond)
 
 				So(ob.Error(), ShouldBeError)
 			})
