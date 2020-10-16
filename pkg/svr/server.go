@@ -3,6 +3,7 @@ package svr
 import (
 	"context"
 	"errors"
+	"sync"
 	"time"
 
 	"github.com/alexfalkowski/go-health/pkg/chk"
@@ -40,6 +41,7 @@ type server struct {
 	ctx         context.Context
 	cancel      context.CancelFunc
 	ticks       chan *prb.Tick
+	wg          *sync.WaitGroup
 }
 
 func (s *server) Register(name string, period time.Duration, checker chk.Checker) error {
@@ -65,11 +67,15 @@ func (s *server) Start() error {
 		return ErrNoRegistrations
 	}
 
+	s.wg = &sync.WaitGroup{}
 	s.ticks = make(chan *prb.Tick)
 	s.ctx, s.cancel = context.WithCancel(context.Background())
 
 	chs := []chan *prb.Tick{}
+
 	for _, p := range s.registry {
+		s.wg.Add(1)
+
 		chs = append(chs, p.Start(s.ctx))
 	}
 
@@ -86,6 +92,8 @@ func (s *server) Stop() error {
 	}
 
 	s.cancel()
+	s.wg.Wait()
+
 	close(s.ticks)
 
 	return nil
@@ -98,11 +106,15 @@ func (s *server) mergeChannels(chs []chan *prb.Tick) {
 }
 
 func (s *server) sendTick(ch chan *prb.Tick) {
+	defer s.wg.Done()
+
 	for {
 		select {
-		case <-s.ctx.Done():
-			return
-		case t := <-ch:
+		case t, ok := <-ch:
+			if !ok {
+				return
+			}
+
 			s.ticks <- t
 		}
 	}
