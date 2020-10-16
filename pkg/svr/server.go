@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/alexfalkowski/go-health/pkg/chk"
+	"github.com/alexfalkowski/go-health/pkg/prb"
 	"github.com/alexfalkowski/go-health/pkg/sub"
 )
 
@@ -27,18 +28,18 @@ type Server interface {
 
 // NewServer for health.
 func NewServer() Server {
-	registry := make(map[string]*Probe)
+	registry := make(map[string]*prb.Probe)
 	subscribers := []*sub.Subscriber{}
 
 	return &server{registry: registry, subscribers: subscribers}
 }
 
 type server struct {
-	registry    map[string]*Probe
+	registry    map[string]*prb.Probe
 	subscribers []*sub.Subscriber
 	ctx         context.Context
 	cancel      context.CancelFunc
-	ticks       chan *ProbeTick
+	ticks       chan *prb.Tick
 }
 
 func (s *server) Register(name string, period time.Duration, checker chk.Checker) error {
@@ -46,7 +47,7 @@ func (s *server) Register(name string, period time.Duration, checker chk.Checker
 		return ErrProbeExists
 	}
 
-	s.registry[name] = NewProbe(name, period, checker)
+	s.registry[name] = prb.NewProbe(name, period, checker)
 
 	return nil
 }
@@ -64,10 +65,10 @@ func (s *server) Start() error {
 		return ErrNoRegistrations
 	}
 
-	s.ticks = make(chan *ProbeTick)
+	s.ticks = make(chan *prb.Tick)
 	s.ctx, s.cancel = context.WithCancel(context.Background())
 
-	chs := []chan *ProbeTick{}
+	chs := []chan *prb.Tick{}
 	for _, p := range s.registry {
 		chs = append(chs, p.Start(s.ctx))
 	}
@@ -90,13 +91,13 @@ func (s *server) Stop() error {
 	return nil
 }
 
-func (s *server) mergeChannels(chs []chan *ProbeTick) {
+func (s *server) mergeChannels(chs []chan *prb.Tick) {
 	for _, ch := range chs {
 		go s.sendTick(ch)
 	}
 }
 
-func (s *server) sendTick(ch chan *ProbeTick) {
+func (s *server) sendTick(ch chan *prb.Tick) {
 	for {
 		select {
 		case <-s.ctx.Done():
