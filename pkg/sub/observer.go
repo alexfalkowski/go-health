@@ -11,7 +11,11 @@ func NewObserver(names []string, sub *Subscriber) *Observer {
 		values[n] = nil
 	}
 
-	return &Observer{values: values, sub: sub}
+	ob := &Observer{values: values, sub: sub}
+
+	go ob.observe()
+
+	return ob
 }
 
 // Observer represents a subscriber that mantaines state about probes.
@@ -19,11 +23,6 @@ type Observer struct {
 	values map[string]error
 	sub    *Subscriber
 	mux    sync.Mutex
-}
-
-// Observe the subscription.
-func (o *Observer) Observe() {
-	go o.observe()
 }
 
 // Error is the first error observed.

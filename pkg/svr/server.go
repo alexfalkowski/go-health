@@ -57,11 +57,7 @@ func (s *Server) Subscribe(names ...string) *sub.Subscriber {
 
 // Observe the names of the probes.
 func (s *Server) Observe(names ...string) *sub.Observer {
-	o := sub.NewObserver(names, s.Subscribe(names...))
-
-	o.Observe()
-
-	return o
+	return sub.NewObserver(names, s.Subscribe(names...))
 }
 
 // Start the server.
