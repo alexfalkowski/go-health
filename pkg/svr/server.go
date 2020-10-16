@@ -126,9 +126,7 @@ func (s *server) sendTick(ch <-chan *prb.Tick) {
 func (s *server) sendToSubscribers() {
 	for t := range s.ticks {
 		for _, sub := range s.subscribers {
-			if sub.HasName(t.Name()) {
-				sub.Send(t.Error())
-			}
+			sub.Send(t)
 		}
 	}
 }

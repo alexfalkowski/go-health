@@ -77,8 +77,8 @@ func TestValidHTTPChecker(t *testing.T) {
 			})
 
 			Convey("Then I should have no error from the probe", func() {
-				err := <-sub.Receive()
-				So(err, ShouldBeNil)
+				t := <-sub.Receive()
+				So(t.Error(), ShouldBeNil)
 			})
 		})
 	})
@@ -104,8 +104,8 @@ func TestInvalidURLHTTPChecker(t *testing.T) {
 			})
 
 			Convey("Then I should have error from the probe", func() {
-				err := <-sub.Receive()
-				So(err, ShouldBeError)
+				t := <-sub.Receive()
+				So(t.Error(), ShouldBeError)
 			})
 		})
 	})
@@ -131,8 +131,8 @@ func TestInvalidCodeHTTPChecker(t *testing.T) {
 			})
 
 			Convey("Then I should have error from the probe", func() {
-				err := <-sub.Receive()
-				So(err, ShouldBeError)
+				t := <-sub.Receive()
+				So(t.Error(), ShouldBeError)
 			})
 		})
 	})
