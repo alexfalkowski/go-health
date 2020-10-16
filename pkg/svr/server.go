@@ -18,23 +18,16 @@ var (
 	ErrNoRegistrations = errors.New("no registrations")
 )
 
-// Server will maintain all the probes and start and stop them.
-type Server interface {
-	Register(string, time.Duration, chk.Checker) error
-	Subscribe(...string) *sub.Subscriber
-	Start() error
-	Stop() error
-}
-
 // NewServer for health.
-func NewServer() Server {
+func NewServer() *Server {
 	registry := make(map[string]*prb.Probe)
 	subscribers := []*sub.Subscriber{}
 
-	return &server{registry: registry, subscribers: subscribers}
+	return &Server{registry: registry, subscribers: subscribers}
 }
 
-type server struct {
+// Server will maintain all the probes and start and stop them.
+type Server struct {
 	registry    map[string]*prb.Probe
 	subscribers []*sub.Subscriber
 	done        chan struct{}
@@ -42,7 +35,8 @@ type server struct {
 	wg          *sync.WaitGroup
 }
 
-func (s *server) Register(name string, period time.Duration, checker chk.Checker) error {
+// Register a checker.
+func (s *Server) Register(name string, period time.Duration, checker chk.Checker) error {
 	if _, ok := s.registry[name]; ok {
 		return ErrProbeExists
 	}
@@ -52,7 +46,8 @@ func (s *server) Register(name string, period time.Duration, checker chk.Checker
 	return nil
 }
 
-func (s *server) Subscribe(names ...string) *sub.Subscriber {
+// Subscribe to the names of the probes.
+func (s *Server) Subscribe(names ...string) *sub.Subscriber {
 	sub := sub.NewSubscriber(names)
 
 	s.subscribers = append(s.subscribers, sub)
@@ -60,7 +55,17 @@ func (s *server) Subscribe(names ...string) *sub.Subscriber {
 	return sub
 }
 
-func (s *server) Start() error {
+// Observe the names of the probes.
+func (s *Server) Observe(names ...string) *sub.Observer {
+	o := sub.NewObserver(names, s.Subscribe(names...))
+
+	o.Observe()
+
+	return o
+}
+
+// Start the server.
+func (s *Server) Start() error {
 	if len(s.registry) == 0 {
 		return ErrNoRegistrations
 	}
@@ -84,7 +89,8 @@ func (s *server) Start() error {
 	return nil
 }
 
-func (s *server) Stop() error {
+// Stop the server.
+func (s *Server) Stop() error {
 	if len(s.registry) == 0 {
 		return ErrNoRegistrations
 	}
@@ -104,13 +110,13 @@ func (s *server) Stop() error {
 	return nil
 }
 
-func (s *server) mergeChannels(chs []<-chan *prb.Tick) {
+func (s *Server) mergeChannels(chs []<-chan *prb.Tick) {
 	for _, ch := range chs {
 		go s.sendTick(ch)
 	}
 }
 
-func (s *server) sendTick(ch <-chan *prb.Tick) {
+func (s *Server) sendTick(ch <-chan *prb.Tick) {
 	defer s.wg.Done()
 
 	for {
@@ -123,7 +129,7 @@ func (s *server) sendTick(ch <-chan *prb.Tick) {
 	}
 }
 
-func (s *server) sendToSubscribers() {
+func (s *Server) sendToSubscribers() {
 	for t := range s.ticks {
 		for _, sub := range s.subscribers {
 			sub.Send(t)

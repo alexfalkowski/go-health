@@ -11,21 +11,23 @@ import (
 var ErrInvalidStatusCode = errors.New("invalid status code")
 
 // NewHTTPChecker with URL and client.
-func NewHTTPChecker(url string, timeout time.Duration, client *http.Client) Checker {
+func NewHTTPChecker(url string, timeout time.Duration, client *http.Client) *HTTPChecker {
 	if client == nil {
 		client = http.DefaultClient
 	}
 
-	return &httpChecker{url, timeout, client}
+	return &HTTPChecker{url, timeout, client}
 }
 
-type httpChecker struct {
+// HTTPChecker for a URL.
+type HTTPChecker struct {
 	url     string
 	timeout time.Duration
 	client  *http.Client
 }
 
-func (c *httpChecker) Check(ctx context.Context) error {
+// Check the URL with a GET.
+func (c *HTTPChecker) Check(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
 
@@ -48,6 +50,6 @@ func (c *httpChecker) Check(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func (c *httpChecker) isValidStatusCode(sc int) bool {
+func (c *HTTPChecker) isValidStatusCode(sc int) bool {
 	return sc >= 200 && sc <= 299
 }

@@ -1,6 +1,8 @@
 package sub
 
-import "github.com/alexfalkowski/go-health/pkg/prb"
+import (
+	"github.com/alexfalkowski/go-health/pkg/prb"
+)
 
 // NewSubscriber for multiple probes.
 func NewSubscriber(names []string) *Subscriber {

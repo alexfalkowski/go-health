@@ -137,3 +137,32 @@ func TestInvalidCodeHTTPChecker(t *testing.T) {
 		})
 	})
 }
+
+func TestInvalidObserver(t *testing.T) {
+	Convey("Given we have a new server", t, func() {
+		server := svr.NewServer()
+		defer server.Stop() // nolint:errcheck
+
+		name := "httpstat"
+		checker := chk.NewHTTPChecker("https://httpstat.us/400", defaultTimeout(), nil)
+
+		_ = server.Register(name, defaultPeriod(), checker)
+
+		ob := server.Observe(name)
+
+		Convey("When I start the server", func() {
+			err := server.Start()
+
+			Convey("Then I should have no server error", func() {
+				So(err, ShouldBeNil)
+			})
+
+			Convey("Then I should have error from the probe", func() {
+				// Sleep for a period to make sure we get a result.
+				time.Sleep(defaultPeriod())
+
+				So(ob.Error(), ShouldBeError)
+			})
+		})
+	})
+}
