@@ -6,7 +6,7 @@ This repository solves the health monitoring pattern in go.
 
 To understand the background please have a read of [Health Endpoint Monitoring pattern](https://docs.microsoft.com/en-us/azure/architecture/patterns/health-endpoint-monitoring).
 
-## Rationale
+### Rationale
 
 You might be asking yourself why create another health solution as there seems to be a few. You are right these are the ones I could find.
 
@@ -20,12 +20,57 @@ So you are free to use any of these awesome solutions, though I had some require
 
 - The solution has to be asynchronous so that we don't DOS our dependencies (some of these solutions have this)
 - The solution is free from other dependencies.
-- Flexible enough to be able to implement any transport that is needed. 
+- Flexible enough to be able to implement any transport that is needed.
 - Not to provide an opinionated way to do heath monitoring across transports.
 
-## Types
+### Types
 
 The types of monitoring that we want others to build is as follows:
 - White/Black box health
 - [Liveliness/Readiness](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/)
 - [Health Check API](https://microservices.io/patterns/observability/health-check-api.html)
+
+## Usage
+
+To get going please add the dependency, as follows:
+
+```sh
+go get github.com/alexfalkowski/go-health
+```
+
+To uses it, please look at this example:
+
+```go
+package main
+
+import (
+	"time"
+
+	"github.com/alexfalkowski/go-health/pkg/chk"
+	"github.com/alexfalkowski/go-health/pkg/svr"
+)
+
+func main() {
+    timeout := 5 * time.Second
+    period := 1 * time.Second
+
+    server := svr.NewServer()
+    defer server.Stop()
+
+    if err := server.Register("http1", period, chk.NewHTTPChecker("https://httpstat.us/400", timeout)); err != nil {
+        panic(err)
+    }
+
+	if err := server.Register("tcp1", period, chk.NewTCPChecker("httpstat.us:9000", timeout)); err != nil {
+        panic(err)
+    }
+
+    ob := server.Observe("http1", "tcp1")
+
+    if err := server.Start(); err != nil {
+        panic(err)
+    }
+
+    ob.Error() // This will update with errors. If nil everything is OK.
+}
+```
