@@ -165,17 +165,69 @@ func TestTimeoutHTTPChecker(t *testing.T) {
 	})
 }
 
+func TestValidTCPChecker(t *testing.T) {
+	Convey("Given we have a new server", t, func() {
+		server := svr.NewServer()
+		defer server.Stop() // nolint:errcheck
+
+		name := "tcp-google"
+		checker := chk.NewTCPChecker("www.google.com:80", defaultTimeout())
+
+		_ = server.Register(name, defaultPeriod(), checker)
+
+		sub := server.Subscribe(name)
+
+		Convey("When I start the server", func() {
+			err := server.Start()
+
+			Convey("Then I should have no server error", func() {
+				So(err, ShouldBeNil)
+			})
+
+			Convey("Then I should have no error from the probe", func() {
+				t := <-sub.Receive()
+				So(t.Error(), ShouldBeNil)
+			})
+		})
+	})
+}
+
+func TestInvalidAddressTCPChecker(t *testing.T) {
+	Convey("Given we have a new server", t, func() {
+		server := svr.NewServer()
+		defer server.Stop() // nolint:errcheck
+
+		name := "tcp-assaaasss"
+		checker := chk.NewTCPChecker("www.assaaasss.com:80", defaultTimeout())
+
+		_ = server.Register(name, defaultPeriod(), checker)
+
+		sub := server.Subscribe(name)
+
+		Convey("When I start the server", func() {
+			err := server.Start()
+
+			Convey("Then I should have no server error", func() {
+				So(err, ShouldBeNil)
+			})
+
+			Convey("Then I should have error from the probe", func() {
+				t := <-sub.Receive()
+				So(t.Error(), ShouldBeError)
+			})
+		})
+	})
+}
+
 func TestInvalidObserver(t *testing.T) {
 	Convey("Given we have a new server", t, func() {
 		server := svr.NewServer()
 		defer server.Stop() // nolint:errcheck
 
-		name := "httpstat400"
-		checker := chk.NewHTTPChecker("https://httpstat.us/400", defaultTimeout(), nil)
+		_ = server.Register("http1", defaultPeriod(), chk.NewHTTPChecker("https://httpstat.us/400", defaultTimeout(), nil))
+		_ = server.Register("tcp1", defaultPeriod(), chk.NewTCPChecker("httpstat.us:9000", defaultTimeout()))
 
-		_ = server.Register(name, defaultPeriod(), checker)
-
-		ob := server.Observe(name)
+		ob := server.Observe("http1", "tcp1")
 
 		Convey("When I start the server", func() {
 			err := server.Start()
