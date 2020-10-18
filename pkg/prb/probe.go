@@ -2,9 +2,17 @@ package prb
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/alexfalkowski/go-health/pkg/chk"
+)
+
+type status string
+
+const (
+	started = status("started")
+	stopped = status("stopped")
 )
 
 // NewProbe with period and checker.
@@ -20,10 +28,20 @@ type Probe struct {
 	checker chk.Checker
 	ch      chan *Tick
 	done    chan struct{}
+	mux     sync.Mutex
+	st      status
 }
 
 // Start the probe.
 func (p *Probe) Start() <-chan *Tick {
+	p.mux.Lock()
+	defer p.mux.Unlock()
+
+	if p.st == started {
+		return p.ch
+	}
+
+	p.st = started
 	p.done = make(chan struct{}, 1)
 	p.ch = make(chan *Tick, 1)
 	p.ticker = time.NewTicker(p.period)
@@ -35,6 +53,14 @@ func (p *Probe) Start() <-chan *Tick {
 
 // Stop the probe.
 func (p *Probe) Stop() {
+	p.mux.Lock()
+	defer p.mux.Unlock()
+
+	if p.st == stopped {
+		return
+	}
+
+	p.st = stopped
 	p.ticker.Stop()
 	close(p.done)
 }
