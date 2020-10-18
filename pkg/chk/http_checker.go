@@ -60,5 +60,5 @@ func (c *HTTPChecker) Check(ctx context.Context) error {
 		return ErrInvalidStatusCode
 	}
 
-	return ctx.Err()
+	return nil
 }
