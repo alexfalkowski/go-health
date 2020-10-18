@@ -61,7 +61,7 @@ func main() {
         panic(err)
     }
 
-	if err := server.Register("tcp1", period, chk.NewTCPChecker("httpstat.us:9000", timeout)); err != nil {
+    if err := server.Register("tcp1", period, chk.NewTCPChecker("httpstat.us:9000", timeout)); err != nil {
         panic(err)
     }
 
