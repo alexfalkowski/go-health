@@ -106,7 +106,6 @@ func (s *Server) Start() error {
 	s.wg = &sync.WaitGroup{}
 	s.ticks = make(chan *prb.Tick, 1)
 	s.done = make(chan struct{}, 1)
-
 	chs := []<-chan *prb.Tick{}
 
 	for _, p := range s.registry {
@@ -136,9 +135,7 @@ func (s *Server) Stop() error {
 	}
 
 	s.st = stopped
-
 	close(s.done)
-
 	s.wg.Wait()
 
 	for _, p := range s.registry {
