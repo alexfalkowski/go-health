@@ -44,10 +44,10 @@ To uses it, please look at this example:
 package main
 
 import (
-	"time"
+    "time"
 
-	"github.com/alexfalkowski/go-health/pkg/chk"
-	"github.com/alexfalkowski/go-health/pkg/svr"
+    "github.com/alexfalkowski/go-health/pkg/chk"
+    "github.com/alexfalkowski/go-health/pkg/svr"
 )
 
 func main() {
