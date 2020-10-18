@@ -23,6 +23,9 @@ var (
 
 	// ErrNoRegistrations have been added.
 	ErrNoRegistrations = errors.New("no registrations")
+
+	// ErrRegistrationNotFound in register.
+	ErrRegistrationNotFound = errors.New("registration not found")
 )
 
 // NewServer for health.
@@ -56,17 +59,28 @@ func (s *Server) Register(name string, period time.Duration, checker chk.Checker
 }
 
 // Subscribe to the names of the probes.
-func (s *Server) Subscribe(names ...string) *sub.Subscriber {
+func (s *Server) Subscribe(names ...string) (*sub.Subscriber, error) {
+	for _, n := range names {
+		if _, ok := s.registry[n]; !ok {
+			return nil, ErrRegistrationNotFound
+		}
+	}
+
 	sub := sub.NewSubscriber(names)
 
 	s.subscribers = append(s.subscribers, sub)
 
-	return sub
+	return sub, nil
 }
 
 // Observe the names of the probes.
-func (s *Server) Observe(names ...string) *sub.Observer {
-	return sub.NewObserver(names, s.Subscribe(names...))
+func (s *Server) Observe(names ...string) (*sub.Observer, error) {
+	su, err := s.Subscribe(names...)
+	if err != nil {
+		return nil, err
+	}
+
+	return sub.NewObserver(names, su), nil
 }
 
 // Start the server.
@@ -111,7 +125,7 @@ func (s *Server) Stop() error {
 		return ErrNoRegistrations
 	}
 
-	if s.st == stopped {
+	if s.st == "" || s.st == stopped {
 		return nil
 	}
 

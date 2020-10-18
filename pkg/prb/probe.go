@@ -56,7 +56,7 @@ func (p *Probe) Stop() {
 	p.mux.Lock()
 	defer p.mux.Unlock()
 
-	if p.st == stopped {
+	if p.st == "" || p.st == stopped {
 		return
 	}
 
