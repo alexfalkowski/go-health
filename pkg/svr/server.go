@@ -13,8 +13,9 @@ import (
 type status string
 
 const (
-	started = status("started")
-	stopped = status("stopped")
+	started       = status("started")
+	stopped       = status("stopped")
+	defaultPeriod = 10 * time.Second
 )
 
 var (
@@ -56,6 +57,11 @@ func (s *Server) Register(name string, period time.Duration, checker chk.Checker
 	s.registry[name] = prb.NewProbe(name, period, checker)
 
 	return nil
+}
+
+// RegisterWithDefault a checker with 10 seconds.
+func (s *Server) RegisterWithDefault(name string, checker chk.Checker) error {
+	return s.Register(name, defaultPeriod, checker)
 }
 
 // Subscribe to the names of the probes.
