@@ -43,7 +43,7 @@ func TestDuplicateRegistrations(t *testing.T) {
 	Convey("Given we have a new server", t, func() {
 		server := svr.NewServer()
 		name := "google"
-		checker := chk.NewHTTPChecker("https://www.google.com/", defaultTimeout(), nil)
+		checker := chk.NewHTTPChecker("https://www.google.com/", defaultTimeout())
 
 		_ = server.Register(name, defaultPeriod(), checker)
 
@@ -63,7 +63,7 @@ func TestValidHTTPChecker(t *testing.T) {
 		defer server.Stop() // nolint:errcheck
 
 		name := "google"
-		checker := chk.NewHTTPChecker("https://www.google.com/", defaultTimeout(), nil)
+		checker := chk.NewHTTPChecker("https://www.google.com/", defaultTimeout())
 
 		_ = server.Register(name, defaultPeriod(), checker)
 
@@ -90,7 +90,7 @@ func TestInvalidURLHTTPChecker(t *testing.T) {
 		defer server.Stop() // nolint:errcheck
 
 		name := "assaaasss"
-		checker := chk.NewHTTPChecker("https://www.assaaasss.com/", defaultTimeout(), nil)
+		checker := chk.NewHTTPChecker("https://www.assaaasss.com/", defaultTimeout())
 
 		_ = server.Register(name, defaultPeriod(), checker)
 
@@ -117,7 +117,7 @@ func TestInvalidCodeHTTPChecker(t *testing.T) {
 		defer server.Stop() // nolint:errcheck
 
 		name := "httpstat400"
-		checker := chk.NewHTTPChecker("https://httpstat.us/400", defaultTimeout(), nil)
+		checker := chk.NewHTTPChecker("https://httpstat.us/400", defaultTimeout())
 
 		_ = server.Register(name, defaultPeriod(), checker)
 
@@ -144,7 +144,7 @@ func TestTimeoutHTTPChecker(t *testing.T) {
 		defer server.Stop() // nolint:errcheck
 
 		name := "httpstat200"
-		checker := chk.NewHTTPChecker("https://httpstat.us/200?sleep=6000", defaultTimeout(), nil)
+		checker := chk.NewHTTPChecker("https://httpstat.us/200?sleep=6000", defaultTimeout())
 
 		_ = server.Register(name, defaultPeriod(), checker)
 
@@ -224,7 +224,7 @@ func TestInvalidObserver(t *testing.T) {
 		server := svr.NewServer()
 		defer server.Stop() // nolint:errcheck
 
-		_ = server.Register("http1", defaultPeriod(), chk.NewHTTPChecker("https://httpstat.us/400", defaultTimeout(), nil))
+		_ = server.Register("http1", defaultPeriod(), chk.NewHTTPChecker("https://httpstat.us/400", defaultTimeout()))
 		_ = server.Register("tcp1", defaultPeriod(), chk.NewTCPChecker("httpstat.us:9000", defaultTimeout()))
 
 		ob := server.Observe("http1", "tcp1")

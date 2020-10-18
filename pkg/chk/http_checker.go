@@ -11,9 +11,22 @@ import (
 var ErrInvalidStatusCode = errors.New("invalid status code")
 
 // NewHTTPChecker with URL and client.
-func NewHTTPChecker(url string, timeout time.Duration, client *http.Client) *HTTPChecker {
-	if client == nil {
-		client = http.DefaultClient
+func NewHTTPChecker(url string, timeout time.Duration) *HTTPChecker {
+	return NewHTTPCheckerWithRoundTripper(url, timeout, nil)
+}
+
+// NewHTTPCheckerWithRoundTripper with URL and client.
+func NewHTTPCheckerWithRoundTripper(url string, timeout time.Duration, tripper http.RoundTripper) *HTTPChecker {
+	if tripper == nil {
+		tripper = http.DefaultTransport
+	}
+
+	client := &http.Client{
+		Timeout:   timeout,
+		Transport: tripper,
+		CheckRedirect: func(*http.Request, []*http.Request) error {
+			return http.ErrUseLastResponse // never follow redirects
+		},
 	}
 
 	return &HTTPChecker{url, timeout, client}
@@ -43,13 +56,9 @@ func (c *HTTPChecker) Check(ctx context.Context) error {
 
 	defer resp.Body.Close()
 
-	if !c.isValidStatusCode(resp.StatusCode) {
+	if resp.StatusCode != http.StatusOK {
 		return ErrInvalidStatusCode
 	}
 
 	return ctx.Err()
-}
-
-func (c *HTTPChecker) isValidStatusCode(sc int) bool {
-	return sc >= 200 && sc <= 299
 }
