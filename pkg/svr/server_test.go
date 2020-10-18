@@ -278,3 +278,30 @@ func TestInvalidObserver(t *testing.T) {
 		})
 	})
 }
+
+func TestValidObserver(t *testing.T) {
+	Convey("Given we have a new server", t, func() {
+		server := svr.NewServer()
+		defer server.Stop() // nolint:errcheck
+
+		_ = server.Register("http", defaultPeriod(), chk.NewHTTPChecker("https://httpstat.us/200", defaultTimeout()))
+		_ = server.Register("tcp", defaultPeriod(), chk.NewTCPChecker("httpstat.us:80", defaultTimeout()))
+
+		ob := server.Observe("http", "tcp")
+
+		Convey("When I start the server", func() {
+			err := server.Start()
+
+			Convey("Then I should have no server error", func() {
+				So(err, ShouldBeNil)
+			})
+
+			Convey("Then I should have no error from the probe", func() {
+				// Sleep for a period to make sure we get a result.
+				time.Sleep(1750 * time.Millisecond)
+
+				So(ob.Error(), ShouldBeNil)
+			})
+		})
+	})
+}
