@@ -65,7 +65,10 @@ func main() {
         panic(err)
     }
 
-    ob := server.Observe("http1", "tcp1")
+    ob, err := server.Observe("http1", "tcp1")
+    if err != nil {
+        panic(err)
+    }
 
     if err := server.Start(); err != nil {
         panic(err)
