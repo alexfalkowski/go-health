@@ -19,10 +19,10 @@ type TCPChecker struct {
 
 // Check the address.
 func (c *TCPChecker) Check(ctx context.Context) error {
-	_, err := net.DialTimeout("tcp", c.address, c.timeout)
+	conn, err := net.DialTimeout("tcp", c.address, c.timeout)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	return conn.Close()
 }
