@@ -10,6 +10,13 @@ import (
 	"github.com/alexfalkowski/go-health/pkg/sub"
 )
 
+type status string
+
+const (
+	started = status("started")
+	stopped = status("stopped")
+)
+
 var (
 	// ErrProbeExists when we register the same probe.
 	ErrProbeExists = errors.New("probe exists")
@@ -33,6 +40,8 @@ type Server struct {
 	done        chan struct{}
 	ticks       chan *prb.Tick
 	wg          *sync.WaitGroup
+	mux         sync.Mutex
+	st          status
 }
 
 // Register a checker.
@@ -62,10 +71,18 @@ func (s *Server) Observe(names ...string) *sub.Observer {
 
 // Start the server.
 func (s *Server) Start() error {
+	s.mux.Lock()
+	defer s.mux.Unlock()
+
 	if len(s.registry) == 0 {
 		return ErrNoRegistrations
 	}
 
+	if s.st == started {
+		return nil
+	}
+
+	s.st = started
 	s.wg = &sync.WaitGroup{}
 	s.ticks = make(chan *prb.Tick, 1)
 	s.done = make(chan struct{}, 1)
@@ -87,9 +104,18 @@ func (s *Server) Start() error {
 
 // Stop the server.
 func (s *Server) Stop() error {
+	s.mux.Lock()
+	defer s.mux.Unlock()
+
 	if len(s.registry) == 0 {
 		return ErrNoRegistrations
 	}
+
+	if s.st == stopped {
+		return nil
+	}
+
+	s.st = stopped
 
 	close(s.done)
 
