@@ -52,9 +52,7 @@ import (
 
 func main() {
     timeout := 5 * time.Second
-
     server := svr.NewServer()
-    defer server.Stop()
 
     if err := server.RegisterWithDefault("http1", chk.NewHTTPChecker("https://httpstat.us/400", timeout)); err != nil {
         panic(err)
@@ -72,6 +70,8 @@ func main() {
     if err := server.Start(); err != nil {
         panic(err)
     }
+
+    defer server.Stop()
 
     ob.Error() // This will update with errors. If nil everything is OK.
 }
