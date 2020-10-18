@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/alexfalkowski/go-health/pkg/chk"
 	"github.com/alexfalkowski/go-health/pkg/svr"
 	. "github.com/smartystreets/goconvey/convey"
@@ -214,6 +215,38 @@ func TestInvalidAddressTCPChecker(t *testing.T) {
 			Convey("Then I should have error from the probe", func() {
 				t := <-sub.Receive()
 				So(t.Error(), ShouldBeError)
+			})
+		})
+	})
+}
+
+func TestValidDBChecker(t *testing.T) {
+	Convey("Given we have a new server", t, func() {
+		server := svr.NewServer()
+		defer server.Stop() // nolint:errcheck
+
+		db, _, err := sqlmock.New()
+		So(err, ShouldBeNil)
+
+		defer db.Close()
+
+		name := "db"
+		checker := chk.NewDBChecker(db, defaultTimeout())
+
+		_ = server.Register(name, defaultPeriod(), checker)
+
+		sub := server.Subscribe(name)
+
+		Convey("When I start the server", func() {
+			err := server.Start()
+
+			Convey("Then I should have no server error", func() {
+				So(err, ShouldBeNil)
+			})
+
+			Convey("Then I should have no error from the probe", func() {
+				t := <-sub.Receive()
+				So(t.Error(), ShouldBeNil)
 			})
 		})
 	})
