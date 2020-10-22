@@ -11,6 +11,15 @@ const (
 	defaultPeriod = 10 * time.Second
 )
 
+// NewRegistration for server.
+func NewRegistration(name string, period time.Duration, checker chk.Checker) *Registration {
+	if period == 0 {
+		period = defaultPeriod
+	}
+
+	return &Registration{name, period, checker}
+}
+
 // Registration for the server.
 type Registration struct {
 	Name    string

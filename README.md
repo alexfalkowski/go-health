@@ -55,9 +55,9 @@ func main() {
     server := svr.NewServer()
 
     cc := chk.NewHTTPChecker("https://httpstat.us/200", timeout)
-    hr := &svr.Registration{Name: "http", Checker: cc}
+    hr := svr.NewRegistration("http", 0, cc)
     tc := chk.NewTCPChecker("httpstat.us:80", timeout)
-    tr := &svr.Registration{Name: "tcp", Checker: tc}
+    tr := svr.NewRegistration("tcp", 0, tc)
 
     if err := server.Register(hr, tr); err != nil {
         panic(err)
