@@ -27,5 +27,5 @@ func (c *DBChecker) Check(ctx context.Context) error {
 }
 
 func (c *DBChecker) String() string {
-	return fmt.Sprintf("db: sql, timeout: %s", c.timeout)
+	return fmt.Sprintf("db: 'sql', timeout: '%s'", c.timeout)
 }

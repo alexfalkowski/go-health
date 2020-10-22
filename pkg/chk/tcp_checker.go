@@ -29,5 +29,5 @@ func (c *TCPChecker) Check(ctx context.Context) error {
 }
 
 func (c *TCPChecker) String() string {
-	return fmt.Sprintf("address: %s, timeout: %s", c.address, c.timeout)
+	return fmt.Sprintf("address: '%s', timeout: '%s'", c.address, c.timeout)
 }
