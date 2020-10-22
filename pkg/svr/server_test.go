@@ -45,8 +45,8 @@ func TestDuplicateRegistrations(t *testing.T) {
 		server := svr.NewServer()
 		name := "google"
 		checker := chk.NewHTTPChecker("https://www.google.com/", defaultTimeout())
+		r := svr.NewRegistration(name, defaultPeriod(), checker)
 
-		r := &svr.Registration{Name: name, Period: defaultPeriod(), Checker: checker}
 		_ = server.Register(r)
 
 		Convey("When add a duplicate subscriber", func() {
@@ -65,8 +65,8 @@ func TestNonExistentRegistration(t *testing.T) {
 		defer server.Stop() // nolint:errcheck
 
 		checker := chk.NewHTTPChecker("https://www.google.com/", defaultTimeout())
+		r := svr.NewRegistration("google", defaultPeriod(), checker)
 
-		r := &svr.Registration{Name: "google", Period: defaultPeriod(), Checker: checker}
 		_ = server.Register(r)
 
 		Convey("When I subscribe to non existent registration", func() {
@@ -86,8 +86,8 @@ func TestValidHTTPChecker(t *testing.T) {
 
 		name := "google"
 		checker := chk.NewHTTPChecker("https://www.google.com/", defaultTimeout())
+		r := svr.NewRegistration(name, defaultPeriod(), checker)
 
-		r := &svr.Registration{Name: name, Period: defaultPeriod(), Checker: checker}
 		_ = server.Register(r)
 
 		sub, _ := server.Subscribe(name)
@@ -114,8 +114,8 @@ func TestInvalidURLHTTPChecker(t *testing.T) {
 
 		name := "assaaasss"
 		checker := chk.NewHTTPChecker("https://www.assaaasss.com/", defaultTimeout())
+		r := svr.NewRegistration(name, defaultPeriod(), checker)
 
-		r := &svr.Registration{Name: name, Period: defaultPeriod(), Checker: checker}
 		_ = server.Register(r)
 
 		sub, _ := server.Subscribe(name)
@@ -142,8 +142,8 @@ func TestInvalidCodeHTTPChecker(t *testing.T) {
 
 		name := "httpstat400"
 		checker := chk.NewHTTPChecker("https://httpstat.us/400", defaultTimeout())
+		r := svr.NewRegistration(name, defaultPeriod(), checker)
 
-		r := &svr.Registration{Name: name, Period: defaultPeriod(), Checker: checker}
 		_ = server.Register(r)
 
 		sub, _ := server.Subscribe(name)
@@ -170,8 +170,8 @@ func TestTimeoutHTTPChecker(t *testing.T) {
 
 		name := "httpstat200"
 		checker := chk.NewHTTPChecker("https://httpstat.us/200?sleep=6000", defaultTimeout())
+		r := svr.NewRegistration(name, defaultPeriod(), checker)
 
-		r := &svr.Registration{Name: name, Period: defaultPeriod(), Checker: checker}
 		_ = server.Register(r)
 
 		sub, _ := server.Subscribe(name)
@@ -198,8 +198,8 @@ func TestValidTCPChecker(t *testing.T) {
 
 		name := "tcp-google"
 		checker := chk.NewTCPChecker("www.google.com:80", defaultTimeout())
+		r := svr.NewRegistration(name, defaultPeriod(), checker)
 
-		r := &svr.Registration{Name: name, Period: defaultPeriod(), Checker: checker}
 		_ = server.Register(r)
 
 		sub, _ := server.Subscribe(name)
@@ -226,8 +226,8 @@ func TestInvalidAddressTCPChecker(t *testing.T) {
 
 		name := "tcp-assaaasss"
 		checker := chk.NewTCPChecker("www.assaaasss.com:80", defaultTimeout())
+		r := svr.NewRegistration(name, defaultPeriod(), checker)
 
-		r := &svr.Registration{Name: name, Period: defaultPeriod(), Checker: checker}
 		_ = server.Register(r)
 
 		sub, _ := server.Subscribe(name)
@@ -259,8 +259,8 @@ func TestValidDBChecker(t *testing.T) {
 
 		name := "db"
 		checker := chk.NewDBChecker(db, defaultTimeout())
+		r := svr.NewRegistration(name, defaultPeriod(), checker)
 
-		r := &svr.Registration{Name: name, Period: defaultPeriod(), Checker: checker}
 		_ = server.Register(r)
 
 		sub, _ := server.Subscribe(name)
@@ -280,16 +280,15 @@ func TestValidDBChecker(t *testing.T) {
 	})
 }
 
-// nolint:dupl
 func TestInvalidObserver(t *testing.T) {
 	Convey("Given we have a new server", t, func() {
 		server := svr.NewServer()
 		defer server.Stop() // nolint:errcheck
 
 		cc := chk.NewHTTPChecker("https://httpstat.us/400", defaultTimeout())
-		hr := &svr.Registration{Name: "http1", Period: defaultPeriod(), Checker: cc}
+		hr := svr.NewRegistration("http1", defaultPeriod(), cc)
 		tc := chk.NewTCPChecker("httpstat.us:9000", defaultTimeout())
-		tr := &svr.Registration{Name: "tcp1", Period: defaultPeriod(), Checker: tc}
+		tr := svr.NewRegistration("tcp1", defaultPeriod(), tc)
 
 		_ = server.Register(hr, tr)
 
@@ -312,16 +311,15 @@ func TestInvalidObserver(t *testing.T) {
 	})
 }
 
-// nolint:dupl
 func TestValidObserver(t *testing.T) {
 	Convey("Given we have a new server", t, func() {
 		server := svr.NewServer()
 		defer server.Stop() // nolint:errcheck
 
 		cc := chk.NewHTTPChecker("https://httpstat.us/200", defaultTimeout())
-		hr := &svr.Registration{Name: "http", Period: defaultPeriod(), Checker: cc}
+		hr := svr.NewRegistration("http", defaultPeriod(), cc)
 		tc := chk.NewTCPChecker("httpstat.us:80", defaultTimeout())
-		tr := &svr.Registration{Name: "tcp", Period: defaultPeriod(), Checker: tc}
+		tr := svr.NewRegistration("tcp", defaultPeriod(), tc)
 
 		_ = server.Register(hr, tr)
 
