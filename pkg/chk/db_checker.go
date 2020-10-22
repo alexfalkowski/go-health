@@ -3,6 +3,7 @@ package chk
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 )
 
@@ -23,4 +24,8 @@ func (c *DBChecker) Check(ctx context.Context) error {
 	defer cancel()
 
 	return c.db.PingContext(ctx)
+}
+
+func (c *DBChecker) String() string {
+	return fmt.Sprintf("db: sql, timeout: %s", c.timeout)
 }

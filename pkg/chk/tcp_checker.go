@@ -2,6 +2,7 @@ package chk
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"time"
 )
@@ -25,4 +26,8 @@ func (c *TCPChecker) Check(ctx context.Context) error {
 	}
 
 	return conn.Close()
+}
+
+func (c *TCPChecker) String() string {
+	return fmt.Sprintf("address: %s, timeout: %s", c.address, c.timeout)
 }
