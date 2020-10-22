@@ -54,15 +54,16 @@ func main() {
     timeout := 5 * time.Second
     server := svr.NewServer()
 
-    if err := server.RegisterWithDefault("http1", chk.NewHTTPChecker("https://httpstat.us/400", timeout)); err != nil {
+    cc := chk.NewHTTPChecker("https://httpstat.us/200", timeout)
+    hr := &svr.Registration{Name: "http", Checker: cc}
+    tc := chk.NewTCPChecker("httpstat.us:80", timeout)
+    tr := &svr.Registration{Name: "tcp", Checker: tc}
+
+    if err := server.Register(hr, tr); err != nil {
         panic(err)
     }
 
-    if err := server.RegisterWithDefault("tcp1", chk.NewTCPChecker("httpstat.us:9000", timeout)); err != nil {
-        panic(err)
-    }
-
-    ob, err := server.Observe("http1", "tcp1")
+    ob, err := server.Observe("http", "tcp")
     if err != nil {
         panic(err)
     }
