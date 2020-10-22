@@ -1,6 +1,8 @@
 package sub
 
 import (
+	"fmt"
+
 	"github.com/alexfalkowski/go-health/pkg/prb"
 )
 
@@ -27,6 +29,10 @@ func (s *Subscriber) Send(tick *prb.Tick) {
 	}
 
 	s.ticks <- tick
+}
+
+func (s *Subscriber) String() string {
+	return fmt.Sprintf("%s", s.names)
 }
 
 func (s *Subscriber) hasName(name string) bool {
