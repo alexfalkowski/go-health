@@ -3,9 +3,7 @@ package svr
 import (
 	"errors"
 	"sync"
-	"time"
 
-	"github.com/alexfalkowski/go-health/pkg/chk"
 	"github.com/alexfalkowski/go-health/pkg/prb"
 	"github.com/alexfalkowski/go-health/pkg/sub"
 )
@@ -13,9 +11,8 @@ import (
 type status string
 
 const (
-	started       = status("started")
-	stopped       = status("stopped")
-	defaultPeriod = 10 * time.Second
+	started = status("started")
+	stopped = status("stopped")
 )
 
 var (
@@ -48,20 +45,22 @@ type Server struct {
 	st          status
 }
 
-// Register a checker.
-func (s *Server) Register(name string, period time.Duration, checker chk.Checker) error {
-	if _, ok := s.registry[name]; ok {
-		return ErrProbeExists
+// Register all the registrations.
+func (s *Server) Register(regs ...*Registration) error {
+	for _, reg := range regs {
+		if _, ok := s.registry[reg.Name]; ok {
+			return ErrProbeExists
+		}
+
+		period := reg.Period
+		if period == 0 {
+			period = defaultPeriod
+		}
+
+		s.registry[reg.Name] = prb.NewProbe(reg.Name, period, reg.Checker)
 	}
 
-	s.registry[name] = prb.NewProbe(name, period, checker)
-
 	return nil
-}
-
-// RegisterWithDefault a checker with 10 seconds.
-func (s *Server) RegisterWithDefault(name string, checker chk.Checker) error {
-	return s.Register(name, defaultPeriod, checker)
 }
 
 // Subscribe to the names of the probes.
