@@ -65,5 +65,5 @@ func (c *HTTPChecker) Check(ctx context.Context) error {
 }
 
 func (c *HTTPChecker) String() string {
-	return fmt.Sprintf("url: %s, timeout: %s", c.url, c.timeout)
+	return fmt.Sprintf("url: '%s', timeout: '%s'", c.url, c.timeout)
 }

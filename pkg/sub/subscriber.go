@@ -32,7 +32,7 @@ func (s *Subscriber) Send(tick *prb.Tick) {
 }
 
 func (s *Subscriber) String() string {
-	return fmt.Sprintf("%s", s.names)
+	return fmt.Sprintf("names: '%s'", s.names)
 }
 
 func (s *Subscriber) hasName(name string) bool {
