@@ -11,7 +11,7 @@ func NewObserver(names []string, sub *Subscriber) *Observer {
 		values[n] = nil
 	}
 
-	ob := &Observer{values: values, sub: sub}
+	ob := &Observer{values: values, sub: sub, mux: sync.Mutex{}}
 
 	go ob.observe()
 

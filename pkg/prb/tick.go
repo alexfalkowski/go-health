@@ -8,7 +8,7 @@ type Tick struct {
 
 // NewTick with name and error.
 func NewTick(name string, err error) *Tick {
-	return &Tick{name, err}
+	return &Tick{name: name, err: err}
 }
 
 // Name of the probe tick.
