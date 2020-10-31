@@ -31,7 +31,7 @@ func NewServer() *Server {
 	registry := make(map[string]*prb.Probe)
 	subscribers := []*sub.Subscriber{}
 
-	return &Server{registry: registry, subscribers: subscribers}
+	return &Server{registry: registry, subscribers: subscribers, done: nil, ticks: nil, wg: nil, mux: sync.Mutex{}, st: ""}
 }
 
 // Server will maintain all the probes and start and stop them.

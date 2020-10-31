@@ -17,7 +17,7 @@ func NewRegistration(name string, period time.Duration, checker chk.Checker) *Re
 		period = defaultPeriod
 	}
 
-	return &Registration{name, period, checker}
+	return &Registration{Name: name, Period: period, Checker: checker}
 }
 
 // Registration for the server.

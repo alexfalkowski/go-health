@@ -17,7 +17,7 @@ const (
 
 // NewProbe with period and checker.
 func NewProbe(name string, period time.Duration, checker chk.Checker) *Probe {
-	return &Probe{name: name, period: period, checker: checker}
+	return &Probe{name: name, period: period, checker: checker, ticker: nil, ch: nil, done: nil, mux: sync.Mutex{}, st: ""}
 }
 
 // Probe is a periodic checker.

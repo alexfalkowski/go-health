@@ -25,12 +25,13 @@ func NewHTTPCheckerWithRoundTripper(url string, timeout time.Duration, tripper h
 	client := &http.Client{
 		Timeout:   timeout,
 		Transport: tripper,
+		Jar:       nil,
 		CheckRedirect: func(*http.Request, []*http.Request) error {
 			return http.ErrUseLastResponse // never follow redirects
 		},
 	}
 
-	return &HTTPChecker{url, timeout, client}
+	return &HTTPChecker{url: url, timeout: timeout, client: client}
 }
 
 // HTTPChecker for a URL.
@@ -47,12 +48,12 @@ func (c *HTTPChecker) Check(ctx context.Context) error {
 
 	req, err := http.NewRequestWithContext(ctx, "GET", c.url, nil)
 	if err != nil {
-		return err
+		return fmt.Errorf("http new request: %w", err)
 	}
 
 	resp, err := c.client.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("client do: %w", err)
 	}
 
 	defer resp.Body.Close()

@@ -9,7 +9,7 @@ import (
 
 // NewDBChecker for SQL.
 func NewDBChecker(db *sql.DB, timeout time.Duration) *DBChecker {
-	return &DBChecker{db, timeout}
+	return &DBChecker{db: db, timeout: timeout}
 }
 
 // DBChecker for SQL.

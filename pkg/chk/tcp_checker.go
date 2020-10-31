@@ -9,7 +9,7 @@ import (
 
 // NewTCPChecker with address.
 func NewTCPChecker(address string, timeout time.Duration) *TCPChecker {
-	return &TCPChecker{address, timeout}
+	return &TCPChecker{address: address, timeout: timeout}
 }
 
 // TCPChecker for an address.
@@ -22,7 +22,7 @@ type TCPChecker struct {
 func (c *TCPChecker) Check(ctx context.Context) error {
 	conn, err := net.DialTimeout("tcp", c.address, c.timeout)
 	if err != nil {
-		return err
+		return fmt.Errorf("net dial: %w", err)
 	}
 
 	return conn.Close()
