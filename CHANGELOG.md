@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.3.0](https://github.com/alexfalkowski/go-health/compare/v1.2.0...v1.3.0) (2020-11-04)
+
+
+### Features
+
+* break up to interfaces ([#23](https://github.com/alexfalkowski/go-health/issues/23)) ([a37a5c5](https://github.com/alexfalkowski/go-health/commit/a37a5c572a84f54f293e65e70ace96cbf826d8c0))
+
 ## [1.2.0](https://github.com/alexfalkowski/go-health/compare/v1.1.0...v1.2.0) (2020-11-02)
 
 
