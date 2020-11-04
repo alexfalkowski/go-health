@@ -2,19 +2,20 @@ package chk
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"time"
+
+	"github.com/alexfalkowski/go-health/pkg/sql"
 )
 
 // NewDBChecker for SQL.
-func NewDBChecker(db *sql.DB, timeout time.Duration) *DBChecker {
-	return &DBChecker{db: db, timeout: timeout}
+func NewDBChecker(pinger sql.Pinger, timeout time.Duration) *DBChecker {
+	return &DBChecker{pinger: pinger, timeout: timeout}
 }
 
 // DBChecker for SQL.
 type DBChecker struct {
-	db      *sql.DB
+	pinger  sql.Pinger
 	timeout time.Duration
 }
 
@@ -23,7 +24,7 @@ func (c *DBChecker) Check(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
 
-	return c.db.PingContext(ctx)
+	return c.pinger.PingContext(ctx)
 }
 
 func (c *DBChecker) String() string {

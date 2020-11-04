@@ -3,17 +3,19 @@ package chk
 import (
 	"context"
 	"fmt"
-	"net"
+	snet "net"
 	"time"
+
+	"github.com/alexfalkowski/go-health/pkg/net"
 )
 
 // NewTCPChecker for address.
 func NewTCPChecker(address string, timeout time.Duration) *TCPChecker {
-	return NewTCPCheckerWithDialer(address, timeout, &net.Dialer{})
+	return NewTCPCheckerWithDialer(address, timeout, &snet.Dialer{})
 }
 
 // NewTCPCheckerWithDialer for address.
-func NewTCPCheckerWithDialer(address string, timeout time.Duration, dialer *net.Dialer) *TCPChecker {
+func NewTCPCheckerWithDialer(address string, timeout time.Duration, dialer net.Dialer) *TCPChecker {
 	return &TCPChecker{address: address, timeout: timeout, dialer: dialer}
 }
 
@@ -21,7 +23,7 @@ func NewTCPCheckerWithDialer(address string, timeout time.Duration, dialer *net.
 type TCPChecker struct {
 	address string
 	timeout time.Duration
-	dialer  *net.Dialer
+	dialer  net.Dialer
 }
 
 // Check the address.
