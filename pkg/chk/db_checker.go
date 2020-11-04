@@ -4,16 +4,18 @@ import (
 	"context"
 	"fmt"
 	"time"
+
+	"github.com/alexfalkowski/go-health/pkg/sql"
 )
 
 // NewDBChecker for SQL.
-func NewDBChecker(pinger Pinger, timeout time.Duration) *DBChecker {
+func NewDBChecker(pinger sql.Pinger, timeout time.Duration) *DBChecker {
 	return &DBChecker{pinger: pinger, timeout: timeout}
 }
 
 // DBChecker for SQL.
 type DBChecker struct {
-	pinger  Pinger
+	pinger  sql.Pinger
 	timeout time.Duration
 }
 

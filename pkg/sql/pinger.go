@@ -1,4 +1,4 @@
-package chk
+package sql
 
 import (
 	"context"
