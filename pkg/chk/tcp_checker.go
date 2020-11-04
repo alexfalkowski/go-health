@@ -13,7 +13,7 @@ func NewTCPChecker(address string, timeout time.Duration) *TCPChecker {
 }
 
 // NewTCPCheckerWithDialer for address.
-func NewTCPCheckerWithDialer(address string, timeout time.Duration, dialer *net.Dialer) *TCPChecker {
+func NewTCPCheckerWithDialer(address string, timeout time.Duration, dialer Dialer) *TCPChecker {
 	return &TCPChecker{address: address, timeout: timeout, dialer: dialer}
 }
 
@@ -21,7 +21,7 @@ func NewTCPCheckerWithDialer(address string, timeout time.Duration, dialer *net.
 type TCPChecker struct {
 	address string
 	timeout time.Duration
-	dialer  *net.Dialer
+	dialer  Dialer
 }
 
 // Check the address.
