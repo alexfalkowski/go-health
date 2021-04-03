@@ -6,15 +6,7 @@ jobs:
       - image: alexfalkowski/go:1.16
     steps:
       - checkout
-      - restore_cache:
-          keys:
-            - go:1.16-health-mod-cache-{{ checksum "go.sum" }}
-            - go:1.16-health-mod-cache-
       - run: make dep
-      - save_cache:
-          key: go:1.16-health-mod-cache-{{ checksum "go.sum" }}
-          paths:
-            - "/go/pkg/mod"
       - run: make specs
       - run: make lint
   release:
