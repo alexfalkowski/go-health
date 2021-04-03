@@ -8,11 +8,11 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - go-health-mod-cache-{{ checksum "go.sum" }}
-            - go-health-mod-cache-
+            - go:1.16-health-mod-cache-{{ checksum "go.sum" }}
+            - go:1.16-health-mod-cache-
       - run: make dep
       - save_cache:
-          key: go-health-mod-cache-{{ checksum "go.sum" }}
+          key: go:1.16-health-mod-cache-{{ checksum "go.sum" }}
           paths:
             - "/go/pkg/mod"
       - run: make specs
