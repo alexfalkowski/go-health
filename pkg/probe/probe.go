@@ -1,11 +1,11 @@
-package prb
+package probe
 
 import (
 	"context"
 	"sync"
 	"time"
 
-	"github.com/alexfalkowski/go-health/pkg/chk"
+	"github.com/alexfalkowski/go-health/pkg/checker"
 )
 
 type status string
@@ -16,8 +16,8 @@ const (
 )
 
 // NewProbe with period and checker.
-func NewProbe(name string, period time.Duration, checker chk.Checker) *Probe {
-	return &Probe{name: name, period: period, checker: checker, ticker: nil, ch: nil, done: nil, mux: sync.Mutex{}, st: ""}
+func NewProbe(name string, period time.Duration, ch checker.Checker) *Probe {
+	return &Probe{name: name, period: period, checker: ch, ticker: nil, ch: nil, done: nil, mux: sync.Mutex{}, st: ""}
 }
 
 // Probe is a periodic checker.
@@ -25,7 +25,7 @@ type Probe struct {
 	name    string
 	period  time.Duration
 	ticker  *time.Ticker
-	checker chk.Checker
+	checker checker.Checker
 	ch      chan *Tick
 	done    chan struct{}
 	mux     sync.Mutex

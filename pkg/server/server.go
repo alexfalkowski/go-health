@@ -1,11 +1,11 @@
-package svr
+package server
 
 import (
 	"errors"
 	"sync"
 
-	"github.com/alexfalkowski/go-health/pkg/prb"
-	"github.com/alexfalkowski/go-health/pkg/sub"
+	"github.com/alexfalkowski/go-health/pkg/probe"
+	"github.com/alexfalkowski/go-health/pkg/subscriber"
 )
 
 type status string
@@ -28,18 +28,18 @@ var (
 
 // NewServer for health.
 func NewServer() *Server {
-	registry := make(map[string]*prb.Probe)
-	subscribers := []*sub.Subscriber{}
+	registry := make(map[string]*probe.Probe)
+	subscribers := []*subscriber.Subscriber{}
 
 	return &Server{registry: registry, subscribers: subscribers, done: nil, ticks: nil, wg: nil, mux: sync.Mutex{}, st: ""}
 }
 
 // Server will maintain all the probes and start and stop them.
 type Server struct {
-	registry    map[string]*prb.Probe
-	subscribers []*sub.Subscriber
+	registry    map[string]*probe.Probe
+	subscribers []*subscriber.Subscriber
 	done        chan struct{}
-	ticks       chan *prb.Tick
+	ticks       chan *probe.Tick
 	wg          *sync.WaitGroup
 	mux         sync.Mutex
 	st          status
@@ -57,21 +57,21 @@ func (s *Server) Register(regs ...*Registration) error {
 			period = defaultPeriod
 		}
 
-		s.registry[reg.Name] = prb.NewProbe(reg.Name, period, reg.Checker)
+		s.registry[reg.Name] = probe.NewProbe(reg.Name, period, reg.Checker)
 	}
 
 	return nil
 }
 
 // Subscribe to the names of the probes.
-func (s *Server) Subscribe(names ...string) (*sub.Subscriber, error) {
+func (s *Server) Subscribe(names ...string) (*subscriber.Subscriber, error) {
 	for _, n := range names {
 		if _, ok := s.registry[n]; !ok {
 			return nil, ErrRegistrationNotFound
 		}
 	}
 
-	sub := sub.NewSubscriber(names)
+	sub := subscriber.NewSubscriber(names)
 
 	s.subscribers = append(s.subscribers, sub)
 
@@ -79,13 +79,13 @@ func (s *Server) Subscribe(names ...string) (*sub.Subscriber, error) {
 }
 
 // Observe the names of the probes.
-func (s *Server) Observe(names ...string) (*sub.Observer, error) {
+func (s *Server) Observe(names ...string) (*subscriber.Observer, error) {
 	su, err := s.Subscribe(names...)
 	if err != nil {
 		return nil, err
 	}
 
-	return sub.NewObserver(names, su), nil
+	return subscriber.NewObserver(names, su), nil
 }
 
 // Start the server.
@@ -103,9 +103,9 @@ func (s *Server) Start() error {
 
 	s.st = started
 	s.wg = &sync.WaitGroup{}
-	s.ticks = make(chan *prb.Tick, 1)
+	s.ticks = make(chan *probe.Tick, 1)
 	s.done = make(chan struct{}, 1)
-	chs := []<-chan *prb.Tick{}
+	chs := []<-chan *probe.Tick{}
 
 	for _, p := range s.registry {
 		s.wg.Add(1)
@@ -146,13 +146,13 @@ func (s *Server) Stop() error {
 	return nil
 }
 
-func (s *Server) mergeChannels(chs []<-chan *prb.Tick) {
+func (s *Server) mergeChannels(chs []<-chan *probe.Tick) {
 	for _, ch := range chs {
 		go s.sendTick(ch)
 	}
 }
 
-func (s *Server) sendTick(ch <-chan *prb.Tick) {
+func (s *Server) sendTick(ch <-chan *probe.Tick) {
 	defer s.wg.Done()
 
 	for {

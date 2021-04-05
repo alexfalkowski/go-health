@@ -46,33 +46,33 @@ package main
 import (
     "time"
 
-    "github.com/alexfalkowski/go-health/pkg/chk"
-    "github.com/alexfalkowski/go-health/pkg/svr"
+    "github.com/alexfalkowski/go-health/pkg/checker"
+    "github.com/alexfalkowski/go-health/pkg/server"
 )
 
 func main() {
     timeout := 5 * time.Second
-    server := svr.NewServer()
+    s := server.NewServer()
 
-    cc := chk.NewHTTPChecker("https://httpstat.us/200", timeout)
-    hr := svr.NewRegistration("http", 0, cc)
-    tc := chk.NewTCPChecker("httpstat.us:80", timeout)
-    tr := svr.NewRegistration("tcp", 0, tc)
+    cc := checker.NewHTTPChecker("https://httpstat.us/200", timeout)
+    hr := server.NewRegistration("http", 0, cc)
+    tc := checker.NewTCPChecker("httpstat.us:80", timeout)
+    tr := server.NewRegistration("tcp", 0, tc)
 
-    if err := server.Register(hr, tr); err != nil {
+    if err := s.Register(hr, tr); err != nil {
         panic(err)
     }
 
-    ob, err := server.Observe("http", "tcp")
+    ob, err := s.Observe("http", "tcp")
     if err != nil {
         panic(err)
     }
 
-    if err := server.Start(); err != nil {
+    if err := s.Start(); err != nil {
         panic(err)
     }
 
-    defer server.Stop()
+    defer s.Stop()
 
     ob.Error() // This will update with errors. If nil everything is OK.
 }

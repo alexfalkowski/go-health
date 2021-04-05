@@ -1,4 +1,4 @@
-package prb
+package probe
 
 // Tick defines a tick in time for a probe.
 type Tick struct {
