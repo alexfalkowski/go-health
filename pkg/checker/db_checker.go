@@ -1,4 +1,4 @@
-package chk
+package checker
 
 import (
 	"context"

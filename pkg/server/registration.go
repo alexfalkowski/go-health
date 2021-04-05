@@ -1,10 +1,10 @@
-package svr
+package server
 
 import (
 	"fmt"
 	"time"
 
-	"github.com/alexfalkowski/go-health/pkg/chk"
+	"github.com/alexfalkowski/go-health/pkg/checker"
 )
 
 const (
@@ -12,19 +12,19 @@ const (
 )
 
 // NewRegistration for server.
-func NewRegistration(name string, period time.Duration, checker chk.Checker) *Registration {
+func NewRegistration(name string, period time.Duration, ch checker.Checker) *Registration {
 	if period == 0 {
 		period = defaultPeriod
 	}
 
-	return &Registration{Name: name, Period: period, Checker: checker}
+	return &Registration{Name: name, Period: period, Checker: ch}
 }
 
 // Registration for the server.
 type Registration struct {
 	Name    string
 	Period  time.Duration
-	Checker chk.Checker
+	Checker checker.Checker
 }
 
 func (r *Registration) String() string {
