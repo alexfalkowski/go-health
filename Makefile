@@ -12,10 +12,10 @@ fix-lint: dep
 	golangci-lint run --fix
 
 specs: dep
-	go test -race -mod vendor -v -covermode=atomic -coverpkg=./... -coverprofile=rpt/profile.cov ./...
+	go test -race -mod vendor -v -covermode=atomic -coverpkg=./... -coverprofile=test/profile.cov ./...
 
 coverage:
-	go tool cover -html=rpt/profile.cov
+	go tool cover -html=test/profile.cov
 
 download:
 	go mod download
