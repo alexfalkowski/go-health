@@ -1,8 +1,6 @@
 package subscriber
 
 import (
-	"fmt"
-
 	"github.com/alexfalkowski/go-health/pkg/probe"
 )
 
@@ -29,10 +27,6 @@ func (s *Subscriber) Send(tick *probe.Tick) {
 	}
 
 	s.ticks <- tick
-}
-
-func (s *Subscriber) String() string {
-	return fmt.Sprintf("names: '%s'", s.names)
 }
 
 func (s *Subscriber) hasName(name string) bool {

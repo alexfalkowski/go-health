@@ -25,10 +25,6 @@ type Observer struct {
 	mux    sync.Mutex
 }
 
-func (o *Observer) String() string {
-	return o.sub.String()
-}
-
 // Error is the first error observed.
 func (o *Observer) Error() error {
 	o.mux.Lock()

@@ -2,7 +2,6 @@ package checker
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/alexfalkowski/go-health/pkg/sql"
@@ -25,8 +24,4 @@ func (c *DBChecker) Check(ctx context.Context) error {
 	defer cancel()
 
 	return c.pinger.PingContext(ctx)
-}
-
-func (c *DBChecker) String() string {
-	return fmt.Sprintf("db: 'sql', timeout: '%s'", c.timeout)
 }
