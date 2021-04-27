@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/alexfalkowski/go-health.svg?style=svg)](https://circleci.com/gh/alexfalkowski/go-health)
+
 # Health Monitoring Pattern
 
 This repository solves the health monitoring pattern in go.
