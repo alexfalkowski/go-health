@@ -30,3 +30,6 @@ dep: download tidy vendor
 
 outdated:
 	go list -u -m -mod=mod -json all | go-mod-outdated -update -direct
+
+goveralls:
+	goveralls -coverprofile=test/profile.cov -service=circle-ci -repotoken=gppTG6I7O5tni1mg336nEm8DFRXwANhJV

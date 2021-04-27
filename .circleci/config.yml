@@ -7,8 +7,9 @@ jobs:
     steps:
       - checkout
       - run: make dep
-      - run: make specs
       - run: make lint
+      - run: make specs
+      - run: make goveralls
   release:
     docker:
       - image: alexfalkowski/release:2.0
