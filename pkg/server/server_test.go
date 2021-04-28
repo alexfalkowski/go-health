@@ -372,3 +372,25 @@ func TestValidObserver(t *testing.T) {
 		})
 	})
 }
+
+func TestNonExistentObserver(t *testing.T) {
+	Convey("Given we have a new server", t, func() {
+		s := server.NewServer()
+		defer s.Stop() // nolint:errcheck
+
+		cc := checker.NewHTTPChecker("https://httpstat.us/200", defaultTimeout())
+		hr := server.NewRegistration("http", defaultPeriod(), cc)
+		tc := checker.NewTCPChecker("httpstat.us:80", defaultTimeout())
+		tr := server.NewRegistration("tcp", defaultPeriod(), tc)
+
+		_ = s.Register(hr, tr)
+
+		Convey("When I observer a non existent registration", func() {
+			_, err := s.Observe("http1", "tcp1")
+
+			Convey("Then I should have an error", func() {
+				So(err, ShouldBeError)
+			})
+		})
+	})
+}
