@@ -43,9 +43,8 @@ func TestNoRegistrations(t *testing.T) {
 func TestDuplicateRegistrations(t *testing.T) {
 	Convey("Given we have a new server", t, func() {
 		s := server.NewServer()
-		name := "google"
 		checker := checker.NewHTTPChecker("https://www.google.com/", defaultTimeout())
-		r := server.NewRegistration(name, defaultPeriod(), checker)
+		r := server.NewRegistration("google", defaultPeriod(), checker)
 
 		_ = s.Register(r)
 
