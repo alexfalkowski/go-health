@@ -22,14 +22,7 @@ func NewHTTPCheckerWithRoundTripper(url string, timeout time.Duration, tripper h
 		tripper = http.DefaultTransport
 	}
 
-	client := &http.Client{
-		Timeout:   timeout,
-		Transport: tripper,
-		Jar:       nil,
-		CheckRedirect: func(*http.Request, []*http.Request) error {
-			return http.ErrUseLastResponse // never follow redirects
-		},
-	}
+	client := &http.Client{Timeout: timeout, Transport: tripper, Jar: nil}
 
 	return &HTTPChecker{url: url, timeout: timeout, client: client}
 }
