@@ -333,7 +333,7 @@ func TestInvalidObserver(t *testing.T) {
 
 			Convey("Then I should have error from the probe", func() {
 				// Sleep for a period to make sure we get a result.
-				time.Sleep(1750 * time.Millisecond)
+				time.Sleep(3 * time.Second)
 
 				So(ob.Error(), ShouldBeError)
 			})
@@ -364,7 +364,7 @@ func TestValidObserver(t *testing.T) {
 
 			Convey("Then I should have no error from the probe", func() {
 				// Sleep for a period to make sure we get a result.
-				time.Sleep(1750 * time.Millisecond)
+				time.Sleep(3 * time.Second)
 
 				So(ob.Error(), ShouldBeNil)
 			})
