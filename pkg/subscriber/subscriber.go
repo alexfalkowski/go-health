@@ -22,19 +22,5 @@ func (s *Subscriber) Receive() <-chan *probe.Tick {
 
 // Send tick to subscriber.
 func (s *Subscriber) Send(tick *probe.Tick) {
-	if !s.hasName(tick.Name()) {
-		return
-	}
-
 	s.ticks <- tick
-}
-
-func (s *Subscriber) hasName(name string) bool {
-	for _, n := range s.names {
-		if name == n {
-			return true
-		}
-	}
-
-	return false
 }
