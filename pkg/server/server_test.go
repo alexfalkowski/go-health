@@ -43,9 +43,8 @@ func TestNoRegistrations(t *testing.T) {
 func TestDuplicateRegistrations(t *testing.T) {
 	Convey("Given we have a new server", t, func() {
 		s := server.NewServer()
-		name := "google"
 		checker := checker.NewHTTPChecker("https://www.google.com/", defaultTimeout())
-		r := server.NewRegistration(name, defaultPeriod(), checker)
+		r := server.NewRegistration("google", defaultPeriod(), checker)
 
 		_ = s.Register(r)
 
@@ -74,6 +73,37 @@ func TestNonExistentRegistration(t *testing.T) {
 
 			Convey("Then I should have an error", func() {
 				So(err, ShouldBeError)
+			})
+		})
+	})
+}
+
+func TestDoubleStart(t *testing.T) {
+	Convey("Given we have a new server", t, func() {
+		s := server.NewServer()
+		defer s.Stop() // nolint:errcheck
+
+		name := "google"
+		checker := checker.NewHTTPChecker("https://www.google.com/", defaultTimeout())
+		r := server.NewRegistration(name, defaultPeriod(), checker)
+
+		_ = s.Register(r)
+
+		sub, _ := s.Subscribe(name)
+
+		Convey("When I start the server", func() {
+			err := s.Start()
+			So(err, ShouldBeNil)
+
+			err = s.Start()
+
+			Convey("Then I should have no server error", func() {
+				So(err, ShouldBeNil)
+			})
+
+			Convey("Then I should have no error from the probe", func() {
+				t := <-sub.Receive()
+				So(t.Error(), ShouldBeNil)
 			})
 		})
 	})
@@ -337,6 +367,28 @@ func TestValidObserver(t *testing.T) {
 				time.Sleep(1750 * time.Millisecond)
 
 				So(ob.Error(), ShouldBeNil)
+			})
+		})
+	})
+}
+
+func TestNonExistentObserver(t *testing.T) {
+	Convey("Given we have a new server", t, func() {
+		s := server.NewServer()
+		defer s.Stop() // nolint:errcheck
+
+		cc := checker.NewHTTPChecker("https://httpstat.us/200", defaultTimeout())
+		hr := server.NewRegistration("http", defaultPeriod(), cc)
+		tc := checker.NewTCPChecker("httpstat.us:80", defaultTimeout())
+		tr := server.NewRegistration("tcp", defaultPeriod(), tc)
+
+		_ = s.Register(hr, tr)
+
+		Convey("When I observer a non existent registration", func() {
+			_, err := s.Observe("http1", "tcp1")
+
+			Convey("Then I should have an error", func() {
+				So(err, ShouldBeError)
 			})
 		})
 	})
