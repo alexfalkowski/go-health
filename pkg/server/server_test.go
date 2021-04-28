@@ -11,13 +11,16 @@ import (
 )
 
 func defaultTimeout() time.Duration {
-	return 5 * time.Second
+	return 500 * time.Millisecond
 }
 
 func defaultPeriod() time.Duration {
-	return 1 * time.Second
+	return 500 * time.Millisecond
 }
 
+func defaultWait() time.Duration {
+	return 2 * time.Second
+}
 func TestNoRegistrations(t *testing.T) {
 	Convey("Given we have a new server", t, func() {
 		s := server.NewServer()
@@ -48,7 +51,7 @@ func TestDuplicateRegistrations(t *testing.T) {
 
 		_ = s.Register(r)
 
-		Convey("When add a duplicate subscriber", func() {
+		Convey("When we add a duplicate subscriber", func() {
 			err := s.Register(r)
 
 			Convey("Then I should have an error", func() {
@@ -89,7 +92,7 @@ func TestDoubleStart(t *testing.T) {
 
 		_ = s.Register(r)
 
-		sub, _ := s.Subscribe(name)
+		ob, _ := s.Observe(name)
 
 		Convey("When I start the server", func() {
 			err := s.Start()
@@ -101,9 +104,10 @@ func TestDoubleStart(t *testing.T) {
 				So(err, ShouldBeNil)
 			})
 
-			Convey("Then I should have no error from the probe", func() {
-				t := <-sub.Receive()
-				So(t.Error(), ShouldBeNil)
+			Convey("Then I should have no error from the observer", func() {
+				time.Sleep(defaultWait())
+
+				So(ob.Error(), ShouldBeNil)
 			})
 		})
 	})
@@ -120,7 +124,7 @@ func TestValidHTTPChecker(t *testing.T) {
 
 		_ = s.Register(r)
 
-		sub, _ := s.Subscribe(name)
+		ob, _ := s.Observe(name)
 
 		Convey("When I start the server", func() {
 			err := s.Start()
@@ -129,9 +133,10 @@ func TestValidHTTPChecker(t *testing.T) {
 				So(err, ShouldBeNil)
 			})
 
-			Convey("Then I should have no error from the probe", func() {
-				t := <-sub.Receive()
-				So(t.Error(), ShouldBeNil)
+			Convey("Then I should have no error from the observer", func() {
+				time.Sleep(defaultWait())
+
+				So(ob.Error(), ShouldBeNil)
 			})
 		})
 	})
@@ -148,7 +153,7 @@ func TestInvalidURLHTTPChecker(t *testing.T) {
 
 		_ = s.Register(r)
 
-		sub, _ := s.Subscribe(name)
+		ob, _ := s.Observe(name)
 
 		Convey("When I start the server", func() {
 			err := s.Start()
@@ -157,9 +162,10 @@ func TestInvalidURLHTTPChecker(t *testing.T) {
 				So(err, ShouldBeNil)
 			})
 
-			Convey("Then I should have error from the probe", func() {
-				t := <-sub.Receive()
-				So(t.Error(), ShouldBeError)
+			Convey("Then I should have error from the observer", func() {
+				time.Sleep(defaultWait())
+
+				So(ob.Error(), ShouldBeError)
 			})
 		})
 	})
@@ -176,7 +182,7 @@ func TestInvalidCodeHTTPChecker(t *testing.T) {
 
 		_ = s.Register(r)
 
-		sub, _ := s.Subscribe(name)
+		ob, _ := s.Observe(name)
 
 		Convey("When I start the server", func() {
 			err := s.Start()
@@ -185,9 +191,10 @@ func TestInvalidCodeHTTPChecker(t *testing.T) {
 				So(err, ShouldBeNil)
 			})
 
-			Convey("Then I should have error from the probe", func() {
-				t := <-sub.Receive()
-				So(t.Error(), ShouldBeError)
+			Convey("Then I should have error from the observer", func() {
+				time.Sleep(defaultWait())
+
+				So(ob.Error(), ShouldBeError)
 			})
 		})
 	})
@@ -204,7 +211,7 @@ func TestTimeoutHTTPChecker(t *testing.T) {
 
 		_ = s.Register(r)
 
-		sub, _ := s.Subscribe(name)
+		ob, _ := s.Observe(name)
 
 		Convey("When I start the server", func() {
 			err := s.Start()
@@ -213,9 +220,10 @@ func TestTimeoutHTTPChecker(t *testing.T) {
 				So(err, ShouldBeNil)
 			})
 
-			Convey("Then I should have error from the probe", func() {
-				t := <-sub.Receive()
-				So(t.Error(), ShouldBeError)
+			Convey("Then I should have error from the observer", func() {
+				time.Sleep(defaultWait())
+
+				So(ob.Error(), ShouldBeError)
 			})
 		})
 	})
@@ -232,7 +240,7 @@ func TestValidTCPChecker(t *testing.T) {
 
 		_ = s.Register(r)
 
-		sub, _ := s.Subscribe(name)
+		ob, _ := s.Observe(name)
 
 		Convey("When I start the server", func() {
 			err := s.Start()
@@ -241,9 +249,10 @@ func TestValidTCPChecker(t *testing.T) {
 				So(err, ShouldBeNil)
 			})
 
-			Convey("Then I should have no error from the probe", func() {
-				t := <-sub.Receive()
-				So(t.Error(), ShouldBeNil)
+			Convey("Then I should have no error from the observer", func() {
+				time.Sleep(defaultWait())
+
+				So(ob.Error(), ShouldBeNil)
 			})
 		})
 	})
@@ -260,7 +269,7 @@ func TestInvalidAddressTCPChecker(t *testing.T) {
 
 		_ = s.Register(r)
 
-		sub, _ := s.Subscribe(name)
+		ob, _ := s.Observe(name)
 
 		Convey("When I start the server", func() {
 			err := s.Start()
@@ -269,9 +278,10 @@ func TestInvalidAddressTCPChecker(t *testing.T) {
 				So(err, ShouldBeNil)
 			})
 
-			Convey("Then I should have error from the probe", func() {
-				t := <-sub.Receive()
-				So(t.Error(), ShouldBeError)
+			Convey("Then I should have error from the observer", func() {
+				time.Sleep(defaultWait())
+
+				So(ob.Error(), ShouldBeError)
 			})
 		})
 	})
@@ -293,7 +303,7 @@ func TestValidDBChecker(t *testing.T) {
 
 		_ = s.Register(r)
 
-		sub, _ := s.Subscribe(name)
+		ob, _ := s.Observe(name)
 
 		Convey("When I start the server", func() {
 			err := s.Start()
@@ -302,9 +312,10 @@ func TestValidDBChecker(t *testing.T) {
 				So(err, ShouldBeNil)
 			})
 
-			Convey("Then I should have no error from the probe", func() {
-				t := <-sub.Receive()
-				So(t.Error(), ShouldBeNil)
+			Convey("Then I should have no error from the observer", func() {
+				time.Sleep(defaultWait())
+
+				So(ob.Error(), ShouldBeNil)
 			})
 		})
 	})
@@ -332,8 +343,7 @@ func TestInvalidObserver(t *testing.T) {
 			})
 
 			Convey("Then I should have error from the probe", func() {
-				// Sleep for a period to make sure we get a result.
-				time.Sleep(1750 * time.Millisecond)
+				time.Sleep(defaultWait())
 
 				So(ob.Error(), ShouldBeError)
 			})
@@ -363,8 +373,7 @@ func TestValidObserver(t *testing.T) {
 			})
 
 			Convey("Then I should have no error from the probe", func() {
-				// Sleep for a period to make sure we get a result.
-				time.Sleep(1750 * time.Millisecond)
+				time.Sleep(defaultWait())
 
 				So(ob.Error(), ShouldBeNil)
 			})
