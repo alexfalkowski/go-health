@@ -52,12 +52,7 @@ func (s *Server) Register(regs ...*Registration) error {
 			return ErrProbeExists
 		}
 
-		period := reg.Period
-		if period == 0 {
-			period = defaultPeriod
-		}
-
-		s.registry[reg.Name] = probe.NewProbe(reg.Name, period, reg.Checker)
+		s.registry[reg.Name] = probe.NewProbe(reg.Name, reg.Period, reg.Checker)
 	}
 
 	return nil
