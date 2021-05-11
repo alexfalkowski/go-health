@@ -13,16 +13,14 @@ var ErrInvalidStatusCode = errors.New("invalid status code")
 
 // NewHTTPChecker with URL and client.
 func NewHTTPChecker(url string, timeout time.Duration) *HTTPChecker {
-	return NewHTTPCheckerWithRoundTripper(url, timeout, nil)
+	return NewHTTPCheckerWithClient(url, timeout, nil)
 }
 
-// NewHTTPCheckerWithRoundTripper with URL and client.
-func NewHTTPCheckerWithRoundTripper(url string, timeout time.Duration, tripper http.RoundTripper) *HTTPChecker {
-	if tripper == nil {
-		tripper = http.DefaultTransport
+// NewHTTPCheckerWithClient with URL and client.
+func NewHTTPCheckerWithClient(url string, timeout time.Duration, client *http.Client) *HTTPChecker {
+	if client == nil {
+		client = http.DefaultClient
 	}
-
-	client := &http.Client{Timeout: timeout, Transport: tripper, Jar: nil}
 
 	return &HTTPChecker{url: url, timeout: timeout, client: client}
 }
