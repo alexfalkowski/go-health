@@ -358,6 +358,37 @@ func TestValidReadyChecker(t *testing.T) {
 	})
 }
 
+func TestValidNoopChecker(t *testing.T) {
+	Convey("Given we have a new server", t, func() {
+		s := server.NewServer()
+		defer s.Stop() // nolint:errcheck
+
+		name := "noop"
+		checker := checker.NewNoopChecker()
+		r := server.NewRegistration(name, defaultPeriod(), checker)
+
+		_ = s.Register(r)
+
+		ob, _ := s.Observe(name)
+
+		Convey("When I start the server", func() {
+			err := s.Start()
+
+			Convey("Then I should have no server error", func() {
+				So(err, ShouldBeNil)
+			})
+
+			Convey("Then I should have no error from the observer", func() {
+				So(ob.Error(), ShouldBeNil)
+
+				time.Sleep(defaultWait())
+
+				So(ob.Error(), ShouldBeNil)
+			})
+		})
+	})
+}
+
 func TestInvalidObserver(t *testing.T) {
 	Convey("Given we have a new server", t, func() {
 		s := server.NewServer()
