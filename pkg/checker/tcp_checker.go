@@ -33,7 +33,7 @@ func (c *TCPChecker) Check(ctx context.Context) error {
 
 	conn, err := c.dialer.DialContext(ctx, "tcp", c.address)
 	if err != nil {
-		return fmt.Errorf("net dial: %w", err)
+		return fmt.Errorf("tcp checker: %w", err)
 	}
 
 	return conn.Close()

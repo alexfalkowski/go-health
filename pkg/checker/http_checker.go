@@ -39,12 +39,12 @@ func (c *HTTPChecker) Check(ctx context.Context) error {
 
 	req, err := http.NewRequestWithContext(ctx, "GET", c.url, nil)
 	if err != nil {
-		return fmt.Errorf("http new request: %w", err)
+		return fmt.Errorf("http checker: %w", err)
 	}
 
 	resp, err := c.client.Do(req)
 	if err != nil {
-		return fmt.Errorf("client do: %w", err)
+		return fmt.Errorf("http checker: %w", err)
 	}
 
 	defer resp.Body.Close()
