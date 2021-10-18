@@ -164,8 +164,6 @@ func TestInvalidURLHTTPChecker(t *testing.T) {
 			})
 
 			Convey("Then I should have error from the observer", func() {
-				time.Sleep(defaultWait())
-
 				So(ob.Error(), ShouldBeError)
 			})
 		})
@@ -193,8 +191,6 @@ func TestInvalidCodeHTTPChecker(t *testing.T) {
 			})
 
 			Convey("Then I should have error from the observer", func() {
-				time.Sleep(defaultWait())
-
 				So(ob.Error(), ShouldBeError)
 			})
 		})
@@ -222,8 +218,6 @@ func TestTimeoutHTTPChecker(t *testing.T) {
 			})
 
 			Convey("Then I should have error from the observer", func() {
-				time.Sleep(defaultWait())
-
 				So(ob.Error(), ShouldBeError)
 			})
 		})
@@ -251,8 +245,6 @@ func TestValidTCPChecker(t *testing.T) {
 			})
 
 			Convey("Then I should have no error from the observer", func() {
-				time.Sleep(defaultWait())
-
 				So(ob.Error(), ShouldBeNil)
 			})
 		})
@@ -280,8 +272,6 @@ func TestInvalidAddressTCPChecker(t *testing.T) {
 			})
 
 			Convey("Then I should have error from the observer", func() {
-				time.Sleep(defaultWait())
-
 				So(ob.Error(), ShouldBeError)
 			})
 		})
@@ -314,8 +304,6 @@ func TestValidDBChecker(t *testing.T) {
 			})
 
 			Convey("Then I should have no error from the observer", func() {
-				time.Sleep(defaultWait())
-
 				So(ob.Error(), ShouldBeNil)
 			})
 		})
@@ -344,7 +332,6 @@ func TestValidReadyChecker(t *testing.T) {
 			})
 
 			Convey("Then I should have no error from the observer", func() {
-				time.Sleep(defaultWait())
 				So(ob.Error(), ShouldEqual, errNotReady)
 
 				checker.Ready()
@@ -378,10 +365,6 @@ func TestValidNoopChecker(t *testing.T) {
 
 			Convey("Then I should have no error from the observer", func() {
 				So(ob.Error(), ShouldBeNil)
-
-				time.Sleep(defaultWait())
-
-				So(ob.Error(), ShouldBeNil)
 			})
 		})
 	})
@@ -409,8 +392,6 @@ func TestInvalidObserver(t *testing.T) {
 			})
 
 			Convey("Then I should have error from the probe", func() {
-				time.Sleep(defaultWait())
-
 				So(ob.Error(), ShouldBeError)
 			})
 		})
@@ -439,8 +420,6 @@ func TestValidObserver(t *testing.T) {
 			})
 
 			Convey("Then I should have no error from the probe", func() {
-				time.Sleep(defaultWait())
-
 				So(ob.Error(), ShouldBeNil)
 			})
 		})
