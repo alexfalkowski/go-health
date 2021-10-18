@@ -33,6 +33,9 @@ func (p *Probe) Start() <-chan *Tick {
 	p.ch = make(chan *Tick, 1)
 	p.ticker = time.NewTicker(p.period)
 
+	// Check on startup.
+	p.tick()
+
 	go p.start()
 
 	return p.ch
@@ -55,7 +58,11 @@ func (p *Probe) start() {
 		case <-p.done:
 			return
 		case <-p.ticker.C:
-			p.ch <- NewTick(p.name, p.checker.Check(context.Background()))
+			p.tick()
 		}
 	}
+}
+
+func (p *Probe) tick() {
+	p.ch <- NewTick(p.name, p.checker.Check(context.Background()))
 }
