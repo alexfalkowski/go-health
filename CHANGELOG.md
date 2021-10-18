@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.7.0](https://github.com/alexfalkowski/go-health/compare/v1.6.2...v1.7.0) (2021-10-18)
+
+
+### Features
+
+* **checker:** add ready and noop ([#36](https://github.com/alexfalkowski/go-health/issues/36)) ([dec38ea](https://github.com/alexfalkowski/go-health/commit/dec38eaf6df354062fc79f865af9cd718fee91f4))
+
 ### [1.6.2](https://github.com/alexfalkowski/go-health/compare/v1.6.1...v1.6.2) (2021-07-19)
 
 ### [1.6.1](https://github.com/alexfalkowski/go-health/compare/v1.6.0...v1.6.1) (2021-05-17)
