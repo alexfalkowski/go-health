@@ -328,8 +328,8 @@ func TestValidReadyChecker(t *testing.T) {
 		defer s.Stop() // nolint:errcheck
 
 		name := "ready"
-		err := errors.New("not ready")
-		checker := checker.NewReadyChecker(err)
+		errNotReady := errors.New("not ready")
+		checker := checker.NewReadyChecker(errNotReady)
 		r := server.NewRegistration(name, defaultPeriod(), checker)
 
 		_ = s.Register(r)
@@ -343,15 +343,13 @@ func TestValidReadyChecker(t *testing.T) {
 				So(err, ShouldBeNil)
 			})
 
-			Convey("Then I should have an error from the observer", func() {
-				So(ob.Error(), ShouldEqual, err)
-			})
-
 			Convey("Then I should have no error from the observer", func() {
+				time.Sleep(defaultWait())
+				So(ob.Error(), ShouldEqual, errNotReady)
+
 				checker.Ready()
 
 				time.Sleep(defaultWait())
-
 				So(ob.Error(), ShouldBeNil)
 			})
 		})
