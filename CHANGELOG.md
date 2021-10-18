@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.7.2](https://github.com/alexfalkowski/go-health/compare/v1.7.1...v1.7.2) (2021-10-18)
+
+
+### Bug Fixes
+
+* **probe:** check on startup ([#38](https://github.com/alexfalkowski/go-health/issues/38)) ([bd5441e](https://github.com/alexfalkowski/go-health/commit/bd5441eb3c6e9e8947410059d42a47daa911df18))
+
 ### [1.7.1](https://github.com/alexfalkowski/go-health/compare/v1.7.0...v1.7.1) (2021-10-18)
 
 ## [1.7.0](https://github.com/alexfalkowski/go-health/compare/v1.6.2...v1.7.0) (2021-10-18)
