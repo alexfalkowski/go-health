@@ -1,6 +1,7 @@
 package server_test
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -313,6 +314,73 @@ func TestValidDBChecker(t *testing.T) {
 			})
 
 			Convey("Then I should have no error from the observer", func() {
+				time.Sleep(defaultWait())
+
+				So(ob.Error(), ShouldBeNil)
+			})
+		})
+	})
+}
+
+func TestValidReadyChecker(t *testing.T) {
+	Convey("Given we have a new server", t, func() {
+		s := server.NewServer()
+		defer s.Stop() // nolint:errcheck
+
+		name := "ready"
+		err := errors.New("not ready")
+		checker := checker.NewReadyChecker(err)
+		r := server.NewRegistration(name, defaultPeriod(), checker)
+
+		_ = s.Register(r)
+
+		ob, _ := s.Observe(name)
+
+		Convey("When I start the server", func() {
+			err := s.Start()
+
+			Convey("Then I should have no server error", func() {
+				So(err, ShouldBeNil)
+			})
+
+			Convey("Then I should have an error from the observer", func() {
+				So(ob.Error(), ShouldEqual, err)
+			})
+
+			Convey("Then I should have no error from the observer", func() {
+				checker.Ready()
+
+				time.Sleep(defaultWait())
+
+				So(ob.Error(), ShouldBeNil)
+			})
+		})
+	})
+}
+
+func TestValidNoopChecker(t *testing.T) {
+	Convey("Given we have a new server", t, func() {
+		s := server.NewServer()
+		defer s.Stop() // nolint:errcheck
+
+		name := "noop"
+		checker := checker.NewNoopChecker()
+		r := server.NewRegistration(name, defaultPeriod(), checker)
+
+		_ = s.Register(r)
+
+		ob, _ := s.Observe(name)
+
+		Convey("When I start the server", func() {
+			err := s.Start()
+
+			Convey("Then I should have no server error", func() {
+				So(err, ShouldBeNil)
+			})
+
+			Convey("Then I should have no error from the observer", func() {
+				So(ob.Error(), ShouldBeNil)
+
 				time.Sleep(defaultWait())
 
 				So(ob.Error(), ShouldBeNil)
