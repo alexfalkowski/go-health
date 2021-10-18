@@ -22,6 +22,7 @@ func defaultPeriod() time.Duration {
 func defaultWait() time.Duration {
 	return 2 * time.Second
 }
+
 func TestNoRegistrations(t *testing.T) {
 	Convey("Given we have a new server", t, func() {
 		s := server.NewServer()
@@ -100,10 +101,7 @@ func TestDoubleStart(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			err = s.Start()
-
-			Convey("Then I should have no server error", func() {
-				So(err, ShouldBeNil)
-			})
+			So(err, ShouldBeNil)
 
 			Convey("Then I should have no error from the observer", func() {
 				time.Sleep(defaultWait())
@@ -129,10 +127,7 @@ func TestValidHTTPChecker(t *testing.T) {
 
 		Convey("When I start the server", func() {
 			err := s.Start()
-
-			Convey("Then I should have no server error", func() {
-				So(err, ShouldBeNil)
-			})
+			So(err, ShouldBeNil)
 
 			Convey("Then I should have no error from the observer", func() {
 				time.Sleep(defaultWait())
@@ -158,10 +153,7 @@ func TestInvalidURLHTTPChecker(t *testing.T) {
 
 		Convey("When I start the server", func() {
 			err := s.Start()
-
-			Convey("Then I should have no server error", func() {
-				So(err, ShouldBeNil)
-			})
+			So(err, ShouldBeNil)
 
 			Convey("Then I should have error from the observer", func() {
 				So(ob.Error(), ShouldBeError)
@@ -185,10 +177,7 @@ func TestInvalidCodeHTTPChecker(t *testing.T) {
 
 		Convey("When I start the server", func() {
 			err := s.Start()
-
-			Convey("Then I should have no server error", func() {
-				So(err, ShouldBeNil)
-			})
+			So(err, ShouldBeNil)
 
 			Convey("Then I should have error from the observer", func() {
 				So(ob.Error(), ShouldBeError)
@@ -212,10 +201,7 @@ func TestTimeoutHTTPChecker(t *testing.T) {
 
 		Convey("When I start the server", func() {
 			err := s.Start()
-
-			Convey("Then I should have no server error", func() {
-				So(err, ShouldBeNil)
-			})
+			So(err, ShouldBeNil)
 
 			Convey("Then I should have error from the observer", func() {
 				So(ob.Error(), ShouldBeError)
@@ -239,10 +225,7 @@ func TestValidTCPChecker(t *testing.T) {
 
 		Convey("When I start the server", func() {
 			err := s.Start()
-
-			Convey("Then I should have no server error", func() {
-				So(err, ShouldBeNil)
-			})
+			So(err, ShouldBeNil)
 
 			Convey("Then I should have no error from the observer", func() {
 				So(ob.Error(), ShouldBeNil)
@@ -266,10 +249,7 @@ func TestInvalidAddressTCPChecker(t *testing.T) {
 
 		Convey("When I start the server", func() {
 			err := s.Start()
-
-			Convey("Then I should have no server error", func() {
-				So(err, ShouldBeNil)
-			})
+			So(err, ShouldBeNil)
 
 			Convey("Then I should have error from the observer", func() {
 				So(ob.Error(), ShouldBeError)
@@ -298,10 +278,7 @@ func TestValidDBChecker(t *testing.T) {
 
 		Convey("When I start the server", func() {
 			err := s.Start()
-
-			Convey("Then I should have no server error", func() {
-				So(err, ShouldBeNil)
-			})
+			So(err, ShouldBeNil)
 
 			Convey("Then I should have no error from the observer", func() {
 				So(ob.Error(), ShouldBeNil)
@@ -326,10 +303,7 @@ func TestValidReadyChecker(t *testing.T) {
 
 		Convey("When I start the server", func() {
 			err := s.Start()
-
-			Convey("Then I should have no server error", func() {
-				So(err, ShouldBeNil)
-			})
+			So(err, ShouldBeNil)
 
 			Convey("Then I should have no error from the observer", func() {
 				So(ob.Error(), ShouldEqual, errNotReady)
@@ -358,10 +332,7 @@ func TestValidNoopChecker(t *testing.T) {
 
 		Convey("When I start the server", func() {
 			err := s.Start()
-
-			Convey("Then I should have no server error", func() {
-				So(err, ShouldBeNil)
-			})
+			So(err, ShouldBeNil)
 
 			Convey("Then I should have no error from the observer", func() {
 				So(ob.Error(), ShouldBeNil)
@@ -386,10 +357,7 @@ func TestInvalidObserver(t *testing.T) {
 
 		Convey("When I start the server", func() {
 			err := s.Start()
-
-			Convey("Then I should have no server error", func() {
-				So(err, ShouldBeNil)
-			})
+			So(err, ShouldBeNil)
 
 			Convey("Then I should have error from the probe", func() {
 				So(ob.Error(), ShouldBeError)
@@ -414,10 +382,7 @@ func TestValidObserver(t *testing.T) {
 
 		Convey("When I start the server", func() {
 			err := s.Start()
-
-			Convey("Then I should have no server error", func() {
-				So(err, ShouldBeNil)
-			})
+			So(err, ShouldBeNil)
 
 			Convey("Then I should have no error from the probe", func() {
 				So(ob.Error(), ShouldBeNil)
