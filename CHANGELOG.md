@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.7.3](https://github.com/alexfalkowski/go-health/compare/v1.7.2...v1.7.3) (2021-10-26)
+
+
+### Bug Fixes
+
+* **http:** pass a client with timeout ([#39](https://github.com/alexfalkowski/go-health/issues/39)) ([0197e6b](https://github.com/alexfalkowski/go-health/commit/0197e6b21a465cb7ca8d029ac26b596e79ac15a2))
+
 ### [1.7.2](https://github.com/alexfalkowski/go-health/compare/v1.7.1...v1.7.2) (2021-10-18)
 
 
