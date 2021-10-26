@@ -5,38 +5,24 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"time"
 )
 
 // ErrInvalidStatusCode when we have errors that are not in the 200 range.
 var ErrInvalidStatusCode = errors.New("invalid status code")
 
 // NewHTTPChecker with URL and client.
-func NewHTTPChecker(url string, timeout time.Duration) *HTTPChecker {
-	return NewHTTPCheckerWithClient(url, timeout, nil)
-}
-
-// NewHTTPCheckerWithClient with URL and client.
-func NewHTTPCheckerWithClient(url string, timeout time.Duration, client *http.Client) *HTTPChecker {
-	if client == nil {
-		client = http.DefaultClient
-	}
-
-	return &HTTPChecker{url: url, timeout: timeout, client: client}
+func NewHTTPChecker(url string, client *http.Client) *HTTPChecker {
+	return &HTTPChecker{url: url, client: client}
 }
 
 // HTTPChecker for a URL.
 type HTTPChecker struct {
-	url     string
-	timeout time.Duration
-	client  *http.Client
+	url    string
+	client *http.Client
 }
 
 // Check the URL with a GET.
 func (c *HTTPChecker) Check(ctx context.Context) error {
-	ctx, cancel := context.WithTimeout(ctx, c.timeout)
-	defer cancel()
-
 	req, err := http.NewRequestWithContext(ctx, "GET", c.url, nil)
 	if err != nil {
 		return fmt.Errorf("http checker: %w", err)

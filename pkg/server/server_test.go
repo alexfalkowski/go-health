@@ -2,6 +2,7 @@ package server_test
 
 import (
 	"errors"
+	"net/http"
 	"testing"
 	"time"
 
@@ -48,7 +49,8 @@ func TestNoRegistrations(t *testing.T) {
 func TestDuplicateRegistrations(t *testing.T) {
 	Convey("Given we have a new server", t, func() {
 		s := server.NewServer()
-		checker := checker.NewHTTPChecker("https://www.google.com/", defaultTimeout())
+
+		checker := checker.NewHTTPChecker("https://www.google.com/", &http.Client{Timeout: defaultTimeout()})
 		r := server.NewRegistration("google", defaultPeriod(), checker)
 
 		_ = s.Register(r)
@@ -68,7 +70,7 @@ func TestNonExistentRegistration(t *testing.T) {
 		s := server.NewServer()
 		defer s.Stop() // nolint:errcheck
 
-		checker := checker.NewHTTPChecker("https://www.google.com/", defaultTimeout())
+		checker := checker.NewHTTPChecker("https://www.google.com/", &http.Client{Timeout: defaultTimeout()})
 		r := server.NewRegistration("google", defaultPeriod(), checker)
 
 		_ = s.Register(r)
@@ -89,7 +91,7 @@ func TestDoubleStart(t *testing.T) {
 		defer s.Stop() // nolint:errcheck
 
 		name := "google"
-		checker := checker.NewHTTPChecker("https://www.google.com/", defaultTimeout())
+		checker := checker.NewHTTPChecker("https://www.google.com/", &http.Client{Timeout: defaultTimeout()})
 		r := server.NewRegistration(name, defaultPeriod(), checker)
 
 		_ = s.Register(r)
@@ -118,7 +120,7 @@ func TestValidHTTPChecker(t *testing.T) {
 		defer s.Stop() // nolint:errcheck
 
 		name := "google"
-		checker := checker.NewHTTPChecker("https://www.google.com/", defaultTimeout())
+		checker := checker.NewHTTPChecker("https://www.google.com/", &http.Client{Timeout: defaultTimeout()})
 		r := server.NewRegistration(name, defaultPeriod(), checker)
 
 		_ = s.Register(r)
@@ -144,7 +146,7 @@ func TestInvalidURLHTTPChecker(t *testing.T) {
 		defer s.Stop() // nolint:errcheck
 
 		name := "assaaasss"
-		checker := checker.NewHTTPChecker("https://www.assaaasss.com/", defaultTimeout())
+		checker := checker.NewHTTPChecker("https://www.assaaasss.com/", &http.Client{Timeout: defaultTimeout()})
 		r := server.NewRegistration(name, defaultPeriod(), checker)
 
 		_ = s.Register(r)
@@ -168,7 +170,7 @@ func TestInvalidCodeHTTPChecker(t *testing.T) {
 		defer s.Stop() // nolint:errcheck
 
 		name := "httpstat400"
-		checker := checker.NewHTTPChecker("https://httpstat.us/400", defaultTimeout())
+		checker := checker.NewHTTPChecker("https://httpstat.us/400", &http.Client{Timeout: defaultTimeout()})
 		r := server.NewRegistration(name, defaultPeriod(), checker)
 
 		_ = s.Register(r)
@@ -192,7 +194,7 @@ func TestTimeoutHTTPChecker(t *testing.T) {
 		defer s.Stop() // nolint:errcheck
 
 		name := "httpstat200"
-		checker := checker.NewHTTPChecker("https://httpstat.us/200?sleep=6000", defaultTimeout())
+		checker := checker.NewHTTPChecker("https://httpstat.us/200?sleep=6000", &http.Client{Timeout: defaultTimeout()})
 		r := server.NewRegistration(name, defaultPeriod(), checker)
 
 		_ = s.Register(r)
@@ -346,7 +348,7 @@ func TestInvalidObserver(t *testing.T) {
 		s := server.NewServer()
 		defer s.Stop() // nolint:errcheck
 
-		cc := checker.NewHTTPChecker("https://httpstat.us/400", defaultTimeout())
+		cc := checker.NewHTTPChecker("https://httpstat.us/400", &http.Client{Timeout: defaultTimeout()})
 		hr := server.NewRegistration("http1", defaultPeriod(), cc)
 		tc := checker.NewTCPChecker("httpstat.us:9000", defaultTimeout())
 		tr := server.NewRegistration("tcp1", defaultPeriod(), tc)
@@ -371,7 +373,7 @@ func TestValidObserver(t *testing.T) {
 		s := server.NewServer()
 		defer s.Stop() // nolint:errcheck
 
-		cc := checker.NewHTTPChecker("https://httpstat.us/200", defaultTimeout())
+		cc := checker.NewHTTPChecker("https://httpstat.us/200", &http.Client{Timeout: defaultTimeout()})
 		hr := server.NewRegistration("http", defaultPeriod(), cc)
 		tc := checker.NewTCPChecker("httpstat.us:80", defaultTimeout())
 		tr := server.NewRegistration("tcp", defaultPeriod(), tc)
@@ -396,7 +398,7 @@ func TestNonExistentObserver(t *testing.T) {
 		s := server.NewServer()
 		defer s.Stop() // nolint:errcheck
 
-		cc := checker.NewHTTPChecker("https://httpstat.us/200", defaultTimeout())
+		cc := checker.NewHTTPChecker("https://httpstat.us/200", &http.Client{Timeout: defaultTimeout()})
 		hr := server.NewRegistration("http", defaultPeriod(), cc)
 		tc := checker.NewTCPChecker("httpstat.us:80", defaultTimeout())
 		tr := server.NewRegistration("tcp", defaultPeriod(), tc)
