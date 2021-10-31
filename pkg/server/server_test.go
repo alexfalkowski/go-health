@@ -21,7 +21,7 @@ func defaultPeriod() time.Duration {
 }
 
 func defaultWait() time.Duration {
-	return 2 * time.Second
+	return 1 * time.Second
 }
 
 func TestNoRegistrations(t *testing.T) {
@@ -105,9 +105,9 @@ func TestDoubleStart(t *testing.T) {
 			err = s.Start()
 			So(err, ShouldBeNil)
 
-			Convey("Then I should have no error from the observer", func() {
-				time.Sleep(defaultWait())
+			time.Sleep(defaultWait())
 
+			Convey("Then I should have no error from the observer", func() {
 				So(ob.Error(), ShouldBeNil)
 			})
 		})
@@ -130,6 +130,8 @@ func TestValidHTTPChecker(t *testing.T) {
 		Convey("When I start the server", func() {
 			err := s.Start()
 			So(err, ShouldBeNil)
+
+			time.Sleep(defaultWait())
 
 			Convey("Then I should have no error from the observer", func() {
 				time.Sleep(defaultWait())
@@ -157,6 +159,8 @@ func TestInvalidURLHTTPChecker(t *testing.T) {
 			err := s.Start()
 			So(err, ShouldBeNil)
 
+			time.Sleep(defaultWait())
+
 			Convey("Then I should have error from the observer", func() {
 				So(ob.Error(), ShouldBeError)
 			})
@@ -180,6 +184,8 @@ func TestInvalidCodeHTTPChecker(t *testing.T) {
 		Convey("When I start the server", func() {
 			err := s.Start()
 			So(err, ShouldBeNil)
+
+			time.Sleep(defaultWait())
 
 			Convey("Then I should have error from the observer", func() {
 				So(ob.Error(), ShouldBeError)
@@ -205,6 +211,8 @@ func TestTimeoutHTTPChecker(t *testing.T) {
 			err := s.Start()
 			So(err, ShouldBeNil)
 
+			time.Sleep(defaultWait())
+
 			Convey("Then I should have error from the observer", func() {
 				So(ob.Error(), ShouldBeError)
 			})
@@ -229,6 +237,8 @@ func TestValidTCPChecker(t *testing.T) {
 			err := s.Start()
 			So(err, ShouldBeNil)
 
+			time.Sleep(defaultWait())
+
 			Convey("Then I should have no error from the observer", func() {
 				So(ob.Error(), ShouldBeNil)
 			})
@@ -252,6 +262,8 @@ func TestInvalidAddressTCPChecker(t *testing.T) {
 		Convey("When I start the server", func() {
 			err := s.Start()
 			So(err, ShouldBeNil)
+
+			time.Sleep(defaultWait())
 
 			Convey("Then I should have error from the observer", func() {
 				So(ob.Error(), ShouldBeError)
@@ -282,6 +294,8 @@ func TestValidDBChecker(t *testing.T) {
 			err := s.Start()
 			So(err, ShouldBeNil)
 
+			time.Sleep(defaultWait())
+
 			Convey("Then I should have no error from the observer", func() {
 				So(ob.Error(), ShouldBeNil)
 			})
@@ -307,12 +321,15 @@ func TestValidReadyChecker(t *testing.T) {
 			err := s.Start()
 			So(err, ShouldBeNil)
 
+			time.Sleep(defaultWait())
+
 			Convey("Then I should have no error from the observer", func() {
 				So(ob.Error(), ShouldEqual, errNotReady)
 
 				checker.Ready()
 
 				time.Sleep(defaultWait())
+
 				So(ob.Error(), ShouldBeNil)
 			})
 		})
@@ -335,6 +352,8 @@ func TestValidNoopChecker(t *testing.T) {
 		Convey("When I start the server", func() {
 			err := s.Start()
 			So(err, ShouldBeNil)
+
+			time.Sleep(defaultWait())
 
 			Convey("Then I should have no error from the observer", func() {
 				So(ob.Error(), ShouldBeNil)
@@ -361,6 +380,8 @@ func TestInvalidObserver(t *testing.T) {
 			err := s.Start()
 			So(err, ShouldBeNil)
 
+			time.Sleep(defaultWait())
+
 			Convey("Then I should have error from the probe", func() {
 				So(ob.Error(), ShouldBeError)
 			})
@@ -385,6 +406,8 @@ func TestValidObserver(t *testing.T) {
 		Convey("When I start the server", func() {
 			err := s.Start()
 			So(err, ShouldBeNil)
+
+			time.Sleep(defaultWait())
 
 			Convey("Then I should have no error from the probe", func() {
 				So(ob.Error(), ShouldBeNil)
