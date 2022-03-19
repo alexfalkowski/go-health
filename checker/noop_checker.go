@@ -10,8 +10,7 @@ func NewNoopChecker() *NoopChecker {
 }
 
 // NoopChecker with no functionality.
-type NoopChecker struct {
-}
+type NoopChecker struct{}
 
 // Check does a NOOP.
 func (c *NoopChecker) Check(ctx context.Context) error {

@@ -303,6 +303,7 @@ func TestValidDBChecker(t *testing.T) {
 	})
 }
 
+// nolint:goerr113
 func TestValidReadyChecker(t *testing.T) {
 	Convey("Given we have a new server", t, func() {
 		s := server.NewServer()
