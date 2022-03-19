@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/alexfalkowski/go-health/pkg/checker"
-	"github.com/alexfalkowski/go-health/pkg/server"
+	"github.com/alexfalkowski/go-health/checker"
+	"github.com/alexfalkowski/go-health/server"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
