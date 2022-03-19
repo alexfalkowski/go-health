@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.8.0](https://github.com/alexfalkowski/go-health/compare/v1.7.4...v1.8.0) (2022-03-19)
+
+
+### Features
+
+* remove pkg folder ([#41](https://github.com/alexfalkowski/go-health/issues/41)) ([7e1171d](https://github.com/alexfalkowski/go-health/commit/7e1171d60dd972f5496669c91af0d425e52407a8))
+
 ### [1.7.4](https://github.com/alexfalkowski/go-health/compare/v1.7.3...v1.7.4) (2021-10-31)
 
 ### [1.7.3](https://github.com/alexfalkowski/go-health/compare/v1.7.2...v1.7.3) (2021-10-26)
