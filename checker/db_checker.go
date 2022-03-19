@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/alexfalkowski/go-health/pkg/sql"
+	"github.com/alexfalkowski/go-health/sql"
 )
 
 // NewDBChecker for SQL.

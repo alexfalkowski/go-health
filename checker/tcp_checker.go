@@ -6,7 +6,7 @@ import (
 	snet "net"
 	"time"
 
-	"github.com/alexfalkowski/go-health/pkg/net"
+	"github.com/alexfalkowski/go-health/net"
 )
 
 // NewTCPChecker for address.

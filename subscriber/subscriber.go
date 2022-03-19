@@ -1,7 +1,7 @@
 package subscriber
 
 import (
-	"github.com/alexfalkowski/go-health/pkg/probe"
+	"github.com/alexfalkowski/go-health/probe"
 )
 
 // NewSubscriber for multiple probes.

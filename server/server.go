@@ -4,8 +4,8 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/alexfalkowski/go-health/pkg/probe"
-	"github.com/alexfalkowski/go-health/pkg/subscriber"
+	"github.com/alexfalkowski/go-health/probe"
+	"github.com/alexfalkowski/go-health/subscriber"
 )
 
 type status string
