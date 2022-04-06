@@ -11,7 +11,7 @@ func NewObserver(names []string, sub *Subscriber) *Observer {
 		errors[n] = nil
 	}
 
-	ob := &Observer{errors: errors, sub: sub, mux: sync.Mutex{}}
+	ob := &Observer{errors: errors, sub: sub, mux: sync.RWMutex{}}
 
 	go ob.observe()
 
@@ -22,13 +22,13 @@ func NewObserver(names []string, sub *Subscriber) *Observer {
 type Observer struct {
 	errors Errors
 	sub    *Subscriber
-	mux    sync.Mutex
+	mux    sync.RWMutex
 }
 
 // Error is the first error observed.
 func (o *Observer) Error() error {
-	o.mux.Lock()
-	defer o.mux.Unlock()
+	o.mux.RLock()
+	defer o.mux.RUnlock()
 
 	return o.errors.Error()
 }
