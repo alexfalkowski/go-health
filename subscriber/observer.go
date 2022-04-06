@@ -6,12 +6,12 @@ import (
 
 // NewObserver from probe names and subscriber.
 func NewObserver(names []string, sub *Subscriber) *Observer {
-	values := make(map[string]error)
+	errors := make(Errors)
 	for _, n := range names {
-		values[n] = nil
+		errors[n] = nil
 	}
 
-	ob := &Observer{values: values, sub: sub, mux: sync.Mutex{}}
+	ob := &Observer{errors: errors, sub: sub, mux: sync.Mutex{}}
 
 	go ob.observe()
 
@@ -20,7 +20,7 @@ func NewObserver(names []string, sub *Subscriber) *Observer {
 
 // Observer represents a subscriber that mantaines state about probes.
 type Observer struct {
-	values map[string]error
+	errors Errors
 	sub    *Subscriber
 	mux    sync.Mutex
 }
@@ -30,19 +30,13 @@ func (o *Observer) Error() error {
 	o.mux.Lock()
 	defer o.mux.Unlock()
 
-	for _, err := range o.values {
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return o.errors.Error()
 }
 
 func (o *Observer) observe() {
 	for t := range o.sub.Receive() {
 		o.mux.Lock()
-		o.values[t.Name()] = t.Error()
+		o.errors.Set(t.Name(), t.Error())
 		o.mux.Unlock()
 	}
 }

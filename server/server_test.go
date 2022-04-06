@@ -13,7 +13,7 @@ import (
 )
 
 func defaultTimeout() time.Duration {
-	return 500 * time.Millisecond
+	return 2 * time.Second
 }
 
 func defaultPeriod() time.Duration {
