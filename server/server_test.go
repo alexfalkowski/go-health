@@ -13,7 +13,7 @@ import (
 )
 
 func defaultTimeout() time.Duration {
-	return 500 * time.Millisecond
+	return 2 * time.Second
 }
 
 func defaultPeriod() time.Duration {
@@ -267,6 +267,7 @@ func TestInvalidAddressTCPChecker(t *testing.T) {
 
 			Convey("Then I should have error from the observer", func() {
 				So(ob.Error(), ShouldBeError)
+				So(ob.Errors()["tcp-assaaasss"], ShouldBeError)
 			})
 		})
 	})
