@@ -33,6 +33,14 @@ func (o *Observer) Error() error {
 	return o.errors.Error()
 }
 
+// Error are a copy of rhe errors.
+func (o *Observer) Errors() Errors {
+	o.mux.RLock()
+	defer o.mux.RUnlock()
+
+	return o.errors.Errors()
+}
+
 func (o *Observer) observe() {
 	for t := range o.sub.Receive() {
 		o.mux.Lock()

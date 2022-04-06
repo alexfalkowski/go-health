@@ -14,6 +14,16 @@ func (e Errors) Error() error {
 	return nil
 }
 
+// Errors is a copy.
+func (e Errors) Errors() Errors {
+	errors := make(Errors)
+	for k, v := range e {
+		errors[k] = v
+	}
+
+	return errors
+}
+
 // Set the error at the name.
 func (e Errors) Set(name string, err error) {
 	e[name] = err

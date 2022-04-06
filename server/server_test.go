@@ -267,6 +267,7 @@ func TestInvalidAddressTCPChecker(t *testing.T) {
 
 			Convey("Then I should have error from the observer", func() {
 				So(ob.Error(), ShouldBeError)
+				So(ob.Errors()["tcp-assaaasss"], ShouldBeError)
 			})
 		})
 	})
