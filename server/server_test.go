@@ -102,6 +102,31 @@ func TestInvalidURLHTTPChecker(t *testing.T) {
 	})
 }
 
+func TestMallformedURLHTTPChecker(t *testing.T) {
+	Convey("Given we have a new server", t, func() {
+		s := server.NewServer()
+		defer s.Stop()
+
+		name := "assaaasss"
+		checker := checker.NewHTTPChecker(string([]byte{0x7f}), &http.Client{Timeout: defaultTimeout()})
+		r := server.NewRegistration(name, defaultPeriod(), checker)
+
+		s.Register(r)
+
+		ob := s.Observe(name)
+
+		Convey("When I start the server", func() {
+			s.Start()
+
+			time.Sleep(defaultWait())
+
+			Convey("Then I should have error from the observer", func() {
+				So(ob.Error(), ShouldBeError)
+			})
+		})
+	})
+}
+
 func TestInvalidCodeHTTPChecker(t *testing.T) {
 	Convey("Given we have a new server", t, func() {
 		s := server.NewServer()
