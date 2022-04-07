@@ -62,21 +62,14 @@ func main() {
     tc := checker.NewTCPChecker("httpstat.us:80", timeout)
     tr := server.NewRegistration("tcp", 0, tc)
 
-    if err := s.Register(hr, tr); err != nil {
-        panic(err)
-    }
+    s.Register(hr, tr)
 
-    ob, err := s.Observe("http", "tcp")
-    if err != nil {
-        panic(err)
-    }
+    ob := s.Observe("http", "tcp")
 
-    if err := s.Start(); err != nil {
-        panic(err)
-    }
-
+    s.Start()
     defer s.Stop()
 
-    ob.Error() // This will update with errors. If nil everything is OK.
+    ob.Error()  // This will update with an error or nil everything is OK.
+    ob.Errors() // This will give you all the errors.
 }
 ```
