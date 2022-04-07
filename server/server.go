@@ -1,7 +1,6 @@
 package server
 
 import (
-	"errors"
 	"sync"
 
 	"github.com/alexfalkowski/go-health/probe"
@@ -13,17 +12,6 @@ type status string
 const (
 	started = status("started")
 	stopped = status("stopped")
-)
-
-var (
-	// ErrProbeExists when we register the same probe.
-	ErrProbeExists = errors.New("probe exists")
-
-	// ErrNoRegistrations have been added.
-	ErrNoRegistrations = errors.New("no registrations")
-
-	// ErrRegistrationNotFound in register.
-	ErrRegistrationNotFound = errors.New("registration not found")
 )
 
 // NewServer for health.
@@ -46,54 +34,33 @@ type Server struct {
 }
 
 // Register all the registrations.
-func (s *Server) Register(regs ...*Registration) error {
+func (s *Server) Register(regs ...*Registration) {
 	for _, reg := range regs {
-		if _, ok := s.registry[reg.Name]; ok {
-			return ErrProbeExists
-		}
-
 		s.registry[reg.Name] = probe.NewProbe(reg.Name, reg.Period, reg.Checker)
 	}
-
-	return nil
 }
 
 // Subscribe to the names of the probes.
-func (s *Server) Subscribe(names ...string) (*subscriber.Subscriber, error) {
-	for _, n := range names {
-		if _, ok := s.registry[n]; !ok {
-			return nil, ErrRegistrationNotFound
-		}
-	}
-
+func (s *Server) Subscribe(names ...string) *subscriber.Subscriber {
 	sub := subscriber.NewSubscriber(names)
 
 	s.subscribers = append(s.subscribers, sub)
 
-	return sub, nil
+	return sub
 }
 
 // Observe the names of the probes.
-func (s *Server) Observe(names ...string) (*subscriber.Observer, error) {
-	su, err := s.Subscribe(names...)
-	if err != nil {
-		return nil, err
-	}
-
-	return subscriber.NewObserver(names, su), nil
+func (s *Server) Observe(names ...string) *subscriber.Observer {
+	return subscriber.NewObserver(names, s.Subscribe(names...))
 }
 
 // Start the server.
-func (s *Server) Start() error {
+func (s *Server) Start() {
 	s.mux.Lock()
 	defer s.mux.Unlock()
 
-	if len(s.registry) == 0 {
-		return ErrNoRegistrations
-	}
-
 	if s.st == started {
-		return nil
+		return
 	}
 
 	s.st = started
@@ -111,21 +78,15 @@ func (s *Server) Start() error {
 	s.mergeChannels(chs)
 
 	go s.sendToSubscribers()
-
-	return nil
 }
 
 // Stop the server.
-func (s *Server) Stop() error {
+func (s *Server) Stop() {
 	s.mux.Lock()
 	defer s.mux.Unlock()
 
-	if len(s.registry) == 0 {
-		return ErrNoRegistrations
-	}
-
 	if s.st == "" || s.st == stopped {
-		return nil
+		return
 	}
 
 	s.st = stopped
@@ -137,8 +98,6 @@ func (s *Server) Stop() error {
 	}
 
 	close(s.ticks)
-
-	return nil
 }
 
 func (s *Server) mergeChannels(chs []<-chan *probe.Tick) {
