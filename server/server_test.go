@@ -368,6 +368,32 @@ func TestValidObserver(t *testing.T) {
 	})
 }
 
+func TestOneInvalidObserver(t *testing.T) {
+	Convey("Given we have a new server", t, func() {
+		s := server.NewServer()
+		defer s.Stop()
+
+		cc := checker.NewHTTPChecker("https://httpstat.us/500", &http.Client{Timeout: defaultTimeout()})
+		hr := server.NewRegistration("http", defaultPeriod(), cc)
+		tc := checker.NewTCPChecker("httpstat.us:80", defaultTimeout())
+		tr := server.NewRegistration("tcp", defaultPeriod(), tc)
+
+		s.Register(hr, tr)
+
+		ob := s.Observe("tcp")
+
+		Convey("When I start the server", func() {
+			s.Start()
+
+			time.Sleep(defaultWait())
+
+			Convey("Then I should have no error from the probe", func() {
+				So(ob.Error(), ShouldBeNil)
+			})
+		})
+	})
+}
+
 func TestNonExistentObserver(t *testing.T) {
 	Convey("Given we have a new server", t, func() {
 		s := server.NewServer()
