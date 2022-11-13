@@ -1,6 +1,6 @@
 module github.com/alexfalkowski/go-health
 
-go 1.18
+go 1.19
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
@@ -8,7 +8,7 @@ require (
 )
 
 require (
-	github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1 // indirect
+	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/jtolds/gls v4.20.0+incompatible // indirect
-	github.com/smartystreets/assertions v1.2.0 // indirect
+	github.com/smartystreets/assertions v1.13.0 // indirect
 )

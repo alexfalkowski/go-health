@@ -3,11 +3,12 @@ version: 2.1
 jobs:
   build:
     docker:
-      - image: alexfalkowski/go:1.18
+      - image: alexfalkowski/go:1.19
     steps:
       - checkout
       - run: make dep
       - run: make lint
+      - run: make sec
       - run: make specs
       - run: make goveralls
   release:
