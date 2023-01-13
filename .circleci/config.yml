@@ -13,12 +13,14 @@ jobs:
       - run: make sec
       - run: make specs
       - run: make goveralls
+    resource_class: large
   release:
     docker:
       - image: alexfalkowski/release:3.1
     steps:
       - checkout
       - run: release
+    resource_class: large
 
 workflows:
   go-health:
