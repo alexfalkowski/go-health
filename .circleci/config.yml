@@ -6,17 +6,21 @@ jobs:
       - image: alexfalkowski/go:1.19-3.1
     steps:
       - checkout
+      - run: git submodule sync
+      - run: git submodule update --init
       - run: make dep
       - run: make lint
       - run: make sec
       - run: make specs
       - run: make goveralls
+    resource_class: large
   release:
     docker:
       - image: alexfalkowski/release:3.1
     steps:
       - checkout
       - run: release
+    resource_class: large
 
 workflows:
   go-health:
@@ -29,3 +33,5 @@ workflows:
           filters:
             branches:
               only: master
+
+# VS Code Extension Version: 1.5.1
