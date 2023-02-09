@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v1.12.0](https://github.com/alexfalkowski/go-health/releases/tag/v1.12.0) - 2023-02-09
+
+- [`33c2a00`](https://github.com/alexfalkowski/go-health/commit/33c2a00fb238af541950f930591b70e4f5bf066d) feat(go): update to v1.20 (#53)
+- [`7d668da`](https://github.com/alexfalkowski/go-health/commit/7d668da6b2b85f9b53d8a04860e194645e2adbfa) build: add bin (#52)
+- [`a660499`](https://github.com/alexfalkowski/go-health/commit/a660499b88c38142cb844d7f82520f978bb67855) ci(dependabot): change commit message (#51)
+- [`d6abc2b`](https://github.com/alexfalkowski/go-health/commit/d6abc2bd2f833eb680a3d927547e2d3ad4ea86ca) ci: use release 3.1 (#50)
+- [`5aadb4a`](https://github.com/alexfalkowski/go-health/commit/5aadb4a96df0c93bae24ee723dae352c4f938316) ci: use release 3.0 (#49)
+
 ## [v1.11.0](https://github.com/alexfalkowski/go-health/releases/tag/v1.11.0) - 2022-11-13
 
 - [`2cc06d0`](https://github.com/alexfalkowski/go-health/commit/2cc06d0459ce7845f698aefa5fd9d387e315aea1) feat(go): update to v1.9 (#48)
