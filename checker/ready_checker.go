@@ -17,7 +17,7 @@ type ReadyChecker struct {
 }
 
 // Check the if ready.
-func (c *ReadyChecker) Check(ctx context.Context) error {
+func (c *ReadyChecker) Check(_ context.Context) error {
 	if c.notReady() {
 		return c.err
 	}
