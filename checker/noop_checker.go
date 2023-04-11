@@ -13,6 +13,6 @@ func NewNoopChecker() *NoopChecker {
 type NoopChecker struct{}
 
 // Check does a NOOP.
-func (c *NoopChecker) Check(ctx context.Context) error {
+func (c *NoopChecker) Check(_ context.Context) error {
 	return nil
 }
