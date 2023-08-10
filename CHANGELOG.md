@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v1.13.0](https://github.com/alexfalkowski/go-health/releases/tag/v1.13.0) - 2023-08-10
+
+- [`939fac9`](https://github.com/alexfalkowski/go-health/commit/939fac9eda176633362ddcc3aaed9deb4a3a2c79) feat: update go to version 1.21 (#58)
+- [`604d3af`](https://github.com/alexfalkowski/go-health/commit/604d3af99ee449195034f7d9d67dcdc95d1a2e78) build(deps): update bin (#57)
+
 ## [v1.12.2](https://github.com/alexfalkowski/go-health/releases/tag/v1.12.2) - 2023-06-29
 
 - [`ff44846`](https://github.com/alexfalkowski/go-health/commit/ff4484626b719bde7036569ffaccbe315a722b78) fix(deps): bump github.com/smartystreets/goconvey from 1.8.0 to 1.8.1 (#56)
