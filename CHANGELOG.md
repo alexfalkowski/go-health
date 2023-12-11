@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v1.13.1](https://github.com/alexfalkowski/go-health/releases/tag/v1.13.1) - 2023-12-11
+
+- [`bfdfd39`](https://github.com/alexfalkowski/go-health/commit/bfdfd39d53e0c80d241e7688672186c90bce02c1) fix(deps): bump github.com/DATA-DOG/go-sqlmock from 1.5.0 to 1.5.1 (#71)
+- [`32808ce`](https://github.com/alexfalkowski/go-health/commit/32808cebb9414efb58d3b24aed7658e0da07b48a) build(deps): bump bin from `e8ef37a` to `e6271f5` (#70)
+- [`26c22d0`](https://github.com/alexfalkowski/go-health/commit/26c22d071bbf10d7d5910a1c8f900c6703277633) build(deps): add bin (#69)
+- [`d25c13b`](https://github.com/alexfalkowski/go-health/commit/d25c13bb50f2be17a68446190fb6ed9a0baf9f3a) build(deps): add bin (#68)
+- [`cabe5bb`](https://github.com/alexfalkowski/go-health/commit/cabe5bb49e0b25535302ad9a06b710532bcddfac) build(deps): update bin (#67)
+- [`0cbea0f`](https://github.com/alexfalkowski/go-health/commit/0cbea0f073b9b770d94d44341c78ece68a2253cd) build(deps): update bin (#66)
+- [`6f69975`](https://github.com/alexfalkowski/go-health/commit/6f6997525b2052f48bd3dfe1cb21eecf57e23ecf) build(deps): update bin (#65)
+- [`92271d7`](https://github.com/alexfalkowski/go-health/commit/92271d7ac0da54597a79a738d29565a7968eb5b4) build(deps): update bin (#64)
+- [`9a59184`](https://github.com/alexfalkowski/go-health/commit/9a59184e213015813f70bea1e246f5ba49b675af) build(deps): update bin (#63)
+- [`22156e1`](https://github.com/alexfalkowski/go-health/commit/22156e181dabadb3e8f1614c6a7b47eb8444b8bf) ci: use go:1.21-ruby (#62)
+- [`51b6657`](https://github.com/alexfalkowski/go-health/commit/51b6657b86e850f6463139289ca32f5896848328) build(deps): update bin (#61)
+- [`443f1e5`](https://github.com/alexfalkowski/go-health/commit/443f1e5d4f138f7ff23132dbb7299131a6caccd9) build(deps): update bin (#60)
+- [`607282f`](https://github.com/alexfalkowski/go-health/commit/607282fe8c2eb8aeacd3f33447fb227c91131199) build(deps): update bin (#59)
+
 ## [v1.13.0](https://github.com/alexfalkowski/go-health/releases/tag/v1.13.0) - 2023-08-10
 
 - [`939fac9`](https://github.com/alexfalkowski/go-health/commit/939fac9eda176633362ddcc3aaed9deb4a3a2c79) feat: update go to version 1.21 (#58)
