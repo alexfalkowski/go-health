@@ -3,7 +3,7 @@ module github.com/alexfalkowski/go-health
 go 1.21
 
 require (
-	github.com/DATA-DOG/go-sqlmock v1.5.1
+	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/smartystreets/goconvey v1.8.1
 )
 
