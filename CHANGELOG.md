@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v1.16.0](https://github.com/alexfalkowski/go-health/releases/tag/v1.16.0) - 2024-03-25
+
+- [`d05a82d`](https://github.com/alexfalkowski/go-health/commit/d05a82dc05af72ac11eb8d956c0498019550f045) feat(build): remove phony (#82)
+- [`1f48884`](https://github.com/alexfalkowski/go-health/commit/1f4888474a0581b9e2ff0f7b9334548023dcc740) build(make): add git commands (#80)
+- [`fce9d99`](https://github.com/alexfalkowski/go-health/commit/fce9d99efcbe26031051ab0d96c05f8a1af1dc1d) build(deps): bump bin from `355347a` to `06726b5` (#79)
+- [`27c777f`](https://github.com/alexfalkowski/go-health/commit/27c777f3a59201de8cb49175d73b6fae10209844) build(deps): bump bin from `66f6a24` to `355347a` (#78)
+
 ## [v1.15.0](https://github.com/alexfalkowski/go-health/releases/tag/v1.15.0) - 2024-03-14
 
 - [`90841b2`](https://github.com/alexfalkowski/go-health/commit/90841b2dfa0fc37f068480ba394b075065167668) feat: change license to MIT (#77)
