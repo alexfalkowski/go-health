@@ -23,7 +23,7 @@ type HTTPChecker struct {
 
 // Check the URL with a GET.
 func (c *HTTPChecker) Check(ctx context.Context) error {
-	req, err := http.NewRequestWithContext(ctx, "GET", c.url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", c.url, http.NoBody)
 	if err != nil {
 		return fmt.Errorf("http checker: %w", err)
 	}
