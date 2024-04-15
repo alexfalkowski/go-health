@@ -9,11 +9,21 @@ jobs:
         environment:
           CONFIG_FILE: yaml:CONFIG
           CONFIG: ZW52aXJvbm1lbnQ6IHByb2R1Y3Rpb24KaGVhbHRoOgogIGR1cmF0aW9uOiAxcwogIHRpbWVvdXQ6IDFzCnRlbGVtZXRyeToKICBsb2dnZXI6CiAgICBsZXZlbDogaW5mbwogIHRyYWNlcjoKICAgIGhvc3Q6IGxvY2FsaG9zdDo0MzE4CiAgICBzZWN1cmU6IGZhbHNlCnRyYW5zcG9ydDoKICBodHRwOgogICAgZW5hYmxlZDogdHJ1ZQogICAgcG9ydDogNjAwMAogICAgdXNlcl9hZ2VudDogIlN0YXR1cy1zZXJ2ZXIvMS4wIGh0dHAvMS4wIgogICAgcmV0cnk6CiAgICAgIHRpbWVvdXQ6IDJzCiAgICAgIGF0dGVtcHRzOiAzCiAgZ3JwYzoKICAgIGVuYWJsZWQ6IHRydWUKICAgIHBvcnQ6IDYwMDEKICAgIHVzZXJfYWdlbnQ6ICJTdGF0dXMtc2VydmVyLzEuMCBncnBjLzEuMCIKICAgIHJldHJ5OgogICAgICB0aW1lb3V0OiAycwogICAgICBhdHRlbXB0czogMwo=
+    working_directory: ~/go-health
     steps:
       - checkout
       - run: git submodule sync
       - run: git submodule update --init
+      - restore_cache:
+          name: restore deps
+          keys:
+            - go-health-cache-{{ checksum "go.sum" }}
       - run: make dep
+      - save_cache:
+          name: save deps
+          key: go-health-cache-{{ checksum "go.sum" }}
+          paths:
+            - /home/circleci/go/pkg/mod
       - run: make lint
       - run: make sec
       - run: make specs
@@ -24,6 +34,7 @@ jobs:
   release:
     docker:
       - image: alexfalkowski/release:3.1
+    working_directory: ~/go-health
     steps:
       - checkout
       - run: release
