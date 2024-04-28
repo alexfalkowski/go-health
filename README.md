@@ -1,5 +1,4 @@
 [![CircleCI](https://circleci.com/gh/alexfalkowski/go-health.svg?style=svg)](https://circleci.com/gh/alexfalkowski/go-health)
-[![Coverage Status](https://coveralls.io/repos/github/alexfalkowski/go-health/badge.svg?branch=master)](https://coveralls.io/github/alexfalkowski/go-health?branch=master)
 
 # Health Monitoring Pattern
 
