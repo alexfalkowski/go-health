@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v1.16.2](https://github.com/alexfalkowski/go-health/releases/tag/v1.16.2) - 2024-05-08
+
+- [`e66bd34`](https://github.com/alexfalkowski/go-health/commit/e66bd3476f5e78772bd2a8ca4de70fdcd5c8ef5b) fix(deps): upgraded go to v1.22.3 (#116)
+- [`068320e`](https://github.com/alexfalkowski/go-health/commit/068320e169a70adc99cd398fb25717740aec01b5) build(deps): bump bin from `253f8fe` to `693b345` (#115)
+- [`9524423`](https://github.com/alexfalkowski/go-health/commit/9524423eef512810bd3e65c66882a3f54ad07f86) build(deps): bump bin from `63b9d75` to `253f8fe` (#114)
+- [`f77cfd9`](https://github.com/alexfalkowski/go-health/commit/f77cfd9ff741d47af33b4573bbe8b04b72177e58) build(deps): bump bin from `cf2a686` to `63b9d75` (#113)
+- [`3f077a9`](https://github.com/alexfalkowski/go-health/commit/3f077a9c2914244e1d0ad9e72c07b0730b2d1145) build(deps): bump bin from `e47704b` to `cf2a686` (#112)
+- [`71333b2`](https://github.com/alexfalkowski/go-health/commit/71333b2d11382b379b1940de37887e85e70e4220) build(ci): cover all (#111)
+- [`2c18816`](https://github.com/alexfalkowski/go-health/commit/2c1881658b80cc4dad43b5e235baa51345021888) build(deps): bump bin from `3976e45` to `e47704b` (#110)
+- [`efbabe5`](https://github.com/alexfalkowski/go-health/commit/efbabe505566ea79806f46b1ef480fa6904b5fc8) build(ci): html coverage (#109)
+- [`6fccdc3`](https://github.com/alexfalkowski/go-health/commit/6fccdc3ec368ee3bfa115bede0df5e970be9adcc) build(deps): bump bin from `1755d45` to `3976e45` (#108)
+- [`52c488d`](https://github.com/alexfalkowski/go-health/commit/52c488d3bcd423a249a86b99e3b40b2f170132ea) build(deps): bump bin from `62c9b8d` to `1755d45` (#107)
+- [`3fd4a05`](https://github.com/alexfalkowski/go-health/commit/3fd4a05aacf9d6ebf079cb066b868b68be6b47ee) build(coveralls): remove goveralls (#106)
+- [`47e2425`](https://github.com/alexfalkowski/go-health/commit/47e24259b08a03ae973defdddcb97e99b6287a7f) build(deps): bump bin from `c06391c` to `62c9b8d` (#105)
+- [`5090917`](https://github.com/alexfalkowski/go-health/commit/50909170a3aa32cb55288cf3fe84c76cc4cd0519) build(deps): bump bin from `cff9786` to `c06391c` (#104)
+- [`a61dc2a`](https://github.com/alexfalkowski/go-health/commit/a61dc2ae5ebe64c83f7bb2e76c8572f64ca79438) build(deps): bump bin from `d5f116d` to `cff9786` (#103)
+- [`457a305`](https://github.com/alexfalkowski/go-health/commit/457a3051ceb3c234c3b32ef02836d0a0d823c26b) build(ci): find the most recently generated cache (#102)
+- [`455b915`](https://github.com/alexfalkowski/go-health/commit/455b915f1bb5ca2f9e313861695a47be26b1e524) build(ci): store tests (#101)
+- [`d8cad82`](https://github.com/alexfalkowski/go-health/commit/d8cad82fff78406c6e2b86a49f65636722642848) build(deps): bump bin from `51c6ece` to `d5f116d` (#100)
+- [`1c2e5fc`](https://github.com/alexfalkowski/go-health/commit/1c2e5fcef98203ad6bb9e5f9ff1dcb6f7a3d3c67) build(ci): change cache key (#98)
+- [`5c4cafd`](https://github.com/alexfalkowski/go-health/commit/5c4cafd776d2d692f929b22c495b8a2f71621e28) build(deps): bump bin from `a1fc5ac` to `51c6ece` (#97)
+- [`a44262f`](https://github.com/alexfalkowski/go-health/commit/a44262fb9a136b55e8bfaa500e0887a20a567668) build(ci): cache go build (#96)
+- [`6e4695d`](https://github.com/alexfalkowski/go-health/commit/6e4695d198c5f5d95bf9d26795897504b2440810) build(ci): cache deps (#95)
+- [`c52ce38`](https://github.com/alexfalkowski/go-health/commit/c52ce38766d0c871768108a5e099f3cb6a99307f) build(deps): bump bin from `c322696` to `a1fc5ac` (#94)
+- [`91875f9`](https://github.com/alexfalkowski/go-health/commit/91875f93ce7985f1ecd7762f2657840877b2a1d3) build(deps): bump bin from `13a7302` to `c322696` (#92)
+
 ## [v1.16.1](https://github.com/alexfalkowski/go-health/releases/tag/v1.16.1) - 2024-04-12
 
 - [`c1928c2`](https://github.com/alexfalkowski/go-health/commit/c1928c252c30e941a905541c1c3089b7203a01c7) fix(checker): use no body instead of nil (#91)
