@@ -13,7 +13,7 @@ func NewRegistration(name string, period time.Duration, ch checker.Checker) *Reg
 
 // Registration for the server.
 type Registration struct {
+	Checker checker.Checker
 	Name    string
 	Period  time.Duration
-	Checker checker.Checker
 }

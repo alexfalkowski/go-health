@@ -21,9 +21,9 @@ func NewTCPCheckerWithDialer(address string, timeout time.Duration, dialer net.D
 
 // TCPChecker for an address.
 type TCPChecker struct {
+	dialer  net.Dialer
 	address string
 	timeout time.Duration
-	dialer  net.Dialer
 }
 
 // Check the address.

@@ -17,8 +17,8 @@ func NewHTTPChecker(url string, client *http.Client) *HTTPChecker {
 
 // HTTPChecker for a URL.
 type HTTPChecker struct {
-	url    string
 	client *http.Client
+	url    string
 }
 
 // Check the URL with a GET.

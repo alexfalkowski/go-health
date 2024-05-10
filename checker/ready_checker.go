@@ -12,8 +12,8 @@ func NewReadyChecker(err error) *ReadyChecker {
 
 // ReadyChecker for when prepared for something.
 type ReadyChecker struct {
-	flag int32
 	err  error
+	flag int32
 }
 
 // Check the if ready.
