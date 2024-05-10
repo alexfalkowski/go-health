@@ -15,12 +15,12 @@ func NewProbe(name string, period time.Duration, ch checker.Checker) *Probe {
 
 // Probe is a periodic checker.
 type Probe struct {
-	name    string
-	period  time.Duration
-	ticker  *time.Ticker
 	checker checker.Checker
+	ticker  *time.Ticker
 	ch      chan *Tick
 	done    chan struct{}
+	name    string
+	period  time.Duration
 	mux     sync.Mutex
 }
 

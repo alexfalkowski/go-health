@@ -11,8 +11,8 @@ func NewSubscriber(names []string) *Subscriber {
 
 // Subscriber subscribes to multiple probes.
 type Subscriber struct {
-	names []string
 	ticks chan *probe.Tick
+	names []string
 }
 
 // Receive from the subscriber.

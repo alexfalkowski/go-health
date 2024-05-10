@@ -25,12 +25,12 @@ func NewServer() *Server {
 // Server will maintain all the probes and start and stop them.
 type Server struct {
 	registry    map[string]*probe.Probe
-	subscribers []*subscriber.Subscriber
 	done        chan struct{}
 	ticks       chan *probe.Tick
 	wg          *sync.WaitGroup
-	mux         sync.Mutex
 	st          status
+	subscribers []*subscriber.Subscriber
+	mux         sync.Mutex
 }
 
 // Register all the registrations.

@@ -2,8 +2,8 @@ package probe
 
 // Tick defines a tick in time for a probe.
 type Tick struct {
-	name string
 	err  error
+	name string
 }
 
 // NewTick with name and error.
