@@ -1,6 +1,6 @@
 module github.com/alexfalkowski/go-health
 
-go 1.22.3
+go 1.22.4
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
