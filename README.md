@@ -1,4 +1,5 @@
 [![CircleCI](https://circleci.com/gh/alexfalkowski/go-health.svg?style=svg)](https://circleci.com/gh/alexfalkowski/go-health)
+[![codecov](https://codecov.io/gh/alexfalkowski/go-health/graph/badge.svg?token=Q7B3VZYL9K)](https://codecov.io/gh/alexfalkowski/go-health)
 
 # Health Monitoring Pattern
 
