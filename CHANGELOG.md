@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v1.17.2](https://github.com/alexfalkowski/go-health/releases/tag/v1.17.2) - 2024-07-03
+
+- [`94aa489`](https://github.com/alexfalkowski/go-health/commit/94aa4899badb5441df4663354b778f4978b56045) fix(go): update go to v1.22.5 (#128)
+- [`2038a85`](https://github.com/alexfalkowski/go-health/commit/2038a85ab7706f27b2649ff9fb07830123191457) docs(reame): add badges (#127)
+- [`e922ef7`](https://github.com/alexfalkowski/go-health/commit/e922ef7b5d06e4d941ff71ab020fd020a37e242d) build(deps): bump bin from `955891d` to `897d5f1` (#126)
+- [`febee5a`](https://github.com/alexfalkowski/go-health/commit/febee5a3e3ec9c5eb1e3501fdfafc99e048d4baf) build(ci): add codecov (#125)
+- [`b6312e9`](https://github.com/alexfalkowski/go-health/commit/b6312e9a404df70ab104f682ccc6e560d72b3f10) build(deps): bump bin from `955891d` to `897d5f1` (#124)
+- [`fd74a63`](https://github.com/alexfalkowski/go-health/commit/fd74a6336589edcb4887308db079a2b12e646290) build(ci): use alexfalkowski/go:1.22 (#123)
+
 ## [v1.17.1](https://github.com/alexfalkowski/go-health/releases/tag/v1.17.1) - 2024-06-05
 
 - [`2bb478a`](https://github.com/alexfalkowski/go-health/commit/2bb478a7a9bbbb7feecea302e35b8fd5e8bad8e7) fix(deps): upgrade to go 1.22.4 (#122)
