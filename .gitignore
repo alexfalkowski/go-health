@@ -1,4 +1,3 @@
 vendor
-*.prof
-*.cov
-*.out
+test/reports/*.cov
+test/reports/*.xml

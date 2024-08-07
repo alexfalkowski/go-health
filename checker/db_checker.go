@@ -8,8 +8,8 @@ import (
 )
 
 // NewDBChecker for SQL.
-func NewDBChecker(pinger sql.Pinger, timeout time.Duration) *DBChecker {
-	return &DBChecker{pinger: pinger, timeout: timeout}
+func NewDBChecker(pinger sql.Pinger, t time.Duration) *DBChecker {
+	return &DBChecker{pinger: pinger, timeout: timeout(t)}
 }
 
 // DBChecker for SQL.

@@ -12,6 +12,8 @@ import (
 	. "github.com/smartystreets/goconvey/convey" //nolint:revive
 )
 
+const google = "google"
+
 func defaultTimeout() time.Duration {
 	return 2 * time.Second
 }
@@ -29,13 +31,12 @@ func TestDoubleStart(t *testing.T) {
 		s := server.NewServer()
 		defer s.Stop()
 
-		name := "google"
-		checker := checker.NewHTTPChecker("https://www.google.com/", &http.Client{Timeout: defaultTimeout()})
-		r := server.NewRegistration(name, defaultPeriod(), checker)
+		checker := checker.NewHTTPChecker("https://www.google.com/", http.DefaultTransport, defaultTimeout())
+		r := server.NewRegistration(google, defaultPeriod(), checker)
 
 		s.Register(r)
 
-		ob := s.Observe(name)
+		ob := s.Observe(google)
 
 		Convey("When I start the server", func() {
 			s.Start()
@@ -55,13 +56,12 @@ func TestValidHTTPChecker(t *testing.T) {
 		s := server.NewServer()
 		defer s.Stop()
 
-		name := "google"
-		checker := checker.NewHTTPChecker("https://www.google.com/", &http.Client{Timeout: defaultTimeout()})
-		r := server.NewRegistration(name, defaultPeriod(), checker)
+		checker := checker.NewHTTPChecker("https://www.google.com/", http.DefaultTransport, 0)
+		r := server.NewRegistration(google, defaultPeriod(), checker)
 
 		s.Register(r)
 
-		ob := s.Observe(name)
+		ob := s.Observe(google)
 
 		Convey("When I start the server", func() {
 			s.Start()
@@ -83,7 +83,7 @@ func TestInvalidURLHTTPChecker(t *testing.T) {
 		defer s.Stop()
 
 		name := "assaaasss"
-		checker := checker.NewHTTPChecker("https://www.assaaasss.com/", &http.Client{Timeout: defaultTimeout()})
+		checker := checker.NewHTTPChecker("https://www.assaaasss.com/", http.DefaultTransport, defaultTimeout())
 		r := server.NewRegistration(name, defaultPeriod(), checker)
 
 		s.Register(r)
@@ -102,13 +102,13 @@ func TestInvalidURLHTTPChecker(t *testing.T) {
 	})
 }
 
-func TestMallformedURLHTTPChecker(t *testing.T) {
+func TestMalformedURLHTTPChecker(t *testing.T) {
 	Convey("Given we have a new server", t, func() {
 		s := server.NewServer()
 		defer s.Stop()
 
 		name := "assaaasss"
-		checker := checker.NewHTTPChecker(string([]byte{0x7f}), &http.Client{Timeout: defaultTimeout()})
+		checker := checker.NewHTTPChecker(string([]byte{0x7f}), http.DefaultTransport, defaultTimeout())
 		r := server.NewRegistration(name, defaultPeriod(), checker)
 
 		s.Register(r)
@@ -132,8 +132,8 @@ func TestInvalidCodeHTTPChecker(t *testing.T) {
 		s := server.NewServer()
 		defer s.Stop()
 
-		name := "httpstat400"
-		checker := checker.NewHTTPChecker("http://localhost:6000/v1/status/400", &http.Client{Timeout: defaultTimeout()})
+		name := "http400"
+		checker := checker.NewHTTPChecker("http://localhost:6000/v1/status/400", http.DefaultTransport, defaultTimeout())
 		r := server.NewRegistration(name, defaultPeriod(), checker)
 
 		s.Register(r)
@@ -157,9 +157,9 @@ func TestTimeoutHTTPChecker(t *testing.T) {
 		s := server.NewServer()
 		defer s.Stop()
 
-		name := "httpstat200"
-		c := &http.Client{Timeout: defaultTimeout()}
-		checker := checker.NewHTTPChecker("http://localhost:6000/v1/status/200?sleep=5s", c)
+		name := "http200"
+		checker := checker.NewHTTPChecker("http://localhost:6000/v1/status/200?sleep=5s",
+			http.DefaultTransport, defaultTimeout())
 		r := server.NewRegistration(name, defaultPeriod(), checker)
 
 		s.Register(r)
@@ -259,7 +259,6 @@ func TestValidDBChecker(t *testing.T) {
 	})
 }
 
-//nolint:goerr113
 func TestValidReadyChecker(t *testing.T) {
 	Convey("Given we have a new server", t, func() {
 		s := server.NewServer()
@@ -322,7 +321,7 @@ func TestInvalidObserver(t *testing.T) {
 		s := server.NewServer()
 		defer s.Stop()
 
-		cc := checker.NewHTTPChecker("http://localhost:6000/v1/status/400", &http.Client{Timeout: defaultTimeout()})
+		cc := checker.NewHTTPChecker("http://localhost:6000/v1/status/400", http.DefaultTransport, defaultTimeout())
 		hr := server.NewRegistration("http1", defaultPeriod(), cc)
 		tc := checker.NewTCPChecker("httpstat.us:9000", defaultTimeout())
 		tr := server.NewRegistration("tcp1", defaultPeriod(), tc)
@@ -348,7 +347,7 @@ func TestValidObserver(t *testing.T) {
 		s := server.NewServer()
 		defer s.Stop()
 
-		cc := checker.NewHTTPChecker("http://localhost:6000/v1/status/200", &http.Client{Timeout: defaultTimeout()})
+		cc := checker.NewHTTPChecker("http://localhost:6000/v1/status/200", http.DefaultTransport, defaultTimeout())
 		hr := server.NewRegistration("http", defaultPeriod(), cc)
 		tc := checker.NewTCPChecker("httpstat.us:80", defaultTimeout())
 		tr := server.NewRegistration("tcp", defaultPeriod(), tc)
@@ -374,7 +373,7 @@ func TestOneInvalidObserver(t *testing.T) {
 		s := server.NewServer()
 		defer s.Stop()
 
-		cc := checker.NewHTTPChecker("http://localhost:6000/v1/status/500", &http.Client{Timeout: defaultTimeout()})
+		cc := checker.NewHTTPChecker("http://localhost:6000/v1/status/500", http.DefaultTransport, defaultTimeout())
 		hr := server.NewRegistration("http", defaultPeriod(), cc)
 		tc := checker.NewTCPChecker("httpstat.us:80", defaultTimeout())
 		tr := server.NewRegistration("tcp", defaultPeriod(), tc)
@@ -400,7 +399,7 @@ func TestNonExistentObserver(t *testing.T) {
 		s := server.NewServer()
 		defer s.Stop()
 
-		cc := checker.NewHTTPChecker("http://localhost:6000/v1/status/200", &http.Client{Timeout: defaultTimeout()})
+		cc := checker.NewHTTPChecker("http://localhost:6000/v1/status/200", http.DefaultTransport, defaultTimeout())
 		hr := server.NewRegistration("http", defaultPeriod(), cc)
 		tc := checker.NewTCPChecker("httpstat.us:80", defaultTimeout())
 		tr := server.NewRegistration("tcp", defaultPeriod(), tc)
@@ -414,5 +413,30 @@ func TestNonExistentObserver(t *testing.T) {
 				So(ob.Error(), ShouldBeNil)
 			})
 		})
+	})
+}
+
+func BenchmarkValidHTTPChecker(b *testing.B) {
+	b.ReportAllocs()
+
+	s := server.NewServer()
+	defer s.Stop()
+
+	checker := checker.NewHTTPChecker("https://www.google.com/", http.DefaultTransport, defaultPeriod())
+
+	r := server.NewRegistration(google, defaultPeriod(), checker)
+	s.Register(r)
+
+	ob := s.Observe(google)
+
+	s.Start()
+	time.Sleep(defaultWait())
+
+	b.Run(google, func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			if err := ob.Error(); err != nil {
+				b.Fail()
+			}
+		}
 	})
 }
