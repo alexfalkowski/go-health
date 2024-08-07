@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v1.18.0](https://github.com/alexfalkowski/go-health/releases/tag/v1.18.0) - 2024-08-07
+
+- [`681d6f9`](https://github.com/alexfalkowski/go-health/commit/681d6f9b2d4c587487b3b6c9d7a9d8c194853991) feat(checker): change http to use round tripper (#131)
+
 ## [v1.17.3](https://github.com/alexfalkowski/go-health/releases/tag/v1.17.3) - 2024-08-07
 
 - [`0133385`](https://github.com/alexfalkowski/go-health/commit/0133385ed737285060a57ff695d484350a71b52d) fix(go): update go to v1.22.6 (#130)
