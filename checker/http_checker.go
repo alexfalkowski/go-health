@@ -5,14 +5,15 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 )
 
 // ErrInvalidStatusCode when we have errors that are not in the 200 range.
 var ErrInvalidStatusCode = errors.New("invalid status code")
 
 // NewHTTPChecker with URL and client.
-func NewHTTPChecker(url string, client *http.Client) *HTTPChecker {
-	return &HTTPChecker{url: url, client: client}
+func NewHTTPChecker(url string, rt http.RoundTripper, t time.Duration) *HTTPChecker {
+	return &HTTPChecker{url: url, client: &http.Client{Transport: rt, Timeout: timeout(t)}}
 }
 
 // HTTPChecker for a URL.
