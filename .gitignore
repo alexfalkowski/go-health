@@ -1,3 +1,5 @@
 vendor
 test/reports/*.cov
 test/reports/*.xml
+test/reports/*.prof
+*.test
