@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v1.18.1](https://github.com/alexfalkowski/go-health/releases/tag/v1.18.1) - 2024-08-08
+
+- [`b2dfd6a`](https://github.com/alexfalkowski/go-health/commit/b2dfd6af205c1bd40e16aa6a9a874a1266f42a3e) fix(go): set to min 1.22 (#139)
+- [`1da16c9`](https://github.com/alexfalkowski/go-health/commit/1da16c9f648d6748641c6cf53bea4fa753432a5b) test(git): ignore files (#138)
+- [`b51ea84`](https://github.com/alexfalkowski/go-health/commit/b51ea84887b6b5607963261df88b975a82b17e94) build(deps): bump bin from `cf2f550` to `2d4d510` (#137)
+- [`e736ff3`](https://github.com/alexfalkowski/go-health/commit/e736ff307f0584ece6136a7e7e37a9af6c1156d7) build(deps): bump bin from `8724850` to `cf2f550` (#136)
+- [`51aa2e6`](https://github.com/alexfalkowski/go-health/commit/51aa2e60a591752352ba208943de3d3a362a8501) build(ci): remove benchmarks (#135)
+- [`b017d1f`](https://github.com/alexfalkowski/go-health/commit/b017d1fd3b82560124e873f995b7a2b2c98e0d26) test(server): remove sub benchmark (#134)
+- [`4550952`](https://github.com/alexfalkowski/go-health/commit/455095210a49d211bb37c23a3b8fa90eb68a9b99) build(ci): add benchmarks (#133)
+- [`d13f7d4`](https://github.com/alexfalkowski/go-health/commit/d13f7d40e47a3f5789ab56e5b588af4efb77b2d6) build(deps): bump bin from `44badfa` to `8724850` (#132)
+
 ## [v1.18.0](https://github.com/alexfalkowski/go-health/releases/tag/v1.18.0) - 2024-08-07
 
 - [`681d6f9`](https://github.com/alexfalkowski/go-health/commit/681d6f9b2d4c587487b3b6c9d7a9d8c194853991) feat(checker): change http to use round tripper (#131)
