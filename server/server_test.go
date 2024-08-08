@@ -12,27 +12,20 @@ import (
 	. "github.com/smartystreets/goconvey/convey" //nolint:revive
 )
 
-const google = "google"
-
-func defaultTimeout() time.Duration {
-	return 2 * time.Second
-}
-
-func defaultPeriod() time.Duration {
-	return 500 * time.Millisecond
-}
-
-func defaultWait() time.Duration {
-	return 1 * time.Second
-}
+const (
+	google  = "google"
+	timeout = 2 * time.Second
+	period  = 500 * time.Millisecond
+	wait    = 1 * time.Second
+)
 
 func TestDoubleStart(t *testing.T) {
 	Convey("Given we have a new server", t, func() {
 		s := server.NewServer()
 		defer s.Stop()
 
-		checker := checker.NewHTTPChecker("https://www.google.com/", http.DefaultTransport, defaultTimeout())
-		r := server.NewRegistration(google, defaultPeriod(), checker)
+		checker := checker.NewHTTPChecker("https://www.google.com/", http.DefaultTransport, timeout)
+		r := server.NewRegistration(google, period, checker)
 
 		s.Register(r)
 
@@ -42,7 +35,7 @@ func TestDoubleStart(t *testing.T) {
 			s.Start()
 			s.Start()
 
-			time.Sleep(defaultWait())
+			time.Sleep(wait)
 
 			Convey("Then I should have no error from the observer", func() {
 				So(ob.Error(), ShouldBeNil)
@@ -57,7 +50,7 @@ func TestValidHTTPChecker(t *testing.T) {
 		defer s.Stop()
 
 		checker := checker.NewHTTPChecker("https://www.google.com/", http.DefaultTransport, 0)
-		r := server.NewRegistration(google, defaultPeriod(), checker)
+		r := server.NewRegistration(google, period, checker)
 
 		s.Register(r)
 
@@ -66,10 +59,10 @@ func TestValidHTTPChecker(t *testing.T) {
 		Convey("When I start the server", func() {
 			s.Start()
 
-			time.Sleep(defaultWait())
+			time.Sleep(wait)
 
 			Convey("Then I should have no error from the observer", func() {
-				time.Sleep(defaultWait())
+				time.Sleep(wait)
 
 				So(ob.Error(), ShouldBeNil)
 			})
@@ -83,8 +76,8 @@ func TestInvalidURLHTTPChecker(t *testing.T) {
 		defer s.Stop()
 
 		name := "assaaasss"
-		checker := checker.NewHTTPChecker("https://www.assaaasss.com/", http.DefaultTransport, defaultTimeout())
-		r := server.NewRegistration(name, defaultPeriod(), checker)
+		checker := checker.NewHTTPChecker("https://www.assaaasss.com/", http.DefaultTransport, timeout)
+		r := server.NewRegistration(name, period, checker)
 
 		s.Register(r)
 
@@ -93,7 +86,7 @@ func TestInvalidURLHTTPChecker(t *testing.T) {
 		Convey("When I start the server", func() {
 			s.Start()
 
-			time.Sleep(defaultWait())
+			time.Sleep(wait)
 
 			Convey("Then I should have error from the observer", func() {
 				So(ob.Error(), ShouldBeError)
@@ -108,8 +101,8 @@ func TestMalformedURLHTTPChecker(t *testing.T) {
 		defer s.Stop()
 
 		name := "assaaasss"
-		checker := checker.NewHTTPChecker(string([]byte{0x7f}), http.DefaultTransport, defaultTimeout())
-		r := server.NewRegistration(name, defaultPeriod(), checker)
+		checker := checker.NewHTTPChecker(string([]byte{0x7f}), http.DefaultTransport, timeout)
+		r := server.NewRegistration(name, period, checker)
 
 		s.Register(r)
 
@@ -118,7 +111,7 @@ func TestMalformedURLHTTPChecker(t *testing.T) {
 		Convey("When I start the server", func() {
 			s.Start()
 
-			time.Sleep(defaultWait())
+			time.Sleep(wait)
 
 			Convey("Then I should have error from the observer", func() {
 				So(ob.Error(), ShouldBeError)
@@ -133,8 +126,8 @@ func TestInvalidCodeHTTPChecker(t *testing.T) {
 		defer s.Stop()
 
 		name := "http400"
-		checker := checker.NewHTTPChecker("http://localhost:6000/v1/status/400", http.DefaultTransport, defaultTimeout())
-		r := server.NewRegistration(name, defaultPeriod(), checker)
+		checker := checker.NewHTTPChecker("http://localhost:6000/v1/status/400", http.DefaultTransport, timeout)
+		r := server.NewRegistration(name, period, checker)
 
 		s.Register(r)
 
@@ -143,7 +136,7 @@ func TestInvalidCodeHTTPChecker(t *testing.T) {
 		Convey("When I start the server", func() {
 			s.Start()
 
-			time.Sleep(defaultWait())
+			time.Sleep(wait)
 
 			Convey("Then I should have error from the observer", func() {
 				So(ob.Error(), ShouldBeError)
@@ -159,8 +152,8 @@ func TestTimeoutHTTPChecker(t *testing.T) {
 
 		name := "http200"
 		checker := checker.NewHTTPChecker("http://localhost:6000/v1/status/200?sleep=5s",
-			http.DefaultTransport, defaultTimeout())
-		r := server.NewRegistration(name, defaultPeriod(), checker)
+			http.DefaultTransport, timeout)
+		r := server.NewRegistration(name, period, checker)
 
 		s.Register(r)
 
@@ -169,7 +162,7 @@ func TestTimeoutHTTPChecker(t *testing.T) {
 		Convey("When I start the server", func() {
 			s.Start()
 
-			time.Sleep(defaultWait())
+			time.Sleep(wait)
 
 			Convey("Then I should have error from the observer", func() {
 				So(ob.Error(), ShouldBeError)
@@ -184,8 +177,8 @@ func TestValidTCPChecker(t *testing.T) {
 		defer s.Stop()
 
 		name := "tcp-google"
-		checker := checker.NewTCPChecker("www.google.com:80", defaultTimeout())
-		r := server.NewRegistration(name, defaultPeriod(), checker)
+		checker := checker.NewTCPChecker("www.google.com:80", timeout)
+		r := server.NewRegistration(name, period, checker)
 
 		s.Register(r)
 
@@ -194,7 +187,7 @@ func TestValidTCPChecker(t *testing.T) {
 		Convey("When I start the server", func() {
 			s.Start()
 
-			time.Sleep(defaultWait())
+			time.Sleep(wait)
 
 			Convey("Then I should have no error from the observer", func() {
 				So(ob.Error(), ShouldBeNil)
@@ -209,8 +202,8 @@ func TestInvalidAddressTCPChecker(t *testing.T) {
 		defer s.Stop()
 
 		name := "tcp-assaaasss"
-		checker := checker.NewTCPChecker("www.assaaasss.com:80", defaultTimeout())
-		r := server.NewRegistration(name, defaultPeriod(), checker)
+		checker := checker.NewTCPChecker("www.assaaasss.com:80", timeout)
+		r := server.NewRegistration(name, period, checker)
 
 		s.Register(r)
 
@@ -219,7 +212,7 @@ func TestInvalidAddressTCPChecker(t *testing.T) {
 		Convey("When I start the server", func() {
 			s.Start()
 
-			time.Sleep(defaultWait())
+			time.Sleep(wait)
 
 			Convey("Then I should have error from the observer", func() {
 				So(ob.Error(), ShouldBeError)
@@ -240,8 +233,8 @@ func TestValidDBChecker(t *testing.T) {
 		defer db.Close()
 
 		name := "db"
-		checker := checker.NewDBChecker(db, defaultTimeout())
-		r := server.NewRegistration(name, defaultPeriod(), checker)
+		checker := checker.NewDBChecker(db, timeout)
+		r := server.NewRegistration(name, period, checker)
 
 		s.Register(r)
 
@@ -250,7 +243,7 @@ func TestValidDBChecker(t *testing.T) {
 		Convey("When I start the server", func() {
 			s.Start()
 
-			time.Sleep(defaultWait())
+			time.Sleep(wait)
 
 			Convey("Then I should have no error from the observer", func() {
 				So(ob.Error(), ShouldBeNil)
@@ -267,7 +260,7 @@ func TestValidReadyChecker(t *testing.T) {
 		name := "ready"
 		errNotReady := errors.New("not ready")
 		checker := checker.NewReadyChecker(errNotReady)
-		r := server.NewRegistration(name, defaultPeriod(), checker)
+		r := server.NewRegistration(name, period, checker)
 
 		s.Register(r)
 
@@ -276,14 +269,14 @@ func TestValidReadyChecker(t *testing.T) {
 		Convey("When I start the server", func() {
 			s.Start()
 
-			time.Sleep(defaultWait())
+			time.Sleep(wait)
 
 			Convey("Then I should have no error from the observer", func() {
 				So(ob.Error(), ShouldEqual, errNotReady)
 
 				checker.Ready()
 
-				time.Sleep(defaultWait())
+				time.Sleep(wait)
 
 				So(ob.Error(), ShouldBeNil)
 			})
@@ -298,7 +291,7 @@ func TestValidNoopChecker(t *testing.T) {
 
 		name := "noop"
 		checker := checker.NewNoopChecker()
-		r := server.NewRegistration(name, defaultPeriod(), checker)
+		r := server.NewRegistration(name, period, checker)
 
 		s.Register(r)
 
@@ -307,7 +300,7 @@ func TestValidNoopChecker(t *testing.T) {
 		Convey("When I start the server", func() {
 			s.Start()
 
-			time.Sleep(defaultWait())
+			time.Sleep(wait)
 
 			Convey("Then I should have no error from the observer", func() {
 				So(ob.Error(), ShouldBeNil)
@@ -321,10 +314,10 @@ func TestInvalidObserver(t *testing.T) {
 		s := server.NewServer()
 		defer s.Stop()
 
-		cc := checker.NewHTTPChecker("http://localhost:6000/v1/status/400", http.DefaultTransport, defaultTimeout())
-		hr := server.NewRegistration("http1", defaultPeriod(), cc)
-		tc := checker.NewTCPChecker("httpstat.us:9000", defaultTimeout())
-		tr := server.NewRegistration("tcp1", defaultPeriod(), tc)
+		cc := checker.NewHTTPChecker("http://localhost:6000/v1/status/400", http.DefaultTransport, timeout)
+		hr := server.NewRegistration("http1", period, cc)
+		tc := checker.NewTCPChecker("httpstat.us:9000", timeout)
+		tr := server.NewRegistration("tcp1", period, tc)
 
 		s.Register(hr, tr)
 
@@ -333,7 +326,7 @@ func TestInvalidObserver(t *testing.T) {
 		Convey("When I start the server", func() {
 			s.Start()
 
-			time.Sleep(defaultWait())
+			time.Sleep(wait)
 
 			Convey("Then I should have error from the probe", func() {
 				So(ob.Error(), ShouldBeError)
@@ -347,10 +340,10 @@ func TestValidObserver(t *testing.T) {
 		s := server.NewServer()
 		defer s.Stop()
 
-		cc := checker.NewHTTPChecker("http://localhost:6000/v1/status/200", http.DefaultTransport, defaultTimeout())
-		hr := server.NewRegistration("http", defaultPeriod(), cc)
-		tc := checker.NewTCPChecker("httpstat.us:80", defaultTimeout())
-		tr := server.NewRegistration("tcp", defaultPeriod(), tc)
+		cc := checker.NewHTTPChecker("http://localhost:6000/v1/status/200", http.DefaultTransport, timeout)
+		hr := server.NewRegistration("http", period, cc)
+		tc := checker.NewTCPChecker("httpstat.us:80", timeout)
+		tr := server.NewRegistration("tcp", period, tc)
 
 		s.Register(hr, tr)
 
@@ -359,7 +352,7 @@ func TestValidObserver(t *testing.T) {
 		Convey("When I start the server", func() {
 			s.Start()
 
-			time.Sleep(defaultWait())
+			time.Sleep(wait)
 
 			Convey("Then I should have no error from the probe", func() {
 				So(ob.Error(), ShouldBeNil)
@@ -373,10 +366,10 @@ func TestOneInvalidObserver(t *testing.T) {
 		s := server.NewServer()
 		defer s.Stop()
 
-		cc := checker.NewHTTPChecker("http://localhost:6000/v1/status/500", http.DefaultTransport, defaultTimeout())
-		hr := server.NewRegistration("http", defaultPeriod(), cc)
-		tc := checker.NewTCPChecker("httpstat.us:80", defaultTimeout())
-		tr := server.NewRegistration("tcp", defaultPeriod(), tc)
+		cc := checker.NewHTTPChecker("http://localhost:6000/v1/status/500", http.DefaultTransport, timeout)
+		hr := server.NewRegistration("http", period, cc)
+		tc := checker.NewTCPChecker("httpstat.us:80", timeout)
+		tr := server.NewRegistration("tcp", period, tc)
 
 		s.Register(hr, tr)
 
@@ -385,7 +378,7 @@ func TestOneInvalidObserver(t *testing.T) {
 		Convey("When I start the server", func() {
 			s.Start()
 
-			time.Sleep(defaultWait())
+			time.Sleep(wait)
 
 			Convey("Then I should have no error from the probe", func() {
 				So(ob.Error(), ShouldBeNil)
@@ -399,10 +392,10 @@ func TestNonExistentObserver(t *testing.T) {
 		s := server.NewServer()
 		defer s.Stop()
 
-		cc := checker.NewHTTPChecker("http://localhost:6000/v1/status/200", http.DefaultTransport, defaultTimeout())
-		hr := server.NewRegistration("http", defaultPeriod(), cc)
-		tc := checker.NewTCPChecker("httpstat.us:80", defaultTimeout())
-		tr := server.NewRegistration("tcp", defaultPeriod(), tc)
+		cc := checker.NewHTTPChecker("http://localhost:6000/v1/status/200", http.DefaultTransport, timeout)
+		hr := server.NewRegistration("http", period, cc)
+		tc := checker.NewTCPChecker("httpstat.us:80", timeout)
+		tr := server.NewRegistration("tcp", period, tc)
 
 		s.Register(hr, tr)
 
@@ -422,15 +415,15 @@ func BenchmarkValidHTTPChecker(b *testing.B) {
 	s := server.NewServer()
 	defer s.Stop()
 
-	checker := checker.NewHTTPChecker("https://www.google.com/", http.DefaultTransport, defaultPeriod())
+	checker := checker.NewHTTPChecker("https://www.google.com/", http.DefaultTransport, period)
 
-	r := server.NewRegistration(google, defaultPeriod(), checker)
+	r := server.NewRegistration(google, period, checker)
 	s.Register(r)
 
 	ob := s.Observe(google)
 
 	s.Start()
-	time.Sleep(defaultWait())
+	time.Sleep(wait)
 
 	b.Run(google, func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
