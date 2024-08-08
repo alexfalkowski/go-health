@@ -425,11 +425,11 @@ func BenchmarkValidHTTPChecker(b *testing.B) {
 	s.Start()
 	time.Sleep(wait)
 
-	b.Run(google, func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			if err := ob.Error(); err != nil {
-				b.Fail()
-			}
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		if err := ob.Error(); err != nil {
+			b.Fail()
 		}
-	})
+	}
 }
