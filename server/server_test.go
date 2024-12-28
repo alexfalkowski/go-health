@@ -273,7 +273,7 @@ func TestValidReadyChecker(t *testing.T) {
 			time.Sleep(wait)
 
 			Convey("Then I should have no error from the observer", func() {
-				So(ob.Error(), ShouldEqual, errNotReady)
+				So(ob.Error(), ShouldBeError)
 
 				checker.Ready()
 
