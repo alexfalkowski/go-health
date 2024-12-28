@@ -1,27 +1,37 @@
 package subscriber
 
+import (
+	"errors"
+	"fmt"
+)
+
 // Errors for observers.
 type Errors map[string]error
 
-// Error the first error from map.
+// Error the combined errors as one.
 func (e Errors) Error() error {
-	for _, err := range e {
+	errs := make([]error, len(e))
+	i := 0
+
+	for k, err := range e {
 		if err != nil {
-			return err
+			errs[i] = fmt.Errorf("%s: %w", k, err)
 		}
+
+		i++
 	}
 
-	return nil
+	return errors.Join(errs...)
 }
 
 // Errors is a copy.
 func (e Errors) Errors() Errors {
-	errors := make(Errors)
+	errs := make(Errors, len(e))
 	for k, v := range e {
-		errors[k] = v
+		errs[k] = v
 	}
 
-	return errors
+	return errs
 }
 
 // Set the error at the name.
