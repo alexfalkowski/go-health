@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v1.20.0](https://github.com/alexfalkowski/go-health/releases/tag/v1.20.0) - 2024-12-28
+
+- [`1659316`](https://github.com/alexfalkowski/go-health/commit/1659316a388e628dabecf6f4cf1c1ce0111f2d45) feat(subscriber): make sure we combine the errors (#155)
+- [`d6f45e7`](https://github.com/alexfalkowski/go-health/commit/d6f45e757bb13f606d0c3d10c1506e0057dfb133) build(deps): bump bin from `a433391` to `bde1e44` (#154)
+- [`8ffd17e`](https://github.com/alexfalkowski/go-health/commit/8ffd17e83db3d7c3e8c4ca929beeefa70ea3cdce) build(deps): bump bin from `9fa29e2` to `a433391` (#153)
+- [`cab35fc`](https://github.com/alexfalkowski/go-health/commit/cab35fc4b9757b2c4240abab7f55289da86d7f47) build(deps): bump bin from `10049eb` to `9fa29e2` (#152)
+- [`0ee120a`](https://github.com/alexfalkowski/go-health/commit/0ee120af04cbfea54b8c0e4a5dd4bfe88a389415) build(ci): update golang config (#151)
+- [`bc915dd`](https://github.com/alexfalkowski/go-health/commit/bc915ddf1dc6737d56ec5b70eeffa97f6e2bd5ac) build(deps): bump bin from `cf4a7d3` to `10049eb` (#150)
+- [`9a3a07f`](https://github.com/alexfalkowski/go-health/commit/9a3a07f49e8ee2435a2271bceac45350aba6dfa8) build(deps): bump bin from `e8f9d73` to `cf4a7d3` (#149)
+- [`eb6eec0`](https://github.com/alexfalkowski/go-health/commit/eb6eec00e98c8bde5adb1cfa807a9f33c9d5cecc) build(deps): bump bin from `8b87d26` to `e8f9d73` (#148)
+- [`bc7720e`](https://github.com/alexfalkowski/go-health/commit/bc7720eb79c374faaec6f3904c4653ce740e0618) build(deps): bump bin from `b975eab` to `8b87d26` (#147)
+- [`eb96b8b`](https://github.com/alexfalkowski/go-health/commit/eb96b8b91b2376dbff852e3af040591bdc95c109) build(deps): bump bin from `1eca781` to `b975eab` (#146)
+- [`8123e4b`](https://github.com/alexfalkowski/go-health/commit/8123e4b9188080500c624794c3c500c8e7d51746) build(deps): bump bin from `4d2cb2a` to `1eca781` (#145)
+- [`6ce9890`](https://github.com/alexfalkowski/go-health/commit/6ce98902a7fce5fb0bc2a9c38afb38a8d6caa0eb) build(deps): bump bin from `41b7c8b` to `4d2cb2a` (#144)
+- [`c5ef416`](https://github.com/alexfalkowski/go-health/commit/c5ef4163938be4225b27236db5677d6aed6677d5) build(deps): bump bin from `bc89e5f` to `41b7c8b` (#143)
+
 ## [v1.19.0](https://github.com/alexfalkowski/go-health/releases/tag/v1.19.0) - 2024-08-14
 
 - [`896000a`](https://github.com/alexfalkowski/go-health/commit/896000a6cc9327a14e9a0589081f330cd527f490) feat(go): upload to v1.23 (#142)
