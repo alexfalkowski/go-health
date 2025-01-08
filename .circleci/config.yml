@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   build:
     docker:
-      - image: alexfalkowski/go:1.3
+      - image: alexfalkowski/go:1.4
       - image: alexfalkowski/status:latest
         command: server
         environment:
