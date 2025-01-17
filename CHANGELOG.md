@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v1.20.1](https://github.com/alexfalkowski/go-health/releases/tag/v1.20.1) - 2025-01-17
+
+- [`044951e`](https://github.com/alexfalkowski/go-health/commit/044951e61d6829dc863417d9731a078ce34aa8a4) fix(deps): update go to v1.23.5 (#162)
+- [`77ddf1f`](https://github.com/alexfalkowski/go-health/commit/77ddf1f1d5d52e8ea244d4b5e7f246cfae3c487d) build(ci): update go:1.5 (#161)
+- [`2eac107`](https://github.com/alexfalkowski/go-health/commit/2eac1074dd3f7cf4058575cfa5a33e85a721d400) build(ci): remove gocov (#160)
+- [`68f8f7e`](https://github.com/alexfalkowski/go-health/commit/68f8f7e9a4488eab6a0ec4bd314470ee3cd8e373) build(deps): bump bin from `a00abbe` to `cb313fe` (#159)
+- [`0c5aa6c`](https://github.com/alexfalkowski/go-health/commit/0c5aa6c3aaf53302cfa15b0ddf8d0281c001776e) build(deps): bump bin from `a278340` to `a00abbe` (#157)
+- [`5bba2c8`](https://github.com/alexfalkowski/go-health/commit/5bba2c83d12cd00e83bfdccb52d3f6c884b032be) build(deps): bump bin from `bde1e44` to `a278340` (#156)
+
 ## [v1.20.0](https://github.com/alexfalkowski/go-health/releases/tag/v1.20.0) - 2024-12-28
 
 - [`1659316`](https://github.com/alexfalkowski/go-health/commit/1659316a388e628dabecf6f4cf1c1ce0111f2d45) feat(subscriber): make sure we combine the errors (#155)
