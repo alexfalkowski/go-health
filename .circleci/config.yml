@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   build:
     docker:
-      - image: alexfalkowski/go:1.10
+      - image: alexfalkowski/go:1.13
       - image: alexfalkowski/status:latest
         command: server
         environment:
@@ -47,7 +47,7 @@ jobs:
     resource_class: large
   release:
     docker:
-      - image: alexfalkowski/release:3.7
+      - image: alexfalkowski/release:3.8
     working_directory: ~/go-health
     steps:
       - checkout
