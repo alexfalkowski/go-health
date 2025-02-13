@@ -1,7 +1,6 @@
 linters:
   enable-all: true
   disable:
-    - exportloopref
     - tagalign
     - gochecknoinits
     - bodyclose
@@ -16,3 +15,4 @@ linters:
     - varnamelen
     - wrapcheck
     - tagliatelle
+    - tenv
