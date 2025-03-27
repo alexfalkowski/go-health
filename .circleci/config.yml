@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   build:
     docker:
-      - image: alexfalkowski/go:2.2
+      - image: alexfalkowski/go:2.3
       - image: alexfalkowski/status:latest
         command: server
         environment:
@@ -19,6 +19,7 @@ jobs:
           keys:
             - go-health-go-cache-{{ checksum "go.sum" }}
             - go-health-go-cache-
+      - run: make clean
       - run: make dep
       - save_cache:
           name: save deps
@@ -30,6 +31,7 @@ jobs:
           keys:
             - go-health-go-build-cache-{{ checksum "go.sum" }}
             - go-health-go-build-cache-
+      - run: make clean
       - run: make lint
       - run: make sec
       - run: make specs
