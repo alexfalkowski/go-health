@@ -2,18 +2,12 @@ version: "2"
 linters:
   default: all
   disable:
-    - bodyclose
     - depguard
     - exhaustruct
-    - fatcontext
-    - forcetypeassert
-    - gochecknoglobals
-    - gochecknoinits
+    - funcorder
     - ireturn
     - mnd
     - paralleltest
-    - tagalign
-    - tagliatelle
     - varnamelen
     - wrapcheck
   exclusions:
