@@ -1,8 +1,6 @@
 package checker
 
-import (
-	"context"
-)
+import "context"
 
 // Checker will check a system.
 type Checker interface {

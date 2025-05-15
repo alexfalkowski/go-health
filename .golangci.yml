@@ -5,6 +5,7 @@ linters:
     - depguard
     - exhaustruct
     - funcorder
+    - gochecknoglobals
     - ireturn
     - mnd
     - paralleltest
