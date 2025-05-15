@@ -5,12 +5,14 @@ import (
 	"sync/atomic"
 )
 
-// NewReadyChecker with a specific error.
+var _ Checker = (*ReadyChecker)(nil)
+
+// NewReadyChecker waits on a condition.
 func NewReadyChecker(err error) *ReadyChecker {
 	return &ReadyChecker{err: err}
 }
 
-// ReadyChecker for when prepared for something.
+// ReadyChecker waits on a condition..
 type ReadyChecker struct {
 	err  error
 	flag int32

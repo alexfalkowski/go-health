@@ -1,15 +1,15 @@
 package checker
 
-import (
-	"context"
-)
+import "context"
 
-// NewNoopChecker with no functionality.
+var _ Checker = (*NoopChecker)(nil)
+
+// NewNoopChecker does nothing.
 func NewNoopChecker() *NoopChecker {
 	return &NoopChecker{}
 }
 
-// NoopChecker with no functionality.
+// NoopChecker does nothing..
 type NoopChecker struct{}
 
 // Check does a NOOP.

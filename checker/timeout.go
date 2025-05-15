@@ -1,8 +1,6 @@
 package checker
 
-import (
-	"time"
-)
+import "time"
 
 func timeout(t time.Duration) time.Duration {
 	if t == 0 {

@@ -1,8 +1,6 @@
 package sql
 
-import (
-	"context"
-)
+import "context"
 
 // Pinger verifies a connection to the database is still alive.
 type Pinger interface {

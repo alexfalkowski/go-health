@@ -1,8 +1,6 @@
 package subscriber
 
-import (
-	"sync"
-)
+import "sync"
 
 // NewObserver from probe names and subscriber.
 func NewObserver(names []string, sub *Subscriber) *Observer {
@@ -18,7 +16,7 @@ func NewObserver(names []string, sub *Subscriber) *Observer {
 	return ob
 }
 
-// Observer represents a subscriber that mantaines state about probes.
+// Observer represents a subscriber that maintains state about probes.
 type Observer struct {
 	errors Errors
 	sub    *Subscriber

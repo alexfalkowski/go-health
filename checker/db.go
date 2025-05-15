@@ -2,10 +2,13 @@ package checker
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/alexfalkowski/go-health/sql"
 )
+
+var _ Checker = (*DBChecker)(nil)
 
 // NewDBChecker for SQL.
 func NewDBChecker(pinger sql.Pinger, t time.Duration) *DBChecker {
@@ -23,5 +26,9 @@ func (c *DBChecker) Check(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
 
-	return c.pinger.PingContext(ctx)
+	if err := c.pinger.PingContext(ctx); err != nil {
+		return fmt.Errorf("db checker: %w", err)
+	}
+
+	return nil
 }
