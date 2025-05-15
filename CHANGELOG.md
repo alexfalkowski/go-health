@@ -6,6 +6,47 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v1.23.0](https://github.com/alexfalkowski/go-health/releases/tag/v1.23.0) - 2025-05-15
+
+- [`39aca2e`](https://github.com/alexfalkowski/go-health/commit/39aca2eafe8f06db1e75d6c15d3e868403204b11) feat(checker): add online checker (#208)
+- [`f81f6cc`](https://github.com/alexfalkowski/go-health/commit/f81f6cc83e32b19cfdfec28a18c3493ef78c7ecf) build(deps): bump bin from `ac9a5b2` to `c59b166` (#207)
+- [`8cadbfc`](https://github.com/alexfalkowski/go-health/commit/8cadbfcd59eb6a7cf49f110a0a5c2ca1098e4bcc) build(ci): use alexfalkowski/go:2.17 (#206)
+- [`c515637`](https://github.com/alexfalkowski/go-health/commit/c515637e3b4137b12c3c6d0cf949a765e468df76) build(deps): bump bin from `652fb33` to `ac9a5b2` (#205)
+- [`fbc3ffb`](https://github.com/alexfalkowski/go-health/commit/fbc3ffb8db31c403d64095687f6d569885e722ef) build(deps): bump bin from `926a71b` to `652fb33` (#204)
+- [`fd01535`](https://github.com/alexfalkowski/go-health/commit/fd01535a6a94699e7a7632e20e75d02111f74bfc) build(ci): use alexfalkowski/go:2.16 (#203)
+- [`b44018b`](https://github.com/alexfalkowski/go-health/commit/b44018b0f2d1bb7d85be13dddebd8f519c401739) build(ci): use alexfalkowski/go:2.15 (#202)
+- [`15dcd26`](https://github.com/alexfalkowski/go-health/commit/15dcd26ef39009df7d9740f59dec2a68795981b6) build(deps): bump bin from `b0fd780` to `926a71b` (#201)
+- [`8e4d296`](https://github.com/alexfalkowski/go-health/commit/8e4d29655d0618b39ca35fb5617b5554884e4942) build(ci): use alexfalkowski/release:3.15 (#200)
+- [`d7a1d78`](https://github.com/alexfalkowski/go-health/commit/d7a1d781d7a52a188dd60917a31ba4ff23ed792b) build(ci): use alexfalkowski/go:2.13 (#199)
+- [`3bf7537`](https://github.com/alexfalkowski/go-health/commit/3bf7537532f61ea671920a31bb15db7aad91c9fb) build(codecov): add config (#198)
+- [`569da1b`](https://github.com/alexfalkowski/go-health/commit/569da1b9f0a1ff9cf51ee5d4d7c50c90fff1f524) build(ci): use alexfalkowski/go:2.12 (#197)
+- [`4e6cf79`](https://github.com/alexfalkowski/go-health/commit/4e6cf79b4ea31de564d9262319a4a091a03abfb1) build(deps): bump bin from `dbf1984` to `b0fd780` (#196)
+- [`8b4f4d6`](https://github.com/alexfalkowski/go-health/commit/8b4f4d6b8a690947ef16b0cb1a129a8da42805e5) build(ci): remove grpc from status (#195)
+- [`c6c3f0d`](https://github.com/alexfalkowski/go-health/commit/c6c3f0d5823829cfc835b20fde4bc4ca44f2d27b) build(deps): bump bin from `68f9c91` to `dbf1984` (#193)
+- [`e5ed68d`](https://github.com/alexfalkowski/go-health/commit/e5ed68d57e902128cef566268ac81f22cb082878) build(ci): specify the input through the parameters (#194)
+- [`d91879b`](https://github.com/alexfalkowski/go-health/commit/d91879b6dbe01dbaab8e7560ac00a1252d9aaac0) build(ci): use lexfalkowski/go:2.7 (#192)
+- [`b565310`](https://github.com/alexfalkowski/go-health/commit/b5653102a5e921fbbe7e6a30d1abff7952468e10) build(deps): bump bin from `16e2296` to `68f9c91` (#191)
+- [`0ded53b`](https://github.com/alexfalkowski/go-health/commit/0ded53b89474eca64a41b56fc50320cf43b0bfe6) build(ci): use alexfalkowski/go:2.5 (#190)
+- [`7d8f0a1`](https://github.com/alexfalkowski/go-health/commit/7d8f0a141c1a16215dcacb3d63f6022462b221fc) build(deps): bump bin from `c88983e` to `78af843` (#189)
+- [`19b462b`](https://github.com/alexfalkowski/go-health/commit/19b462bbae24fb0fb1aacab546d11f9c5bc62820) build(deps): bump bin from `16e2296` to `c88983e` (#188)
+- [`7a314b6`](https://github.com/alexfalkowski/go-health/commit/7a314b692e0ae6c50dface3884bd3558beaea59d) build(deps): bump bin from `db4042b` to `16e2296` (#187)
+- [`f43d1fc`](https://github.com/alexfalkowski/go-health/commit/f43d1fcb3ce7e8d4db330acc265b2fc4cf470380) build(ci): add clean (#186)
+- [`a58fee8`](https://github.com/alexfalkowski/go-health/commit/a58fee82102d62f839b53150cc5d3c4c427f191f) build(deps): bump bin from `96b240c` to `db4042b` (#185)
+- [`7a3c6b9`](https://github.com/alexfalkowski/go-health/commit/7a3c6b96fed7ec3734d9341596d3ca80d7f60dbe) build(deps): bump bin from `b887116` to `96b240c` (#184)
+- [`a5f0e3a`](https://github.com/alexfalkowski/go-health/commit/a5f0e3a57d190240a820912974b87fd0ca5c794f) build(ci): use alexfalkowski/go:2.2 (#182)
+- [`f03ada8`](https://github.com/alexfalkowski/go-health/commit/f03ada8a7b1bade1cb733c22983561bf0c7d3810) build(deps): bump bin from `8e1a9ac` to `b887116` (#181)
+- [`1294bb5`](https://github.com/alexfalkowski/go-health/commit/1294bb5ea9b01dd48689b54055abd4d998d4d634) build(ci): update alexfalkowski/go:2.1 (#180)
+- [`688bf6b`](https://github.com/alexfalkowski/go-health/commit/688bf6bfb7ae7f0f2f8044f6523d80aa1d3f9f76) build(deps): bump bin from `637442f` to `8e1a9ac` (#179)
+- [`9d11f58`](https://github.com/alexfalkowski/go-health/commit/9d11f58089643dbc1d8a247d5dd882f895880f67) build(deps): bump bin from `e1bf51d` to `637442f` (#178)
+- [`9a17742`](https://github.com/alexfalkowski/go-health/commit/9a17742cf90b57813c4d2f094c24974366d6f83b) build(ci): update to alexfalkowski/go:1.20 (#177)
+- [`4b9ebcc`](https://github.com/alexfalkowski/go-health/commit/4b9ebcc4338e5c041400dd684129e06d789999af) build(deps): bump bin from `c8030a1` to `637442f` (#176)
+- [`538cf83`](https://github.com/alexfalkowski/go-health/commit/538cf83fc244cfff7b667a7ba7befa59abfed8a6) build(deps): bump bin from `8592a53` to `c8030a1` (#175)
+- [`f0a6cec`](https://github.com/alexfalkowski/go-health/commit/f0a6ceca89d3be621750f79c8cce522468d3c0db) build(deps): bump bin from `6a2279d` to `8592a53` (#174)
+- [`aeb6895`](https://github.com/alexfalkowski/go-health/commit/aeb68958e2428a6fc33c05b8b2cae820be88f42d) build(deps): bump bin from `e1bf51d` to `6a2279d` (#173)
+- [`b636961`](https://github.com/alexfalkowski/go-health/commit/b636961ed49957860bab61ab98af59b7c0112e3a) build(deps): bump bin from `3e0336a` to `e1bf51d` (#172)
+- [`838069a`](https://github.com/alexfalkowski/go-health/commit/838069a57954dbd1ca1b6dbf66dad310d8e70d70) build(ci): update alexfalkowski/go:1.14 (#171)
+- [`fc53b5c`](https://github.com/alexfalkowski/go-health/commit/fc53b5c9964029996e4b9c9b8bf6f3083fce8034) build(ci): update linter config (#170)
+
 ## [v1.22.0](https://github.com/alexfalkowski/go-health/releases/tag/v1.22.0) - 2025-02-13
 
 - [`ccbd504`](https://github.com/alexfalkowski/go-health/commit/ccbd5040672135e86d0b637125c1cddff2e316a1) feat(go): update to v1.24.0 (#169)
