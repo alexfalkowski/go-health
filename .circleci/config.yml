@@ -13,6 +13,7 @@ jobs:
       - checkout
       - run: git submodule sync
       - run: git submodule update --init
+      - run: make source-key
       - restore_cache:
           name: restore go cache
           keys:
@@ -22,31 +23,31 @@ jobs:
       - run: make dep
       - save_cache:
           name: save go cache
-          key: go-health-go-cache-{{ checksum "go.sum" }}-{{ checksum "~/.go-version" }}
+          key: go-health-go-cache-{{ checksum "go.sum" }}-{{ checksum "~/.go-version" }}-{{ checksum ".source-key" }}
           paths:
             - ~/go/pkg/mod
       - restore_cache:
           name: restore go build cache
           keys:
-            - go-health-go-build-cache-{{ checksum "go.sum" }}-{{ checksum "~/.go-version" }}
+            - go-health-go-build-cache-{{ checksum "go.sum" }}-{{ checksum "~/.go-version" }}-{{ checksum ".source-key" }}
             - go-health-go-build-cache-
       - restore_cache:
           name: restore go lint cache
           keys:
-            - go-health-go-lint-cache-{{ checksum "go.sum" }}-{{ checksum "~/.go-lint-version" }}
+            - go-health-go-lint-cache-{{ checksum "go.sum" }}-{{ checksum "~/.go-lint-version" }}-{{ checksum ".source-key" }}
             - go-health-go-lint-cache-
       - run: make clean
       - run: make lint
       - save_cache:
           name: save go lint cache
-          key: go-health-go-lint-cache-{{ checksum "go.sum" }}-{{ checksum "~/.go-lint-version" }}
+          key: go-health-go-lint-cache-{{ checksum "go.sum" }}-{{ checksum "~/.go-lint-version" }}-{{ checksum ".source-key" }}
           paths:
             - ~/.cache/golangci-lint
       - run: make sec
       - run: make specs
       - save_cache:
           name: save go build cache
-          key: go-health-go-build-cache-{{ checksum "go.sum" }}-{{ checksum "~/.go-version" }}
+          key: go-health-go-build-cache-{{ checksum "go.sum" }}-{{ checksum "~/.go-version" }}-{{ checksum ".source-key" }}
           paths:
             - ~/.cache/go-build
       - run: make coverage
