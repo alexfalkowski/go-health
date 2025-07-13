@@ -3,11 +3,11 @@ version: 2.1
 jobs:
   build:
     docker:
-      - image: alexfalkowski/go:2.40
+      - image: alexfalkowski/go:2.41
       - image: alexfalkowski/status:latest
         command: server -i env:CONFIG
         environment:
-          CONFIG: yaml:ZW52aXJvbm1lbnQ6IGRldmVsb3BtZW50CmhlYWx0aDoKICBkdXJhdGlvbjogMXMKICB0aW1lb3V0OiAxcwppZDoKICBraW5kOiB1dWlkCnRlbGVtZXRyeToKICBsb2dnZXI6CiAgICBraW5kOiB0ZXh0CiAgICBsZXZlbDogaW5mbwp0cmFuc3BvcnQ6CiAgaHR0cDoKICAgIGFkZHJlc3M6IDo2MDAwCiAgICByZXRyeToKICAgICAgYmFja29mZjogMTAwbXMKICAgICAgdGltZW91dDogMXMKICAgICAgYXR0ZW1wdHM6IDMKICAgIHRpbWVvdXQ6IDEwcwogICAgdXNlcl9hZ2VudDogIlN0YXR1cy1zZXJ2ZXIvMS4wIGh0dHAvMS4wIgo=
+          CONFIG: yml:ZW52aXJvbm1lbnQ6IGRldmVsb3BtZW50CmhlYWx0aDoKICBkdXJhdGlvbjogMXMKICB0aW1lb3V0OiAxcwppZDoKICBraW5kOiB1dWlkCnRlbGVtZXRyeToKICBsb2dnZXI6CiAgICBraW5kOiB0ZXh0CiAgICBsZXZlbDogaW5mbwp0cmFuc3BvcnQ6CiAgaHR0cDoKICAgIGFkZHJlc3M6IHRjcDovLzo2MDAwCiAgICByZXRyeToKICAgICAgYmFja29mZjogMTAwbXMKICAgICAgdGltZW91dDogMXMKICAgICAgYXR0ZW1wdHM6IDMKICAgIHRpbWVvdXQ6IDEwcwogICAgdXNlcl9hZ2VudDogIlN0YXR1cy1zZXJ2ZXIvMS4wIGh0dHAvMS4wIgo=
     working_directory: ~/go-health
     steps:
       - checkout
@@ -33,13 +33,13 @@ jobs:
       - restore_cache:
           name: restore go lint cache
           keys:
-            - go-health-go-lint-cache-{{ checksum "go.sum" }}-{{ checksum "~/.go-version" }}
+            - go-health-go-lint-cache-{{ checksum "go.sum" }}-{{ checksum "~/.go-lint-version" }}
             - go-health-go-lint-cache-
       - run: make clean
       - run: make lint
       - save_cache:
           name: save go lint cache
-          key: go-health-go-lint-cache-{{ checksum "go.sum" }}-{{ checksum "~/.go-version" }}
+          key: go-health-go-lint-cache-{{ checksum "go.sum" }}-{{ checksum "~/.go-lint-version" }}
           paths:
             - ~/.cache/golangci-lint
       - run: make sec
