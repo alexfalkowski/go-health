@@ -3,6 +3,7 @@ package subscriber
 import (
 	"errors"
 	"fmt"
+	"maps"
 )
 
 // Errors for observers.
@@ -27,10 +28,7 @@ func (e Errors) Error() error {
 // Errors is a copy.
 func (e Errors) Errors() Errors {
 	errs := make(Errors, len(e))
-	for k, v := range e {
-		errs[k] = v
-	}
-
+	maps.Copy(errs, e)
 	return errs
 }
 

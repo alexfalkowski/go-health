@@ -35,7 +35,6 @@ func (p *Probe) Start() <-chan *Tick {
 
 	// Check on startup.
 	p.tick()
-
 	go p.start()
 
 	return p.ch
