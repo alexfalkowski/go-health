@@ -41,11 +41,9 @@ func parseOptions(opts ...Option) *options {
 	for _, o := range opts {
 		o.apply(os)
 	}
-
 	if os.roundTripper == nil {
 		os.roundTripper = http.DefaultTransport
 	}
-
 	if os.dialer == nil {
 		os.dialer = net.DefaultDialer
 	}

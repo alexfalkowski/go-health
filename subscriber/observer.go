@@ -10,7 +10,6 @@ func NewObserver(names []string, sub *Subscriber) *Observer {
 	}
 
 	ob := &Observer{errors: errors, sub: sub, mux: sync.RWMutex{}}
-
 	go ob.observe()
 
 	return ob
