@@ -33,6 +33,7 @@ So you are free to use any of these awesome solutions, though I had some require
 ### Types
 
 The types of monitoring that we want others to build is as follows:
+
 - White/Black box health
 - [Liveliness/Readiness](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/)
 - [Health Check API](https://microservices.io/patterns/observability/health-check-api.html)
@@ -66,9 +67,9 @@ func main() {
     tc := checker.NewTCPChecker("httpstat.us:80", timeout)
     tr := server.NewRegistration("tcp", 0, tc)
 
-    s.Register(hr, tr)
+    s.Register("myservice", hr, tr)
 
-    ob := s.Observe("http", "tcp")
+    ob := s.Observe("myservice", "livez", "http", "tcp")
 
     s.Start()
     defer s.Stop()

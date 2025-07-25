@@ -3,7 +3,7 @@ package server
 import (
 	"time"
 
-	"github.com/alexfalkowski/go-health/checker"
+	"github.com/alexfalkowski/go-health/v2/checker"
 )
 
 // NewOnlineRegistration for server.

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/alexfalkowski/go-health/sql"
+	"github.com/alexfalkowski/go-health/v2/sql"
 )
 
 var _ Checker = (*DBChecker)(nil)

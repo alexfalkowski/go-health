@@ -1,4 +1,4 @@
-module github.com/alexfalkowski/go-health
+module github.com/alexfalkowski/go-health/v2
 
 go 1.24.0
 
