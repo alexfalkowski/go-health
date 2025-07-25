@@ -418,6 +418,47 @@ func TestNonExistentObserver(t *testing.T) {
 	})
 }
 
+func TestObservers(t *testing.T) {
+	Convey("Given we have a new server", t, func() {
+		s := server.NewServer()
+
+		checker := checker.NewHTTPChecker(
+			"https://www.google.com/",
+			timeout,
+			checker.WithRoundTripper(http.DefaultTransport),
+		)
+		r := server.NewRegistration("google", period, checker)
+		s.Register("test", r)
+
+		Convey("When I get livez observers", func() {
+			s.Observe("test", "livez", r.Name)
+
+			var names []string
+			for name := range s.Observers("livez") {
+				names = append(names, name)
+				break
+			}
+
+			Convey("Then I should have an observer", func() {
+				So(names, ShouldEqual, []string{"test"})
+			})
+		})
+
+		Convey("When I get grpc observers", func() {
+			s.Observe("test", "livez", r.Name)
+
+			var names []string
+			for name := range s.Observers("grpc") {
+				names = append(names, name)
+			}
+
+			Convey("Then I should have no observers", func() {
+				So(names, ShouldBeEmpty)
+			})
+		})
+	})
+}
+
 func BenchmarkValidHTTPChecker(b *testing.B) {
 	b.ReportAllocs()
 
