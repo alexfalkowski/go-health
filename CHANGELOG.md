@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v2.0.0](https://github.com/alexfalkowski/go-health/releases/tag/v2.0.0) - 2025-07-25
+
+- [`37f92e4`](https://github.com/alexfalkowski/go-health/commit/37f92e4dd1bdd113b25e64033db4317350de367a) feat(server): use services (#238)
+- [`5eff5ba`](https://github.com/alexfalkowski/go-health/commit/5eff5ba636242111f2d41d32dbab51a73369f21a) build(deps): bump bin from `911aa21` to `b4da06c` (#239)
+- [`d7d2eea`](https://github.com/alexfalkowski/go-health/commit/d7d2eea6a1b4735a6e0f6ae5b4a1ed4454f503d0) build(ci): use latest published images (#237)
+
 ## [v1.24.0](https://github.com/alexfalkowski/go-health/releases/tag/v1.24.0) - 2025-07-22
 
 - [`94a7835`](https://github.com/alexfalkowski/go-health/commit/94a783523564217c673bea8cc7586fd8da1e3bc6) feat(subscriber): use maps.Copy (#236)
