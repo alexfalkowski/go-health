@@ -1,6 +1,8 @@
 package server
 
 import (
+	"iter"
+	"maps"
 	"sync"
 
 	"github.com/alexfalkowski/go-health/v2/subscriber"
@@ -23,6 +25,22 @@ func (s *Server) Register(name string, regs ...*Registration) {
 	service := NewService()
 	service.Register(regs...)
 	s.services[name] = service
+}
+
+// Observers for this server.
+func (s *Server) Observers(kind string) iter.Seq2[string, *subscriber.Observer] {
+	return func(yield func(string, *subscriber.Observer) bool) {
+		for name, service := range maps.All(s.services) {
+			observer := service.Observer(kind)
+			if observer == nil {
+				continue
+			}
+
+			if !yield(name, observer) {
+				return
+			}
+		}
+	}
 }
 
 // Observer from the service with name and kind of observer.
