@@ -3,55 +3,37 @@ package server
 import (
 	"sync"
 
-	"github.com/alexfalkowski/go-health/probe"
-	"github.com/alexfalkowski/go-health/subscriber"
-)
-
-type status string
-
-const (
-	started = status("started")
-	stopped = status("stopped")
+	"github.com/alexfalkowski/go-health/v2/subscriber"
 )
 
 // NewServer for health.
 func NewServer() *Server {
-	registry := make(map[string]*probe.Probe)
-	subscribers := []*subscriber.Subscriber{}
-
-	return &Server{registry: registry, subscribers: subscribers, done: nil, ticks: nil, wg: nil, mux: sync.Mutex{}, st: ""}
+	return &Server{services: make(map[string]*Service), mux: sync.Mutex{}}
 }
 
-// Server will maintain all the probes and start and stop them.
+// Server will maintain all the services and start and stop them.
 type Server struct {
-	registry    map[string]*probe.Probe
-	done        chan struct{}
-	ticks       chan *probe.Tick
-	wg          *sync.WaitGroup
-	st          status
-	subscribers []*subscriber.Subscriber
-	mux         sync.Mutex
+	services map[string]*Service
+	status   Status
+	mux      sync.Mutex
 }
 
-// Register all the registrations.
-func (s *Server) Register(regs ...*Registration) {
-	for _, reg := range regs {
-		s.registry[reg.Name] = probe.NewProbe(reg.Name, reg.Period, reg.Checker)
-	}
+// Register a service with name and registrations.
+func (s *Server) Register(name string, regs ...*Registration) {
+	service := NewService()
+	service.Register(regs...)
+	s.services[name] = service
 }
 
-// Subscribe to the names of the probes.
-func (s *Server) Subscribe(names ...string) *subscriber.Subscriber {
-	sub := subscriber.NewSubscriber(names)
-
-	s.subscribers = append(s.subscribers, sub)
-
-	return sub
+// Observer from the service with name and kind of observer.
+func (s *Server) Observer(name, kind string) *subscriber.Observer {
+	return s.services[name].Observer(kind)
 }
 
-// Observe the names of the probes.
-func (s *Server) Observe(names ...string) *subscriber.Observer {
-	return subscriber.NewObserver(names, s.Subscribe(names...))
+// Observe a service with name and kind of observer with names of the probes.
+func (s *Server) Observe(name, kind string, names ...string) *subscriber.Observer {
+	service := s.services[name]
+	return service.Observe(kind, names...)
 }
 
 // Start the server.
@@ -59,25 +41,14 @@ func (s *Server) Start() {
 	s.mux.Lock()
 	defer s.mux.Unlock()
 
-	if s.st == started {
+	if s.status.IsStarted() {
 		return
 	}
 
-	s.st = started
-	s.wg = &sync.WaitGroup{}
-	s.ticks = make(chan *probe.Tick, 1)
-	s.done = make(chan struct{}, 1)
-	chs := []<-chan *probe.Tick{}
-
-	for _, p := range s.registry {
-		s.wg.Add(1)
-
-		chs = append(chs, p.Start())
+	s.status = Started
+	for _, service := range s.services {
+		service.Start()
 	}
-
-	s.mergeChannels(chs)
-
-	go s.sendToSubscribers()
 }
 
 // Stop the server.
@@ -85,44 +56,12 @@ func (s *Server) Stop() {
 	s.mux.Lock()
 	defer s.mux.Unlock()
 
-	if s.st == "" || s.st == stopped {
+	if s.status.IsEmpty() || s.status.IsStopped() {
 		return
 	}
 
-	s.st = stopped
-	close(s.done)
-	s.wg.Wait()
-
-	for _, p := range s.registry {
-		p.Stop()
-	}
-
-	close(s.ticks)
-}
-
-func (s *Server) mergeChannels(chs []<-chan *probe.Tick) {
-	for _, ch := range chs {
-		go s.sendTick(ch)
-	}
-}
-
-func (s *Server) sendTick(ch <-chan *probe.Tick) {
-	defer s.wg.Done()
-
-	for {
-		select {
-		case <-s.done:
-			return
-		case t := <-ch:
-			s.ticks <- t
-		}
-	}
-}
-
-func (s *Server) sendToSubscribers() {
-	for t := range s.ticks {
-		for _, sub := range s.subscribers {
-			sub.Send(t)
-		}
+	s.status = Stopped
+	for _, service := range s.services {
+		service.Stop()
 	}
 }

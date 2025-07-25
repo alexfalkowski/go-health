@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/alexfalkowski/go-health/checker"
+	"github.com/alexfalkowski/go-health/v2/checker"
 )
 
 // NewProbe with period and checker.

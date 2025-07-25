@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/alexfalkowski/go-health/net"
+	"github.com/alexfalkowski/go-health/v2/net"
 )
 
 var _ Checker = (*TCPChecker)(nil)

@@ -3,7 +3,7 @@ package checker
 import (
 	"net/http"
 
-	"github.com/alexfalkowski/go-health/net"
+	"github.com/alexfalkowski/go-health/v2/net"
 )
 
 // Option for checker.
