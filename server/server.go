@@ -49,9 +49,9 @@ func (s *Server) Observer(name, kind string) *subscriber.Observer {
 }
 
 // Observe a service with name and kind of observer with names of the probes.
-func (s *Server) Observe(name, kind string, names ...string) *subscriber.Observer {
+func (s *Server) Observe(name, kind string, names ...string) {
 	service := s.services[name]
-	return service.Observe(kind, names...)
+	service.Observe(kind, names...)
 }
 
 // Start the server.

@@ -39,15 +39,11 @@ func (s *Service) Observer(kind string) *subscriber.Observer {
 }
 
 // Observe a kind with the names of the probes.
-func (s *Service) Observe(kind string, names ...string) *subscriber.Observer {
-	observer, ok := s.observers[kind]
-	if ok {
-		return observer
+func (s *Service) Observe(kind string, names ...string) {
+	_, ok := s.observers[kind]
+	if !ok {
+		s.observers[kind] = subscriber.NewObserver(names, s.subscribe(names...))
 	}
-
-	observer = subscriber.NewObserver(names, s.subscribe(names...))
-	s.observers[kind] = observer
-	return observer
 }
 
 // Start the service.
