@@ -1,12 +1,16 @@
 package server
 
 import (
+	"errors"
 	"iter"
 	"maps"
 	"sync"
 
 	"github.com/alexfalkowski/go-health/v2/subscriber"
 )
+
+// ErrServiceNotFound when the service has not been registered.
+var ErrServiceNotFound = errors.New("health: service not found")
 
 // NewServer for health.
 func NewServer() *Server {
@@ -31,8 +35,8 @@ func (s *Server) Register(name string, regs ...*Registration) {
 func (s *Server) Observers(kind string) iter.Seq2[string, *subscriber.Observer] {
 	return func(yield func(string, *subscriber.Observer) bool) {
 		for name, service := range maps.All(s.services) {
-			observer := service.Observer(kind)
-			if observer == nil {
+			observer, err := service.Observer(kind)
+			if err != nil {
 				continue
 			}
 
@@ -44,14 +48,24 @@ func (s *Server) Observers(kind string) iter.Seq2[string, *subscriber.Observer] 
 }
 
 // Observer from the service with name and kind of observer.
-func (s *Server) Observer(name, kind string) *subscriber.Observer {
-	return s.services[name].Observer(kind)
+func (s *Server) Observer(name, kind string) (*subscriber.Observer, error) {
+	service, ok := s.services[name]
+	if !ok {
+		return nil, ErrServiceNotFound
+	}
+
+	return service.Observer(kind)
 }
 
 // Observe a service with name and kind of observer with names of the probes.
-func (s *Server) Observe(name, kind string, names ...string) {
-	service := s.services[name]
+func (s *Server) Observe(name, kind string, names ...string) error {
+	service, ok := s.services[name]
+	if !ok {
+		return ErrServiceNotFound
+	}
+
 	service.Observe(kind, names...)
+	return nil
 }
 
 // Start the server.

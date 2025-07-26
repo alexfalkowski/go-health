@@ -1,11 +1,15 @@
 package server
 
 import (
+	"errors"
 	"sync"
 
 	"github.com/alexfalkowski/go-health/v2/probe"
 	"github.com/alexfalkowski/go-health/v2/subscriber"
 )
+
+// ErrServiceNotFound when the observer has not been registered.
+var ErrObserverNotFound = errors.New("health: observer not found")
 
 // NewService for health.
 func NewService() *Service {
@@ -34,8 +38,13 @@ func (s *Service) Register(regs ...*Registration) {
 }
 
 // Observer for kind.
-func (s *Service) Observer(kind string) *subscriber.Observer {
-	return s.observers[kind]
+func (s *Service) Observer(kind string) (*subscriber.Observer, error) {
+	observer, ok := s.observers[kind]
+	if !ok {
+		return nil, ErrObserverNotFound
+	}
+
+	return observer, nil
 }
 
 // Observe a kind with the names of the probes.
