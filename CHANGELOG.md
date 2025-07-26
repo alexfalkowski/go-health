@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v2.2.0](https://github.com/alexfalkowski/go-health/releases/tag/v2.2.0) - 2025-07-26
+
+- [`07eafc0`](https://github.com/alexfalkowski/go-health/commit/07eafc0e90358e94119e42b7576ab12c552b6c81) feat(server): observe just registers (#241)
+
 ## [v2.1.0](https://github.com/alexfalkowski/go-health/releases/tag/v2.1.0) - 2025-07-25
 
 - [`8652a89`](https://github.com/alexfalkowski/go-health/commit/8652a896fe1002840a30302ad0ce1a550a448f03) feat(server): add ability to get observers by kind (#240)
