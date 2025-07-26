@@ -68,12 +68,12 @@ func main() {
     tr := server.NewRegistration("tcp", 0, tc)
 
     s.Register("myservice", hr, tr)
-    s.Observe("myservice", "livez", "http", "tcp")
+    _ = s.Observe("myservice", "livez", "http", "tcp")
 
     s.Start()
     defer s.Stop()
 
-    ob := s.Observer("myservice", "livez")
+    ob, _ := s.Observer("myservice", "livez")
     ob.Error()  // This will update with an error or nil everything is OK.
     ob.Errors() // This will give you all the errors.
 }
