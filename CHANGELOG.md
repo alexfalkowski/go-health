@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v2.3.0](https://github.com/alexfalkowski/go-health/releases/tag/v2.3.0) - 2025-07-26
+
+- [`b8c2ecb`](https://github.com/alexfalkowski/go-health/commit/b8c2ecb1d73493f265b74ea4d1519d6e5a9395ab) feat(server): handle missing services or observers (#242)
+
 ## [v2.2.0](https://github.com/alexfalkowski/go-health/releases/tag/v2.2.0) - 2025-07-26
 
 - [`07eafc0`](https://github.com/alexfalkowski/go-health/commit/07eafc0e90358e94119e42b7576ab12c552b6c81) feat(server): observe just registers (#241)
