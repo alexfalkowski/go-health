@@ -57,20 +57,22 @@ jobs:
           path: test/reports
       - run: make codecov-upload
     resource_class: large
-  release:
+  version:
     docker:
-      - image: alexfalkowski/release:4.4
+      - image: alexfalkowski/release:5.2
     working_directory: ~/go-health
     steps:
       - checkout
-      - run: release
+      - run: git submodule sync
+      - run: git submodule update --init
+      - run: version
     resource_class: large
 
 workflows:
   go-health:
     jobs:
       - build
-      - release:
+      - version:
           context: gh
           requires:
             - build
