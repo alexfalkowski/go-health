@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v2.4.0](https://github.com/alexfalkowski/go-health/releases/tag/v2.4.0) - 2025-08-14
+
+- [`2635229`](https://github.com/alexfalkowski/go-health/commit/26352297a7131924fbe0f7590b157a77b21a9272) feat(go): update to v1.25.0 (#256)
+- [`df0a7b7`](https://github.com/alexfalkowski/go-health/commit/df0a7b7f7a7c57f91f4cfee5c5e6b9e4c98e9ca6) build(ci): use latest published images (#255)
+- [`9c53b33`](https://github.com/alexfalkowski/go-health/commit/9c53b334d10a5c331d48ceb36ad4379f72bef7b3) build(ci): use latest published images (#254)
+- [`e8949f4`](https://github.com/alexfalkowski/go-health/commit/e8949f453b72f62b4b20a126777eb171f3230dc7) build(ci): use latest published images (#253)
+- [`e9b05e7`](https://github.com/alexfalkowski/go-health/commit/e9b05e7e4b294f5a05bc3e0ea0b201fe9635c7a8) build(deps): bump bin from `4dda9b0` to `bf35764` (#252)
+- [`787caec`](https://github.com/alexfalkowski/go-health/commit/787caecbe4978d803e0ed8dd5d8fa1b810b7df9b) build(ci): use latest published images (#251)
+- [`b17b192`](https://github.com/alexfalkowski/go-health/commit/b17b192d84e1bc3b3aa78db71dba0b9bb02a8268) build(ci): use latest published images (#250)
+- [`c491dbb`](https://github.com/alexfalkowski/go-health/commit/c491dbba433712150aeb0c66ce5d53f61146e9bc) build(deps): bump bin from `22b4d36` to `4dda9b0` (#249)
+- [`0a389c3`](https://github.com/alexfalkowski/go-health/commit/0a389c35e28d09b65b54d0e44ca187fe44ca24c0) build(ci): use latest published images (#248)
+- [`1a6e722`](https://github.com/alexfalkowski/go-health/commit/1a6e722a9bf44835054baabd35306c7d88e6fb8b) build(ci): use latest published images (#247)
+- [`0f2ab00`](https://github.com/alexfalkowski/go-health/commit/0f2ab0088bf3c7f43e287f947f7d1edd113dc556) build(deps): bump bin from `fe4b684` to `22b4d36` (#246)
+- [`523c352`](https://github.com/alexfalkowski/go-health/commit/523c3527018371122728e79df9b4615305246ee4) build(ci): update submodule (#245)
+- [`243d3fe`](https://github.com/alexfalkowski/go-health/commit/243d3fe7375fb88d29f76de8bf2259498740b51a) build(ci): use latest published images (#244)
+- [`5f47464`](https://github.com/alexfalkowski/go-health/commit/5f474643d569dcf0007a2b244feb967741d213b2) build(ci): add missing .source-key (#243)
+
 ## [v2.3.0](https://github.com/alexfalkowski/go-health/releases/tag/v2.3.0) - 2025-07-26
 
 - [`b8c2ecb`](https://github.com/alexfalkowski/go-health/commit/b8c2ecb1d73493f265b74ea4d1519d6e5a9395ab) feat(server): handle missing services or observers (#242)
