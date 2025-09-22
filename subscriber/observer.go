@@ -30,7 +30,7 @@ func (o *Observer) Error() error {
 	return o.errors.Error()
 }
 
-// Error are a copy of rhe errors.
+// Errors are a copy of rhe errors.
 func (o *Observer) Errors() Errors {
 	o.mux.RLock()
 	defer o.mux.RUnlock()
