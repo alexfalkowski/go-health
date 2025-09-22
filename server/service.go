@@ -8,7 +8,7 @@ import (
 	"github.com/alexfalkowski/go-health/v2/subscriber"
 )
 
-// ErrServiceNotFound when the observer has not been registered.
+// ErrObserverNotFound when the observer has not been registered.
 var ErrObserverNotFound = errors.New("health: observer not found")
 
 // NewService for health.
