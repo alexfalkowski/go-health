@@ -10,7 +10,7 @@ import (
 	"github.com/alexfalkowski/go-health/v2/checker"
 	"github.com/alexfalkowski/go-health/v2/net"
 	"github.com/alexfalkowski/go-health/v2/server"
-	. "github.com/smartystreets/goconvey/convey" //nolint:revive
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -20,475 +20,370 @@ const (
 )
 
 func TestDoubleStart(t *testing.T) {
-	Convey("Given we have a new server", t, func() {
-		s := server.NewServer()
-		defer s.Stop()
+	s := server.NewServer()
+	defer s.Stop()
 
-		checker := checker.NewHTTPChecker(
-			"https://www.google.com/",
-			timeout,
-			checker.WithRoundTripper(http.DefaultTransport),
-		)
-		r := server.NewRegistration("google", period, checker)
-		s.Register("test", r)
+	checker := checker.NewHTTPChecker(
+		"https://www.google.com/",
+		timeout,
+		checker.WithRoundTripper(http.DefaultTransport),
+	)
+	r := server.NewRegistration("google", period, checker)
+	s.Register("test", r)
 
-		Convey("When I start the server", func() {
-			_ = s.Observe("test", "livez", r.Name)
-			_, _ = s.Observer("test", "livez")
+	_ = s.Observe("test", "livez", r.Name)
+	_, _ = s.Observer("test", "livez")
 
-			_ = s.Observe("test", "livez", r.Name)
-			ob, _ := s.Observer("test", "livez")
+	_ = s.Observe("test", "livez", r.Name)
+	ob, _ := s.Observer("test", "livez")
 
-			s.Start()
-			s.Start()
-			time.Sleep(wait)
+	s.Start()
+	s.Start()
+	time.Sleep(wait)
 
-			Convey("Then I should have no error from the observer", func() {
-				So(ob.Error(), ShouldBeNil)
-			})
-		})
-	})
+	require.NoError(t, ob.Error())
 }
 
 func TestOnlineChecker(t *testing.T) {
-	Convey("Given we have a new server", t, func() {
-		s := server.NewServer()
-		defer s.Stop()
+	s := server.NewServer()
+	defer s.Stop()
 
-		r := server.NewOnlineRegistration(0, period)
-		s.Register("test", r)
+	r := server.NewOnlineRegistration(0, period)
+	s.Register("test", r)
 
-		Convey("When I start the server", func() {
-			_ = s.Observe("test", "livez", r.Name)
-			ob, _ := s.Observer("test", "livez")
+	_ = s.Observe("test", "livez", r.Name)
+	ob, _ := s.Observer("test", "livez")
 
-			s.Start()
-			time.Sleep(wait)
+	s.Start()
+	time.Sleep(wait)
 
-			Convey("Then I should have no error from the observer", func() {
-				time.Sleep(wait)
-
-				So(ob.Error(), ShouldBeNil)
-			})
-		})
-	})
+	require.NoError(t, ob.Error())
 }
 
 func TestValidHTTPChecker(t *testing.T) {
-	Convey("Given we have a new server", t, func() {
-		s := server.NewServer()
-		defer s.Stop()
+	s := server.NewServer()
+	defer s.Stop()
 
-		checker := checker.NewHTTPChecker("https://www.google.com/", 0)
-		r := server.NewRegistration("google", period, checker)
-		s.Register("test", r)
+	checker := checker.NewHTTPChecker("https://www.google.com/", 0)
+	r := server.NewRegistration("google", period, checker)
+	s.Register("test", r)
 
-		Convey("When I start the server", func() {
-			_ = s.Observe("test", "livez", r.Name)
-			ob, _ := s.Observer("test", "livez")
+	_ = s.Observe("test", "livez", r.Name)
+	ob, _ := s.Observer("test", "livez")
 
-			s.Start()
-			time.Sleep(wait)
+	s.Start()
+	time.Sleep(wait)
 
-			Convey("Then I should have no error from the observer", func() {
-				time.Sleep(wait)
-
-				So(ob.Error(), ShouldBeNil)
-			})
-		})
-	})
+	require.NoError(t, ob.Error())
 }
 
 func TestInvalidURLHTTPChecker(t *testing.T) {
-	Convey("Given we have a new server", t, func() {
-		s := server.NewServer()
-		defer s.Stop()
+	s := server.NewServer()
+	defer s.Stop()
 
-		checker := checker.NewHTTPChecker("https://www.assaaasss.com/", timeout)
-		r := server.NewRegistration("assaaasss", period, checker)
-		s.Register("test", r)
+	checker := checker.NewHTTPChecker("https://www.assaaasss.com/", timeout)
+	r := server.NewRegistration("assaaasss", period, checker)
+	s.Register("test", r)
 
-		Convey("When I start the server", func() {
-			_ = s.Observe("test", "livez", r.Name)
-			ob, _ := s.Observer("test", "livez")
+	_ = s.Observe("test", "livez", r.Name)
+	ob, _ := s.Observer("test", "livez")
 
-			s.Start()
-			time.Sleep(wait)
+	s.Start()
+	time.Sleep(wait)
 
-			Convey("Then I should have error from the observer", func() {
-				So(ob.Error(), ShouldBeError)
-			})
-		})
-	})
+	require.Error(t, ob.Error())
 }
 
 func TestMalformedURLHTTPChecker(t *testing.T) {
-	Convey("Given we have a new server", t, func() {
-		s := server.NewServer()
-		defer s.Stop()
+	s := server.NewServer()
+	defer s.Stop()
 
-		checker := checker.NewHTTPChecker(string([]byte{0x7f}), timeout)
-		r := server.NewRegistration("assaaasss", period, checker)
-		s.Register("test", r)
+	checker := checker.NewHTTPChecker(string([]byte{0x7f}), timeout)
+	r := server.NewRegistration("assaaasss", period, checker)
+	s.Register("test", r)
 
-		Convey("When I start the server", func() {
-			_ = s.Observe("test", "livez", r.Name)
-			ob, _ := s.Observer("test", "livez")
+	_ = s.Observe("test", "livez", r.Name)
+	ob, _ := s.Observer("test", "livez")
 
-			s.Start()
-			time.Sleep(wait)
+	s.Start()
+	time.Sleep(wait)
 
-			Convey("Then I should have error from the observer", func() {
-				So(ob.Error(), ShouldBeError)
-			})
-		})
-	})
+	require.Error(t, ob.Error())
 }
 
 func TestInvalidCodeHTTPChecker(t *testing.T) {
-	Convey("Given we have a new server", t, func() {
-		s := server.NewServer()
-		defer s.Stop()
+	s := server.NewServer()
+	defer s.Stop()
 
-		checker := checker.NewHTTPChecker("http://localhost:6000/v1/status/400", timeout)
-		r := server.NewRegistration("http400", period, checker)
-		s.Register("test", r)
+	checker := checker.NewHTTPChecker("http://localhost:6000/v1/status/400", timeout)
+	r := server.NewRegistration("http400", period, checker)
+	s.Register("test", r)
 
-		Convey("When I start the server", func() {
-			_ = s.Observe("test", "livez", r.Name)
-			ob, _ := s.Observer("test", "livez")
+	_ = s.Observe("test", "livez", r.Name)
+	ob, _ := s.Observer("test", "livez")
 
-			s.Start()
-			time.Sleep(wait)
+	s.Start()
+	time.Sleep(wait)
 
-			Convey("Then I should have error from the observer", func() {
-				So(ob.Error(), ShouldBeError)
-			})
-		})
-	})
+	require.Error(t, ob.Error())
 }
 
 func TestTimeoutHTTPChecker(t *testing.T) {
-	Convey("Given we have a new server", t, func() {
-		s := server.NewServer()
-		defer s.Stop()
+	s := server.NewServer()
+	defer s.Stop()
 
-		checker := checker.NewHTTPChecker("http://localhost:6000/v1/status/200?sleep=5s", timeout)
-		r := server.NewRegistration("http200", period, checker)
-		s.Register("test", r)
+	checker := checker.NewHTTPChecker("http://localhost:6000/v1/status/200?sleep=5s", timeout)
+	r := server.NewRegistration("http200", period, checker)
+	s.Register("test", r)
 
-		Convey("When I start the server", func() {
-			_ = s.Observe("test", "livez", r.Name)
-			ob, _ := s.Observer("test", "livez")
+	_ = s.Observe("test", "livez", r.Name)
+	ob, _ := s.Observer("test", "livez")
 
-			s.Start()
-			time.Sleep(wait)
+	s.Start()
+	time.Sleep(wait)
 
-			Convey("Then I should have error from the observer", func() {
-				So(ob.Error(), ShouldBeError)
-			})
-		})
-	})
+	require.Error(t, ob.Error())
 }
 
 func TestValidTCPChecker(t *testing.T) {
-	Convey("Given we have a new server", t, func() {
-		s := server.NewServer()
-		defer s.Stop()
+	s := server.NewServer()
+	defer s.Stop()
 
-		checker := checker.NewTCPChecker(
-			"www.google.com:80",
-			timeout,
-			checker.WithDialer(net.DefaultDialer),
-		)
-		r := server.NewRegistration("tcp-google", period, checker)
-		s.Register("test", r)
+	checker := checker.NewTCPChecker(
+		"www.google.com:80",
+		timeout,
+		checker.WithDialer(net.DefaultDialer),
+	)
+	r := server.NewRegistration("tcp-google", period, checker)
+	s.Register("test", r)
 
-		Convey("When I start the server", func() {
-			_ = s.Observe("test", "livez", r.Name)
-			ob, _ := s.Observer("test", "livez")
+	_ = s.Observe("test", "livez", r.Name)
+	ob, _ := s.Observer("test", "livez")
 
-			s.Start()
-			time.Sleep(wait)
+	s.Start()
+	time.Sleep(wait)
 
-			Convey("Then I should have no error from the observer", func() {
-				So(ob.Error(), ShouldBeNil)
-			})
-		})
-	})
+	require.NoError(t, ob.Error())
 }
 
 func TestInvalidAddressTCPChecker(t *testing.T) {
-	Convey("Given we have a new server", t, func() {
-		s := server.NewServer()
-		defer s.Stop()
+	s := server.NewServer()
+	defer s.Stop()
 
-		checker := checker.NewTCPChecker("www.assaaasss.com:80", timeout)
-		r := server.NewRegistration("tcp-assaaasss", period, checker)
-		s.Register("test", r)
+	checker := checker.NewTCPChecker("www.assaaasss.com:80", timeout)
+	r := server.NewRegistration("tcp-assaaasss", period, checker)
+	s.Register("test", r)
 
-		Convey("When I start the server", func() {
-			_ = s.Observe("test", "livez", r.Name)
-			ob, _ := s.Observer("test", "livez")
+	_ = s.Observe("test", "livez", r.Name)
+	ob, _ := s.Observer("test", "livez")
 
-			s.Start()
-			time.Sleep(wait)
+	s.Start()
+	time.Sleep(wait)
 
-			Convey("Then I should have error from the observer", func() {
-				So(ob.Error(), ShouldBeError)
-				So(ob.Errors()["tcp-assaaasss"], ShouldBeError)
-			})
-		})
-	})
+	require.Error(t, ob.Error())
+	require.Error(t, ob.Errors()["tcp-assaaasss"])
 }
 
 func TestValidDBChecker(t *testing.T) {
-	Convey("Given we have a new server", t, func() {
-		s := server.NewServer()
-		defer s.Stop()
+	s := server.NewServer()
+	defer s.Stop()
 
-		db, _, err := sqlmock.New()
-		So(err, ShouldBeNil)
+	db, _, err := sqlmock.New()
+	require.NoError(t, err)
 
-		defer db.Close()
+	defer db.Close()
 
-		checker := checker.NewDBChecker(db, timeout)
-		r := server.NewRegistration("db", period, checker)
-		s.Register("test", r)
+	checker := checker.NewDBChecker(db, timeout)
+	r := server.NewRegistration("db", period, checker)
+	s.Register("test", r)
 
-		Convey("When I start the server", func() {
-			_ = s.Observe("test", "livez", r.Name)
-			ob, _ := s.Observer("test", "livez")
+	_ = s.Observe("test", "livez", r.Name)
+	ob, _ := s.Observer("test", "livez")
 
-			s.Start()
-			time.Sleep(wait)
+	s.Start()
+	time.Sleep(wait)
 
-			Convey("Then I should have no error from the observer", func() {
-				So(ob.Error(), ShouldBeNil)
-			})
-		})
-	})
+	require.NoError(t, ob.Error())
 }
 
 //nolint:err113
 func TestValidReadyChecker(t *testing.T) {
-	Convey("Given we have a new server", t, func() {
-		s := server.NewServer()
-		defer s.Stop()
+	s := server.NewServer()
+	defer s.Stop()
 
-		errNotReady := errors.New("not ready")
-		checker := checker.NewReadyChecker(errNotReady)
-		r := server.NewRegistration("ready", period, checker)
-		s.Register("test", r)
+	errNotReady := errors.New("not ready")
+	checker := checker.NewReadyChecker(errNotReady)
+	r := server.NewRegistration("ready", period, checker)
+	s.Register("test", r)
 
-		Convey("When I start the server", func() {
-			_ = s.Observe("test", "livez", r.Name)
-			ob, _ := s.Observer("test", "livez")
+	_ = s.Observe("test", "livez", r.Name)
+	ob, _ := s.Observer("test", "livez")
 
-			s.Start()
-			time.Sleep(wait)
+	s.Start()
+	time.Sleep(wait)
 
-			Convey("Then I should have no error from the observer", func() {
-				So(ob.Error(), ShouldBeError)
+	require.Error(t, ob.Error())
 
-				checker.Ready()
-				time.Sleep(wait)
-				So(ob.Error(), ShouldBeNil)
-			})
-		})
-	})
+	checker.Ready()
+	time.Sleep(wait)
+
+	require.NoError(t, ob.Error())
 }
 
 func TestValidNoopChecker(t *testing.T) {
-	Convey("Given we have a new server", t, func() {
-		s := server.NewServer()
-		defer s.Stop()
+	s := server.NewServer()
+	defer s.Stop()
 
-		checker := checker.NewNoopChecker()
-		r := server.NewRegistration("noop", period, checker)
-		s.Register("test", r)
+	checker := checker.NewNoopChecker()
+	r := server.NewRegistration("noop", period, checker)
+	s.Register("test", r)
 
-		Convey("When I start the server", func() {
-			_ = s.Observe("test", "livez", r.Name)
-			ob, _ := s.Observer("test", "livez")
+	_ = s.Observe("test", "livez", r.Name)
+	ob, _ := s.Observer("test", "livez")
 
-			s.Start()
-			time.Sleep(wait)
+	s.Start()
+	time.Sleep(wait)
 
-			Convey("Then I should have no error from the observer", func() {
-				So(ob.Error(), ShouldBeNil)
-			})
-		})
-	})
+	require.NoError(t, ob.Error())
 }
 
 func TestInvalidObserver(t *testing.T) {
-	Convey("Given we have a new server", t, func() {
-		s := server.NewServer()
-		defer s.Stop()
+	s := server.NewServer()
+	defer s.Stop()
 
-		cc := checker.NewHTTPChecker("http://localhost:6000/v1/status/400", timeout)
-		hr := server.NewRegistration("http1", period, cc)
-		tc := checker.NewTCPChecker("httpstat.us:9000", timeout)
-		tr := server.NewRegistration("tcp1", period, tc)
-		s.Register("test", hr, tr)
+	cc := checker.NewHTTPChecker("http://localhost:6000/v1/status/400", timeout)
+	hr := server.NewRegistration("http1", period, cc)
+	tc := checker.NewTCPChecker("httpstat.us:9000", timeout)
+	tr := server.NewRegistration("tcp1", period, tc)
+	s.Register("test", hr, tr)
 
-		Convey("When I start the server", func() {
-			_ = s.Observe("test", "livez", hr.Name, tr.Name)
-			ob, _ := s.Observer("test", "livez")
+	_ = s.Observe("test", "livez", hr.Name, tr.Name)
+	ob, _ := s.Observer("test", "livez")
 
-			s.Start()
-			time.Sleep(wait)
+	s.Start()
+	time.Sleep(wait)
 
-			Convey("Then I should have error from the probe", func() {
-				So(ob.Error(), ShouldBeError)
-			})
-		})
-	})
+	require.Error(t, ob.Error())
 }
 
 func TestValidObserver(t *testing.T) {
-	Convey("Given we have a new server", t, func() {
-		s := server.NewServer()
-		defer s.Stop()
+	s := server.NewServer()
+	defer s.Stop()
 
-		cc := checker.NewHTTPChecker("http://localhost:6000/v1/status/200", timeout)
-		hr := server.NewRegistration("http", period, cc)
-		tc := checker.NewTCPChecker("httpstat.us:80", timeout)
-		tr := server.NewRegistration("tcp", period, tc)
-		s.Register("test", hr, tr)
+	cc := checker.NewHTTPChecker("http://localhost:6000/v1/status/200", timeout)
+	hr := server.NewRegistration("http", period, cc)
+	tc := checker.NewTCPChecker("httpstat.us:80", timeout)
+	tr := server.NewRegistration("tcp", period, tc)
+	s.Register("test", hr, tr)
 
-		Convey("When I start the server", func() {
-			_ = s.Observe("test", "livez", hr.Name, tr.Name)
-			ob, _ := s.Observer("test", "livez")
+	_ = s.Observe("test", "livez", hr.Name, tr.Name)
+	ob, _ := s.Observer("test", "livez")
 
-			s.Start()
-			time.Sleep(wait)
+	s.Start()
+	time.Sleep(wait)
 
-			Convey("Then I should have no error from the probe", func() {
-				So(ob.Error(), ShouldBeNil)
-			})
-		})
-	})
+	require.NoError(t, ob.Error())
 }
 
 func TestOneInvalidObserver(t *testing.T) {
-	Convey("Given we have a new server", t, func() {
-		s := server.NewServer()
-		defer s.Stop()
+	s := server.NewServer()
+	defer s.Stop()
 
-		cc := checker.NewHTTPChecker("http://localhost:6000/v1/status/500", timeout)
-		hr := server.NewRegistration("http", period, cc)
-		tc := checker.NewTCPChecker("httpstat.us:80", timeout)
-		tr := server.NewRegistration("tcp", period, tc)
-		s.Register("test", hr, tr)
+	cc := checker.NewHTTPChecker("http://localhost:6000/v1/status/500", timeout)
+	hr := server.NewRegistration("http", period, cc)
+	tc := checker.NewTCPChecker("httpstat.us:80", timeout)
+	tr := server.NewRegistration("tcp", period, tc)
+	s.Register("test", hr, tr)
 
-		Convey("When I start the server", func() {
-			_ = s.Observe("test", "livez", tr.Name)
-			ob, _ := s.Observer("test", "livez")
+	_ = s.Observe("test", "livez", tr.Name)
+	ob, _ := s.Observer("test", "livez")
 
-			s.Start()
-			time.Sleep(wait)
+	s.Start()
+	time.Sleep(wait)
 
-			Convey("Then I should have no error from the probe", func() {
-				So(ob.Error(), ShouldBeNil)
-			})
-		})
-	})
+	require.NoError(t, ob.Error())
 }
 
 func TestNonExistentObserver(t *testing.T) {
-	Convey("Given we have a new server", t, func() {
-		s := server.NewServer()
-		defer s.Stop()
+	s := server.NewServer()
+	defer s.Stop()
 
-		cc := checker.NewHTTPChecker("http://localhost:6000/v1/status/200", timeout)
-		hr := server.NewRegistration("http", period, cc)
-		tc := checker.NewTCPChecker("httpstat.us:80", timeout)
-		tr := server.NewRegistration("tcp", period, tc)
-		s.Register("test", hr, tr)
+	cc := checker.NewHTTPChecker("http://localhost:6000/v1/status/200", timeout)
+	hr := server.NewRegistration("http", period, cc)
+	tc := checker.NewTCPChecker("httpstat.us:80", timeout)
+	tr := server.NewRegistration("tcp", period, tc)
+	s.Register("test", hr, tr)
 
-		Convey("When I observer a non existent registration", func() {
-			_ = s.Observe("test", "livez", "http1", "tcp1")
-			ob, _ := s.Observer("test", "livez")
+	_ = s.Observe("test", "livez", "http1", "tcp1")
+	ob, _ := s.Observer("test", "livez")
 
-			Convey("Then I should have no error from the probe", func() {
-				So(ob.Error(), ShouldBeNil)
-			})
-		})
-	})
+	require.NoError(t, ob.Error())
 }
 
-func TestObservers(t *testing.T) {
-	Convey("Given we have a new server", t, func() {
-		s := server.NewServer()
+func TestLivezObservers(t *testing.T) {
+	s := server.NewServer()
+	defer s.Stop()
 
-		checker := checker.NewHTTPChecker(
-			"https://www.google.com/",
-			timeout,
-			checker.WithRoundTripper(http.DefaultTransport),
-		)
-		r := server.NewRegistration("google", period, checker)
-		s.Register("test", r)
+	checker := checker.NewHTTPChecker(
+		"https://www.google.com/",
+		timeout,
+		checker.WithRoundTripper(http.DefaultTransport),
+	)
+	r := server.NewRegistration("google", period, checker)
+	s.Register("test", r)
 
-		Convey("When I get livez observers", func() {
-			_ = s.Observe("test", "livez", r.Name)
+	_ = s.Observe("test", "livez", r.Name)
 
-			var names []string
-			for name := range s.Observers("livez") {
-				names = append(names, name)
-				break
-			}
+	var names []string
+	for name := range s.Observers("livez") {
+		names = append(names, name)
+		break
+	}
 
-			Convey("Then I should have an observer", func() {
-				So(names, ShouldEqual, []string{"test"})
-			})
-		})
+	require.Equal(t, []string{"test"}, names)
+}
 
-		Convey("When I get grpc observers", func() {
-			_ = s.Observe("test", "livez", r.Name)
+func TestGRPCObservers(t *testing.T) {
+	s := server.NewServer()
+	defer s.Stop()
 
-			var names []string
-			for name := range s.Observers("grpc") {
-				names = append(names, name)
-			}
+	checker := checker.NewHTTPChecker(
+		"https://www.google.com/",
+		timeout,
+		checker.WithRoundTripper(http.DefaultTransport),
+	)
+	r := server.NewRegistration("google", period, checker)
+	s.Register("test", r)
 
-			Convey("Then I should have no observers", func() {
-				So(names, ShouldBeEmpty)
-			})
-		})
-	})
+	_ = s.Observe("test", "livez", r.Name)
+
+	var names []string
+	for name := range s.Observers("grpc") {
+		names = append(names, name)
+		break
+	}
+
+	require.Empty(t, names)
 }
 
 func TestInvalidObservers(t *testing.T) {
-	Convey("Given we have a new server", t, func() {
-		s := server.NewServer()
+	s := server.NewServer()
+	defer s.Stop()
 
-		checker := checker.NewHTTPChecker(
-			"https://www.google.com/",
-			timeout,
-			checker.WithRoundTripper(http.DefaultTransport),
-		)
-		r := server.NewRegistration("google", period, checker)
-		s.Register("test", r)
+	checker := checker.NewHTTPChecker(
+		"https://www.google.com/",
+		timeout,
+		checker.WithRoundTripper(http.DefaultTransport),
+	)
+	r := server.NewRegistration("google", period, checker)
+	s.Register("test", r)
 
-		Convey("When I observe for a missing service", func() {
-			err := s.Observe("bob", "livez", r.Name)
+	require.Error(t, s.Observe("bob", "livez", r.Name))
 
-			Convey("Then I should have an error", func() {
-				So(err, ShouldBeError)
-			})
-		})
+	_ = s.Observe("test", "livez", r.Name)
+	_, err := s.Observer("bob", "livez")
 
-		Convey("When I get an observer for a missing service", func() {
-			_ = s.Observe("test", "livez", r.Name)
-			_, err := s.Observer("bob", "livez")
-
-			Convey("Then I should have an error", func() {
-				So(err, ShouldBeError)
-			})
-		})
-	})
+	require.Error(t, err)
 }
 
 func BenchmarkValidHTTPChecker(b *testing.B) {
@@ -511,8 +406,6 @@ func BenchmarkValidHTTPChecker(b *testing.B) {
 	b.ResetTimer()
 
 	for b.Loop() {
-		if err := ob.Error(); err != nil {
-			b.Fail()
-		}
+		require.Error(b, ob.Error())
 	}
 }
