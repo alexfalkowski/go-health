@@ -11,6 +11,7 @@ linters:
     - nlreturn
     - noinlineerr
     - paralleltest
+    - prealloc
     - varnamelen
     - wrapcheck
     - wsl
