@@ -60,7 +60,7 @@ jobs:
     resource_class: large
   version:
     docker:
-      - image: alexfalkowski/release:5.27
+      - image: alexfalkowski/release:5.28
     working_directory: ~/go-health
     steps:
       - checkout:
