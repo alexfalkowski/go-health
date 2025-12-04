@@ -12,6 +12,7 @@ linters:
     - noinlineerr
     - paralleltest
     - prealloc
+    - revive
     - varnamelen
     - wrapcheck
     - wsl
