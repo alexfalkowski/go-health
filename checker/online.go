@@ -1,8 +1,6 @@
 package checker
 
-import (
-	"time"
-)
+import "time"
 
 var _ Checker = (*OnlineChecker)(nil)
 
