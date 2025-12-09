@@ -14,6 +14,7 @@ type Option interface {
 type options struct {
 	roundTripper http.RoundTripper
 	dialer       net.Dialer
+	urls         []string
 }
 
 type optionFunc func(*options)
@@ -36,6 +37,13 @@ func WithDialer(dialer net.Dialer) Option {
 	})
 }
 
+// WithURLs for checker.
+func WithURLs(urls ...string) Option {
+	return optionFunc(func(o *options) {
+		o.urls = urls
+	})
+}
+
 func parseOptions(opts ...Option) *options {
 	os := &options{}
 	for _, o := range opts {
@@ -46,6 +54,13 @@ func parseOptions(opts ...Option) *options {
 	}
 	if os.dialer == nil {
 		os.dialer = net.DefaultDialer
+	}
+	if len(os.urls) == 0 {
+		os.urls = []string{
+			"https://google.com/generate_204",
+			"https://cp.cloudflare.com/generate_204",
+			"https://connectivity-check.ubuntu.com",
+		}
 	}
 
 	return os
