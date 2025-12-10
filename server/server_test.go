@@ -60,6 +60,22 @@ func TestOnlineChecker(t *testing.T) {
 	require.NoError(t, ob.Error())
 }
 
+func TestInvalidOnlineChecker(t *testing.T) {
+	s := server.NewServer()
+	defer s.Stop()
+
+	r := server.NewOnlineRegistration(0, period, checker.WithURLs("https://www.assaaasss.com/"))
+	s.Register("test", r)
+
+	_ = s.Observe("test", "livez", r.Name)
+	ob, _ := s.Observer("test", "livez")
+
+	s.Start()
+	time.Sleep(wait)
+
+	require.Error(t, ob.Error())
+}
+
 func TestValidHTTPChecker(t *testing.T) {
 	s := server.NewServer()
 	defer s.Stop()

@@ -1,15 +1,60 @@
 package checker
 
-import "time"
+import (
+	"context"
+	"errors"
+	"net/http"
+	"sync"
+	"sync/atomic"
+	"time"
+)
 
 var _ Checker = (*OnlineChecker)(nil)
 
-// NewOnlineChecker checks https://google.com/generate_204.
+// ErrNotOnline when the system is not online.
+var ErrNotOnline = errors.New("not online")
+
+// NewOnlineChecker checks https://antonz.org/is-online/.
 func NewOnlineChecker(t time.Duration, opts ...Option) *OnlineChecker {
-	return &OnlineChecker{NewHTTPChecker("https://google.com/generate_204", t, opts...)}
+	os := parseOptions(opts...)
+
+	return &OnlineChecker{
+		urls:   os.urls,
+		client: &http.Client{Transport: os.roundTripper, Timeout: timeout(t)},
+	}
 }
 
-// OnlineChecker is just HTTPChecker with a url.
+// OnlineChecker will verify all the urls and if all are not online, it will return ErrNotOnline.
 type OnlineChecker struct {
-	*HTTPChecker
+	client *http.Client
+	urls   []string
+}
+
+// Check the all the urls.
+func (c *OnlineChecker) Check(ctx context.Context) error {
+	var counter atomic.Uint64
+	var wg sync.WaitGroup
+
+	for _, url := range c.urls {
+		wg.Go(func() {
+			req, _ := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
+
+			resp, err := c.client.Do(req)
+			if err != nil {
+				return
+			}
+			defer resp.Body.Close()
+
+			if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusNoContent {
+				counter.Add(1)
+			}
+		})
+	}
+
+	wg.Wait()
+
+	if counter.Load() == 0 {
+		return ErrNotOnline
+	}
+	return nil
 }
