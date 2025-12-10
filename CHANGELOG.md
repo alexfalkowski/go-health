@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v2.6.0](https://github.com/alexfalkowski/go-health/releases/tag/v2.6.0) - 2025-12-10
+
+- [`6c1653a`](https://github.com/alexfalkowski/go-health/commit/6c1653aa7194b79f53e63020de22274ac9e13438) feat(checker): make sure we handle bad urls (#303)
+
 ## [v2.5.0](https://github.com/alexfalkowski/go-health/releases/tag/v2.5.0) - 2025-12-10
 
 - [`5cb89ca`](https://github.com/alexfalkowski/go-health/commit/5cb89caa75c5bc3e7badabd46a68157afbe23d91) feat(checker): add more urls for online (#302)
