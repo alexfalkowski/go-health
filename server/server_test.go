@@ -19,6 +19,8 @@ const (
 	wait    = 1 * time.Second
 )
 
+var invalidURL = string([]byte{0x7f})
+
 func TestDoubleStart(t *testing.T) {
 	s := server.NewServer()
 	defer s.Stop()
@@ -64,7 +66,7 @@ func TestInvalidOnlineChecker(t *testing.T) {
 	s := server.NewServer()
 	defer s.Stop()
 
-	r := server.NewOnlineRegistration(0, period, checker.WithURLs("https://www.assaaasss.com/"))
+	r := server.NewOnlineRegistration(0, period, checker.WithURLs(invalidURL, "https://www.assaaasss.com/"))
 	s.Register("test", r)
 
 	_ = s.Observe("test", "livez", r.Name)
@@ -114,7 +116,7 @@ func TestMalformedURLHTTPChecker(t *testing.T) {
 	s := server.NewServer()
 	defer s.Stop()
 
-	checker := checker.NewHTTPChecker(string([]byte{0x7f}), timeout)
+	checker := checker.NewHTTPChecker(invalidURL, timeout)
 	r := server.NewRegistration("assaaasss", period, checker)
 	s.Register("test", r)
 

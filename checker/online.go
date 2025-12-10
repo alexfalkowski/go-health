@@ -3,6 +3,7 @@ package checker
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"sync"
 	"sync/atomic"
@@ -37,7 +38,10 @@ func (c *OnlineChecker) Check(ctx context.Context) error {
 
 	for _, url := range c.urls {
 		wg.Go(func() {
-			req, _ := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
+			req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
+			if err != nil {
+				return
+			}
 
 			resp, err := c.client.Do(req)
 			if err != nil {
@@ -54,7 +58,7 @@ func (c *OnlineChecker) Check(ctx context.Context) error {
 	wg.Wait()
 
 	if counter.Load() == 0 {
-		return ErrNotOnline
+		return fmt.Errorf("online checker: %w", ErrNotOnline)
 	}
 	return nil
 }
