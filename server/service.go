@@ -64,22 +64,38 @@ func (s *Service) Start() {
 
 	for _, p := range s.registry {
 		s.wg.Add(1)
-
 		chs = append(chs, p.Start())
 	}
 
 	s.mergeChannels(chs)
+	s.wg.Add(1)
 	go s.sendToSubscribers()
 }
 
 // Stop the server.
 func (s *Service) Stop() {
+	if s.done == nil {
+		for _, o := range s.observers {
+			o.Stop()
+		}
+		return
+	}
+
 	close(s.done)
-	s.wg.Wait()
 
 	for _, p := range s.registry {
 		p.Stop()
 	}
+
+	for _, o := range s.observers {
+		o.Stop()
+	}
+
+	for _, s := range s.subscribers {
+		s.Close()
+	}
+
+	s.wg.Wait()
 	close(s.ticks)
 }
 
@@ -109,9 +125,16 @@ func (s *Service) sendTick(ch <-chan *probe.Tick) {
 }
 
 func (s *Service) sendToSubscribers() {
-	for t := range s.ticks {
-		for _, sub := range s.subscribers {
-			sub.Send(t)
+	defer s.wg.Done()
+
+	for {
+		select {
+		case <-s.done:
+			return
+		case t := <-s.ticks:
+			for _, sub := range s.subscribers {
+				sub.Send(t)
+			}
 		}
 	}
 }
