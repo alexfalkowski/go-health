@@ -6,6 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v2.7.0](https://github.com/alexfalkowski/go-health/releases/tag/v2.7.0) - 2026-01-17
+
+- [`f1fb3b0`](https://github.com/alexfalkowski/go-health/commit/f1fb3b044f1d7bbebe3f77fb44ffacf902425fbf) feat(goroutine): remove leak (#330)
+- [`25d47b2`](https://github.com/alexfalkowski/go-health/commit/25d47b242517c712a4d634f95aba710aabc2cd92) docs(ai): add AGENTS.md (#329)
+- [`48f69d5`](https://github.com/alexfalkowski/go-health/commit/48f69d54fd4795d8de27f7e92a6cf5b5a74cf3d1) build(deps): bump bin from `42dc7ae` to `07eff55` (#328)
+- [`21af86e`](https://github.com/alexfalkowski/go-health/commit/21af86e78499d6b4c917f54fbf5b7cd6d481407c) build(ci): use latest published images (#327)
+- [`6ddacb4`](https://github.com/alexfalkowski/go-health/commit/6ddacb4b55afba72309835c997bf4615a705159f) build(ci): use latest published images (#326)
+- [`9af4969`](https://github.com/alexfalkowski/go-health/commit/9af496945dd1d2fa10b44a541d2c959d5d1bdaa1) build(ci): use latest published images (#325)
+- [`55cbc7c`](https://github.com/alexfalkowski/go-health/commit/55cbc7c91ebf69871541a4b0cd22a64024873b9e) build(ci): use latest published images (#324)
+- [`fd29a57`](https://github.com/alexfalkowski/go-health/commit/fd29a5781e7a3f94ea9bbd3c0a4c520199ceb07c) build(deps): upgraded github.com/alexfalkowski/bin (#323)
+- [`ada9acd`](https://github.com/alexfalkowski/go-health/commit/ada9acd7f5b01a6d04230457bc628f35ffcc9e12) build(ci): use latest published images (#322)
+- [`a59eaea`](https://github.com/alexfalkowski/go-health/commit/a59eaea2cfa74921103d217d869b3c091a81013a) build(ci): use latest published images (#321)
+- [`1a4ac34`](https://github.com/alexfalkowski/go-health/commit/1a4ac341dd9a22b34c10df16f15c0aec7896171f) build(ci): use latest published images (#320)
+- [`7ab1b9b`](https://github.com/alexfalkowski/go-health/commit/7ab1b9b7164d9d8f93f0c67801779032ad8d7a51) build(deps): upgraded github.com/alexfalkowski/bin (#319)
+- [`df97b92`](https://github.com/alexfalkowski/go-health/commit/df97b92bc7f7da6f3f8deeebc20cfc8a8ba42474) build(ci): use latest published images (#318)
+- [`697e36d`](https://github.com/alexfalkowski/go-health/commit/697e36d07a91162505adc12a366989efc76fd050) build(deps): bump bin from `664d367` to `302ba69` (#317)
+- [`79e7439`](https://github.com/alexfalkowski/go-health/commit/79e7439b0ada96dfc3ccc18afb169565e88af6b4) build(ci): use latest published images (#316)
+- [`859ac7c`](https://github.com/alexfalkowski/go-health/commit/859ac7c282d92fd20e310d7284603b906a3751d0) build(ci): use latest published images (#315)
+- [`3ab6b58`](https://github.com/alexfalkowski/go-health/commit/3ab6b58680a93b239dda2774009efddcb20ca9b7) build(ci): use latest published images (#314)
+- [`6975fa5`](https://github.com/alexfalkowski/go-health/commit/6975fa5ec99cc6f33f98bc01e53b4f976ef9d07d) build(deps): upgraded github.com/alexfalkowski/bin (#313)
+- [`68b9948`](https://github.com/alexfalkowski/go-health/commit/68b9948e76392b6a1d8ee6039eb482607081bf4a) build(deps): upgraded github.com/alexfalkowski/bin (#312)
+- [`20a9747`](https://github.com/alexfalkowski/go-health/commit/20a9747a860b6747b14477cc30580a40d03a5567) build(ci): use latest published images (#311)
+- [`99aa1af`](https://github.com/alexfalkowski/go-health/commit/99aa1af804918a47d5515678b7162ac1b9896438) build(ci): use latest published images (#310)
+- [`8b72dd9`](https://github.com/alexfalkowski/go-health/commit/8b72dd988abf53d725eccae993887b656e8cb852) build(deps): upgraded github.com/alexfalkowski/bin (#309)
+- [`ee15e05`](https://github.com/alexfalkowski/go-health/commit/ee15e0541739eeb551fd005bf4e34193d5b09053) build(deps): upgraded github.com/alexfalkowski/bin (#308)
+- [`0064e14`](https://github.com/alexfalkowski/go-health/commit/0064e1447350032c1505315853b5c5648d6918de) build(ci): use latest published images (#307)
+- [`93dce94`](https://github.com/alexfalkowski/go-health/commit/93dce9420d36ee53bb5648d13e48db2800477cff) build(deps): upgraded github.com/alexfalkowski/bin (#306)
+- [`b55b933`](https://github.com/alexfalkowski/go-health/commit/b55b933f85977a5222f8f39e6e22c41bc5c009e7) build(ci): use latest published images (#305)
+- [`fd695e5`](https://github.com/alexfalkowski/go-health/commit/fd695e5097ca382bb83c5d17f1165eab5de69bb2) build(ci): use latest published images (#304)
+
 ## [v2.6.0](https://github.com/alexfalkowski/go-health/releases/tag/v2.6.0) - 2025-12-10
 
 - [`6c1653a`](https://github.com/alexfalkowski/go-health/commit/6c1653aa7194b79f53e63020de22274ac9e13438) feat(checker): make sure we handle bad urls (#303)
