@@ -2,14 +2,17 @@
 
 ## Repository overview
 
-This is a Go library implementing a health monitoring pattern (async probes + observers). The public API is primarily under:
+This is a Go library implementing a health monitoring pattern (async probes + observers).
+
+Top-level packages:
 
 - `checker/`: check implementations (HTTP/TCP/DB/online/ready/noop/timeout)
 - `probe/`: periodic probe runner that emits ticks
 - `subscriber/`: subscriber/observer that tracks probe errors
 - `server/`: orchestration (services, registrations, observers)
 - `net/`: dialer abstraction used by checkers
-- `sql/`: DB “pinger” helper
+- `sql/`: DB “pinger” helper interface
+- `internal/test/`: test helpers (e.g. status service URL)
 
 Module: `github.com/alexfalkowski/go-health/v2` (`go.mod:1`).
 
@@ -26,7 +29,7 @@ The top-level `Makefile` only includes `bin/build/make/go.mak` and `bin/build/ma
 
 ## Essential commands
 
-All commands below are *observed* in `bin/build/make/go.mak` and CI (`.circleci/config.yml`).
+These commands are *observed* in `bin/build/make/go.mak` and CI (`.circleci/config.yml`).
 
 ### Dependencies
 
@@ -39,13 +42,15 @@ make dep
 
 ### Tests
 
+CI-style test run:
+
 ```sh
 make specs
 ```
 
-- Runs tests via `gotestsum` with `-race` and coverage output to `test/reports/` (`bin/build/make/go.mak:61-64`).
+- Uses `gotestsum` with `-race` and writes reports/coverage under `test/reports/` (`bin/build/make/go.mak:61-64`).
 
-Direct Go test (when you don’t need the CI-style reports):
+Local quick run:
 
 ```sh
 go test ./...
@@ -57,9 +62,9 @@ go test ./...
 make lint
 ```
 
-- Runs a “field alignment” check (`bin/build/make/go.mak:39-56`).
+- Runs field-alignment check (`bin/build/make/go.mak:39-44`).
 - Runs `golangci-lint` via `bin/build/go/lint` (`bin/build/make/go.mak:45-53`).
-- Formatting is configured via `.golangci.yml` (enables `gci`, `gofmt`, `gofumpt`, `goimports`).
+- Linter/formatter config is in `.golangci.yml`.
 
 Auto-fix (where supported):
 
@@ -78,28 +83,25 @@ make sec
 
 ### Coverage artifacts
 
-CI runs:
-
 ```sh
 make coverage
 ```
 
 - Generates HTML + function coverage outputs (`bin/build/make/go.mak:76-86`).
-- Coverage thresholds configured in `.codecov.yml`.
+- Codecov thresholds are in `.codecov.yml`.
 
-### Misc (available via Make targets)
+### Other useful Make targets
 
-From `bin/build/make/go.mak`, these targets exist but may require extra tools installed:
+From `bin/build/make/go.mak` (may require extra tools installed):
 
 - `make benchmark package=<pkg>` (`bin/build/make/go.mak:65-72`)
 - `make create-diagram package=<pkg>` (uses `goda` + `dot`) (`bin/build/make/go.mak:118-121`)
-- `make money` (uses `scc`) (`bin/build/make/go.mak:126-128`)
-- `make analyse` (uses `gsa`) (`bin/build/make/go.mak:122-125`)
 - `make create-certs` (uses `mkcert`) (`bin/build/make/go.mak:113-117`)
+- `make encode-config kind=<name>` (base64 encodes `test/<name>.yml`) (`bin/build/make/go.mak:109-112`)
 
 ## CI behavior (CircleCI)
 
-CircleCI runs these steps in order (`.circleci/config.yml:23-59`):
+CircleCI runs these steps (`.circleci/config.yml:23-59`):
 
 - `make clean`
 - `make dep`
@@ -109,32 +111,32 @@ CircleCI runs these steps in order (`.circleci/config.yml:23-59`):
 - `make coverage`
 - `make codecov-upload`
 
-CI also starts a “status” service container (`alexfalkowski/status:latest`) on `tcp://:6000` with a base64-encoded config (`.circleci/config.yml:6-10`).
+CI also starts a “status” service container (`alexfalkowski/status:latest`) with `command: server -i env:CONFIG` and a base64-encoded config in `CONFIG` (`.circleci/config.yml:6-10`).
 
 ## Testing gotchas
 
 ### Local status service dependency (`localhost:6000`)
 
-Some tests expect an HTTP status service on `http://localhost:6000` (e.g. `server/server_test.go:132-165`, `268-323`). If nothing is listening on `:6000`, those tests fail with `connect: connection refused`.
+Several tests expect an HTTP service that responds on `http://localhost:<port>/v1/status/<code>`.
 
-A config file for that service exists at `test/status.yml`.
+- The helper `internal/test.StatusURL` builds this URL and defaults to port `6000`; it can be overridden with `STATUS_PORT` (`internal/test/test.go:9-13`).
+- CI provides the service via a container (`.circleci/config.yml:6-10`).
+- A sample config exists at `test/status.yml`.
 
-CI satisfies this by starting a container (`alexfalkowski/status:latest`) with `command: server -i env:CONFIG` and a base64-encoded config in `CONFIG` (`.circleci/config.yml:6-10`).
-
-There is also a `make start`/`make stop` pair (`bin/build/make/go.mak:130-136`), but it uses `bin/build/docker/env` which clones/pulls `git@github.com:alexfalkowski/docker.git` (`bin/build/docker/env:10-19`) and may require GitHub SSH access and Docker.
+If nothing is listening, `go test ./...` fails with `connect: connection refused` (e.g. `server/server_test.go`).
 
 ### External network dependency
 
-Some tests hit external endpoints (e.g. `https://www.google.com/`, `httpstat.us`) (`server/server_test.go:28-33`, `291-295`), so running the full suite may require outbound network access.
+Some tests hit external endpoints (e.g. `https://www.google.com/`, `httpstat.us`) (`server/server_test.go:28-33`, `291-295`). Running the full suite may require outbound network access.
 
 ## Code organization & patterns
 
 ### High-level flow
 
-- A `server.Server` holds named `Service`s and controls start/stop (`server/server.go:16-99`).
-- A `Service` registers probes, merges their tick channels, and broadcasts ticks to subscribers (`server/service.go:14-117`).
-- A `probe.Probe` runs a `checker.Checker` periodically and sends `*probe.Tick` on a buffered channel (`probe/probe.go:11-67`).
-- A `subscriber.Observer` maintains an `Errors` map and updates it by receiving ticks from a subscriber (`subscriber/observer.go:5-47`).
+- `server.Server` holds named `Service`s and controls start/stop (`server/server.go:15-99`).
+- `server.Service` registers probes, merges their tick channels, and broadcasts ticks to subscribers (`server/service.go:14-140`).
+- `probe.Probe` runs a `checker.Checker` periodically and sends `*probe.Tick` on a buffered channel (`probe/probe.go:16-86`).
+- `subscriber.Observer` maintains an `Errors` map and updates it by receiving ticks from a `Subscriber` (`subscriber/observer.go:5-93`).
 
 ### Interfaces & options
 
@@ -146,17 +148,18 @@ Some tests hit external endpoints (e.g. `https://www.google.com/`, `httpstat.us`
 
 ### Error wrapping style
 
-Checkers generally wrap errors with a component prefix, e.g. `fmt.Errorf("http checker: %w", err)` (`checker/http.go:33-53`) and `fmt.Errorf("tcp checker: %w", err)` (`checker/tcp.go:28-39`).
+Checkers wrap errors with a component prefix, e.g. `fmt.Errorf("http checker: %w", err)` (`checker/http.go:33-53`).
+
+### Concurrency & shutdown notes
+
+- `subscriber.Observer` starts a goroutine in `Start()` and can be stopped via `Stop()` (`subscriber/observer.go:28-62`).
+- `server.Service.Stop()` calls `Observer.Stop()` and closes subscribers (`server/service.go:75-100`).
+- `probe.Probe.Start()` is idempotent; `Stop()` is guarded and won’t double-close (`probe/probe.go:29-63`).
 
 ## Lint/style conventions
 
-- `golangci-lint` is used with “default: all” and a set of disabled linters (`.golangci.yml:1-20`).
+- `golangci-lint` config: `.golangci.yml` (default: all; many disabled).
 - Formatters are enabled via golangci-lint (`.golangci.yml:31-36`).
-
-Follow existing style:
-
-- Tabs for indentation (standard gofmt output).
-- Keep APIs small and dependency-free; most packages use only stdlib.
 
 ## Submodule notes
 
@@ -166,6 +169,6 @@ Follow existing style:
 ## Where to look first when changing behavior
 
 - Add a new check type: implement `checker.Checker` under `checker/` and wire it via `server.Registration` helpers (see `server/registration.go:9-21`).
-- Probe scheduling and tick emission: `probe/probe.go:27-67`.
-- Aggregation and fan-out: `server/service.go:58-117`.
-- Observer semantics (first error vs all errors): `subscriber/observer.go:25-39` and `subscriber/errors.go`.
+- Probe scheduling and tick emission: `probe/probe.go:29-86`.
+- Aggregation/fan-out: `server/service.go:58-140`.
+- Observer error semantics: `subscriber/errors.go` and `subscriber/observer.go`.

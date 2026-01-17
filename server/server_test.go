@@ -8,6 +8,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/alexfalkowski/go-health/v2/checker"
+	"github.com/alexfalkowski/go-health/v2/internal/test"
 	"github.com/alexfalkowski/go-health/v2/net"
 	"github.com/alexfalkowski/go-health/v2/server"
 	"github.com/stretchr/testify/require"
@@ -149,7 +150,7 @@ func TestInvalidCodeHTTPChecker(t *testing.T) {
 	s := server.NewServer()
 	defer s.Stop()
 
-	checker := checker.NewHTTPChecker("http://localhost:6000/v1/status/400", timeout)
+	checker := checker.NewHTTPChecker(test.StatusURL("400"), timeout)
 	r := server.NewRegistration("http400", period, checker)
 	s.Register("test", r)
 
@@ -166,7 +167,7 @@ func TestTimeoutHTTPChecker(t *testing.T) {
 	s := server.NewServer()
 	defer s.Stop()
 
-	checker := checker.NewHTTPChecker("http://localhost:6000/v1/status/200?sleep=5s", timeout)
+	checker := checker.NewHTTPChecker(test.StatusURL("200?sleep=5s"), timeout)
 	r := server.NewRegistration("http200", period, checker)
 	s.Register("test", r)
 
@@ -285,7 +286,7 @@ func TestInvalidObserver(t *testing.T) {
 	s := server.NewServer()
 	defer s.Stop()
 
-	cc := checker.NewHTTPChecker("http://localhost:6000/v1/status/400", timeout)
+	cc := checker.NewHTTPChecker(test.StatusURL("400"), timeout)
 	hr := server.NewRegistration("http1", period, cc)
 	tc := checker.NewTCPChecker("httpstat.us:9000", timeout)
 	tr := server.NewRegistration("tcp1", period, tc)
@@ -304,7 +305,7 @@ func TestValidObserver(t *testing.T) {
 	s := server.NewServer()
 	defer s.Stop()
 
-	cc := checker.NewHTTPChecker("http://localhost:6000/v1/status/200", timeout)
+	cc := checker.NewHTTPChecker(test.StatusURL("200"), timeout)
 	hr := server.NewRegistration("http", period, cc)
 	tc := checker.NewTCPChecker("httpstat.us:80", timeout)
 	tr := server.NewRegistration("tcp", period, tc)
@@ -323,7 +324,7 @@ func TestOneInvalidObserver(t *testing.T) {
 	s := server.NewServer()
 	defer s.Stop()
 
-	cc := checker.NewHTTPChecker("http://localhost:6000/v1/status/500", timeout)
+	cc := checker.NewHTTPChecker(test.StatusURL("500"), timeout)
 	hr := server.NewRegistration("http", period, cc)
 	tc := checker.NewTCPChecker("httpstat.us:80", timeout)
 	tr := server.NewRegistration("tcp", period, tc)
@@ -342,7 +343,7 @@ func TestNonExistentObserver(t *testing.T) {
 	s := server.NewServer()
 	defer s.Stop()
 
-	cc := checker.NewHTTPChecker("http://localhost:6000/v1/status/200", timeout)
+	cc := checker.NewHTTPChecker(test.StatusURL("200"), timeout)
 	hr := server.NewRegistration("http", period, cc)
 	tc := checker.NewTCPChecker("httpstat.us:80", timeout)
 	tr := server.NewRegistration("tcp", period, tc)
