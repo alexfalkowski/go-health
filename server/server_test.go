@@ -21,6 +21,22 @@ const (
 
 var invalidURL = string([]byte{0x7f})
 
+func TestStop(t *testing.T) {
+	s := server.NewServer()
+
+	stopped := make(chan struct{})
+	go func() {
+		s.Stop()
+		close(stopped)
+	}()
+
+	select {
+	case <-stopped:
+	case <-time.After(time.Second):
+		t.Fatal("server stop timed out")
+	}
+}
+
 func TestDoubleStart(t *testing.T) {
 	s := server.NewServer()
 	defer s.Stop()

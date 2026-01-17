@@ -22,6 +22,8 @@ type Probe struct {
 	name    string
 	period  time.Duration
 	mux     sync.Mutex
+	started bool
+	stopped bool
 }
 
 // Start the probe.
@@ -29,6 +31,12 @@ func (p *Probe) Start() <-chan *Tick {
 	p.mux.Lock()
 	defer p.mux.Unlock()
 
+	if p.started {
+		return p.ch
+	}
+
+	p.started = true
+	p.stopped = false
 	p.done = make(chan struct{}, 1)
 	p.ch = make(chan *Tick, 1)
 	p.ticker = time.NewTicker(p.period)
@@ -45,6 +53,11 @@ func (p *Probe) Stop() {
 	p.mux.Lock()
 	defer p.mux.Unlock()
 
+	if !p.started || p.stopped {
+		return
+	}
+
+	p.stopped = true
 	p.ticker.Stop()
 	close(p.done)
 }
@@ -63,5 +76,11 @@ func (p *Probe) start() {
 }
 
 func (p *Probe) tick() {
-	p.ch <- NewTick(p.name, p.checker.Check(context.Background()))
+	tick := NewTick(p.name, p.checker.Check(context.Background()))
+
+	select {
+	case <-p.done:
+		return
+	case p.ch <- tick:
+	}
 }
