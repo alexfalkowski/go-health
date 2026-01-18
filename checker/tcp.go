@@ -33,10 +33,7 @@ func (c *TCPChecker) Check(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("tcp checker: %w", err)
 	}
-
-	if err := conn.Close(); err != nil {
-		return fmt.Errorf("tcp checker: %w", err)
-	}
+	defer conn.Close()
 
 	return nil
 }

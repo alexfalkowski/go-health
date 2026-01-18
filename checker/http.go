@@ -40,16 +40,10 @@ func (c *HTTPChecker) Check(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("http checker: %w", err)
 	}
+	defer response.Body.Close()
 
 	if response.StatusCode >= 400 && response.StatusCode <= 599 {
-		// Nothing we can do with the error.
-		_ = response.Body.Close()
-
 		return fmt.Errorf("http checker: %w", ErrInvalidStatusCode)
-	}
-
-	if err := response.Body.Close(); err != nil {
-		return fmt.Errorf("http checker: %w", err)
 	}
 
 	return nil
