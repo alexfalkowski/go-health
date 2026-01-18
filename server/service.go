@@ -14,20 +14,25 @@ var ErrObserverNotFound = errors.New("health: observer not found")
 // NewService for health.
 func NewService() *Service {
 	return &Service{
-		registry:    make(map[string]*probe.Probe),
-		observers:   make(map[string]*subscriber.Observer),
-		subscribers: []*subscriber.Subscriber{},
+		registry:     make(map[string]*probe.Probe),
+		observers:    make(map[string]*subscriber.Observer),
+		subscribers:  []*subscriber.Subscriber{},
+		registryWG:   &sync.WaitGroup{},
+		subscriberWG: &sync.WaitGroup{},
+		ticks:        make(chan *probe.Tick, 1),
+		done:         make(chan struct{}),
 	}
 }
 
 // Service will maintain all the probes and start and stop them.
 type Service struct {
-	registry    map[string]*probe.Probe
-	observers   map[string]*subscriber.Observer
-	done        chan struct{}
-	ticks       chan *probe.Tick
-	wg          *sync.WaitGroup
-	subscribers []*subscriber.Subscriber
+	registry     map[string]*probe.Probe
+	observers    map[string]*subscriber.Observer
+	done         chan struct{}
+	ticks        chan *probe.Tick
+	registryWG   *sync.WaitGroup
+	subscriberWG *sync.WaitGroup
+	subscribers  []*subscriber.Subscriber
 }
 
 // Register all the registrations.
@@ -57,30 +62,34 @@ func (s *Service) Observe(kind string, names ...string) {
 
 // Start the service.
 func (s *Service) Start() {
-	s.wg = &sync.WaitGroup{}
-	s.ticks = make(chan *probe.Tick, 1)
-	s.done = make(chan struct{}, 1)
 	chs := []<-chan *probe.Tick{}
-
 	for _, p := range s.registry {
-		s.wg.Add(1)
-
+		s.registryWG.Add(1)
 		chs = append(chs, p.Start())
 	}
 
 	s.mergeChannels(chs)
-	go s.sendToSubscribers()
+	s.subscriberWG.Go(func() {
+		s.sendToSubscribers()
+	})
 }
 
 // Stop the server.
 func (s *Service) Stop() {
-	close(s.done)
-	s.wg.Wait()
-
+	// Stop probes first so their tick channels can close and sendTick goroutines can exit cleanly.
 	for _, p := range s.registry {
 		p.Stop()
 	}
+
+	// Signal all sendTick goroutines to stop and wait for them to finish.
+	close(s.done)
+	s.registryWG.Wait()
+
+	// Now it is safe to close the fan-in channel: no further sends can occur.
 	close(s.ticks)
+
+	// Wait for the fan-out goroutine to drain/exit and close all subscribers.
+	s.subscriberWG.Wait()
 }
 
 func (s *Service) subscribe(names ...string) *subscriber.Subscriber {
@@ -96,14 +105,23 @@ func (s *Service) mergeChannels(chs []<-chan *probe.Tick) {
 }
 
 func (s *Service) sendTick(ch <-chan *probe.Tick) {
-	defer s.wg.Done()
+	defer s.registryWG.Done()
 
 	for {
 		select {
 		case <-s.done:
 			return
-		case t := <-ch:
-			s.ticks <- t
+		case t, ok := <-ch:
+			if !ok {
+				return
+			}
+
+			// Avoid sending after shutdown starts.
+			select {
+			case <-s.done:
+				return
+			case s.ticks <- t:
+			}
 		}
 	}
 }
@@ -113,5 +131,9 @@ func (s *Service) sendToSubscribers() {
 		for _, sub := range s.subscribers {
 			sub.Send(t)
 		}
+	}
+
+	for _, sub := range s.subscribers {
+		sub.Close()
 	}
 }
