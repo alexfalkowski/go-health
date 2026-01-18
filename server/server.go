@@ -20,8 +20,8 @@ func NewServer() *Server {
 // Server will maintain all the services and start and stop them.
 type Server struct {
 	services map[string]*Service
-	status   Status
 	mux      sync.Mutex
+	running  bool
 }
 
 // Register a service with name and registrations.
@@ -73,14 +73,14 @@ func (s *Server) Start() {
 	s.mux.Lock()
 	defer s.mux.Unlock()
 
-	if s.status.IsStarted() {
+	if s.running {
 		return
 	}
 
-	s.status = Started
 	for _, service := range s.services {
 		service.Start()
 	}
+	s.running = true
 }
 
 // Stop the server.
@@ -88,12 +88,12 @@ func (s *Server) Stop() {
 	s.mux.Lock()
 	defer s.mux.Unlock()
 
-	if s.status.IsEmpty() || s.status.IsStopped() {
+	if !s.running {
 		return
 	}
 
-	s.status = Stopped
 	for _, service := range s.services {
 		service.Stop()
 	}
+	s.running = false
 }
