@@ -10,10 +10,12 @@ import (
 
 var _ Checker = (*HTTPChecker)(nil)
 
-// ErrInvalidStatusCode when we have errors that are not in the 200-300 range.
+// ErrInvalidStatusCode is returned when the response status code is in the 4xx or 5xx range.
 var ErrInvalidStatusCode = errors.New("invalid status code")
 
-// NewHTTPChecker with url, round tripper and timeout.
+// NewHTTPChecker returns an HTTPChecker that performs a GET request to url.
+//
+// The timeout is applied to the underlying http.Client.
 func NewHTTPChecker(url string, t time.Duration, opts ...Option) *HTTPChecker {
 	os := parseOptions(opts...)
 
@@ -23,13 +25,13 @@ func NewHTTPChecker(url string, t time.Duration, opts ...Option) *HTTPChecker {
 	}
 }
 
-// HTTPChecker with url, round tripper and timeout..
+// HTTPChecker performs an HTTP GET request to a URL.
 type HTTPChecker struct {
 	client *http.Client
 	url    string
 }
 
-// Check the URL with a GET.
+// Check performs an HTTP GET request.
 func (c *HTTPChecker) Check(ctx context.Context) error {
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, c.url, http.NoBody)
 	if err != nil {

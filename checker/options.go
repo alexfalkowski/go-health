@@ -23,21 +23,21 @@ func (f optionFunc) apply(o *options) {
 	f(o)
 }
 
-// WithRoundTripper for checker.
+// WithRoundTripper sets the HTTP transport used by HTTPChecker and OnlineChecker.
 func WithRoundTripper(rt http.RoundTripper) Option {
 	return optionFunc(func(o *options) {
 		o.roundTripper = rt
 	})
 }
 
-// WithDialer for checker.
+// WithDialer sets the dialer used by TCPChecker.
 func WithDialer(dialer net.Dialer) Option {
 	return optionFunc(func(o *options) {
 		o.dialer = dialer
 	})
 }
 
-// WithURLs for checker.
+// WithURLs sets the list of URLs used by OnlineChecker.
 func WithURLs(urls ...string) Option {
 	return optionFunc(func(o *options) {
 		o.urls = urls

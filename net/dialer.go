@@ -1,3 +1,4 @@
+// Package net contains small network-related interfaces.
 package net
 
 import (

@@ -1,3 +1,4 @@
+// Package server orchestrates probes and observers for multiple services.
 package server
 
 import (
@@ -12,26 +13,26 @@ import (
 // ErrServiceNotFound when the service has not been registered.
 var ErrServiceNotFound = errors.New("health: service not found")
 
-// NewServer for health.
+// NewServer returns a Server.
 func NewServer() *Server {
 	return &Server{services: make(map[string]*Service), mux: sync.Mutex{}}
 }
 
-// Server will maintain all the services and start and stop them.
+// Server maintains registered services and can start/stop them.
 type Server struct {
 	services map[string]*Service
 	mux      sync.Mutex
 	running  bool
 }
 
-// Register a service with name and registrations.
+// Register adds a service with name and registrations.
 func (s *Server) Register(name string, regs ...*Registration) {
 	service := NewService()
 	service.Register(regs...)
 	s.services[name] = service
 }
 
-// Observers for this server.
+// Observers returns all observers of the given kind.
 func (s *Server) Observers(kind string) iter.Seq2[string, *subscriber.Observer] {
 	return func(yield func(string, *subscriber.Observer) bool) {
 		for name, service := range maps.All(s.services) {
@@ -47,7 +48,7 @@ func (s *Server) Observers(kind string) iter.Seq2[string, *subscriber.Observer] 
 	}
 }
 
-// Observer from the service with name and kind of observer.
+// Observer returns an observer for the service name and observer kind.
 func (s *Server) Observer(name, kind string) (*subscriber.Observer, error) {
 	service, ok := s.services[name]
 	if !ok {
@@ -57,7 +58,9 @@ func (s *Server) Observer(name, kind string) (*subscriber.Observer, error) {
 	return service.Observer(kind)
 }
 
-// Observe a service with name and kind of observer with names of the probes.
+// Observe registers an observer kind for the service name.
+//
+// The observer will track the probes listed in names.
 func (s *Server) Observe(name, kind string, names ...string) error {
 	service, ok := s.services[name]
 	if !ok {
@@ -68,7 +71,7 @@ func (s *Server) Observe(name, kind string, names ...string) error {
 	return nil
 }
 
-// Start the server.
+// Start starts all registered services.
 func (s *Server) Start() {
 	s.mux.Lock()
 	defer s.mux.Unlock()
@@ -83,7 +86,7 @@ func (s *Server) Start() {
 	s.running = true
 }
 
-// Stop the server.
+// Stop stops all registered services.
 func (s *Server) Stop() {
 	s.mux.Lock()
 	defer s.mux.Unlock()

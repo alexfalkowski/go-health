@@ -15,7 +15,10 @@ var _ Checker = (*OnlineChecker)(nil)
 // ErrNotOnline when the system is not online.
 var ErrNotOnline = errors.New("not online")
 
-// NewOnlineChecker checks https://antonz.org/is-online/.
+// NewOnlineChecker returns an OnlineChecker that checks whether any configured URL
+// is reachable.
+//
+// It uses the default URL list unless overridden via WithURLs.
 func NewOnlineChecker(t time.Duration, opts ...Option) *OnlineChecker {
 	os := parseOptions(opts...)
 
@@ -25,13 +28,14 @@ func NewOnlineChecker(t time.Duration, opts ...Option) *OnlineChecker {
 	}
 }
 
-// OnlineChecker will verify all the urls and if all are not online, it will return ErrNotOnline.
+// OnlineChecker checks a list of URLs concurrently and returns ErrNotOnline if none
+// of them respond with 200 OK or 204 No Content.
 type OnlineChecker struct {
 	client *http.Client
 	urls   []string
 }
 
-// Check the all the urls.
+// Check performs the online check.
 func (c *OnlineChecker) Check(ctx context.Context) error {
 	var counter atomic.Uint64
 	var wg sync.WaitGroup

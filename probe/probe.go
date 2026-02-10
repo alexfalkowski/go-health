@@ -1,3 +1,4 @@
+// Package probe provides periodic execution of checkers.
 package probe
 
 import (
@@ -8,12 +9,12 @@ import (
 	"github.com/alexfalkowski/go-health/v2/checker"
 )
 
-// NewProbe with period and checker.
+// NewProbe returns a Probe that runs ch at the given period.
 func NewProbe(name string, period time.Duration, ch checker.Checker) *Probe {
 	return &Probe{name: name, period: period, checker: ch, ticker: nil, ch: nil, done: nil, mux: sync.Mutex{}}
 }
 
-// Probe is a periodic checker.
+// Probe periodically runs a Checker and emits ticks.
 type Probe struct {
 	checker checker.Checker
 	ticker  *time.Ticker
@@ -24,7 +25,9 @@ type Probe struct {
 	mux     sync.Mutex
 }
 
-// Start the probe.
+// Start begins running checks and returns a channel of ticks.
+//
+// Start performs an initial check before starting the periodic checks.
 func (p *Probe) Start() <-chan *Tick {
 	p.mux.Lock()
 	defer p.mux.Unlock()
@@ -40,7 +43,7 @@ func (p *Probe) Start() <-chan *Tick {
 	return p.ch
 }
 
-// Stop the probe.
+// Stop stops the probe.
 func (p *Probe) Stop() {
 	p.mux.Lock()
 	defer p.mux.Unlock()

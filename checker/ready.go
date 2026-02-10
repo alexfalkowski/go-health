@@ -7,18 +7,20 @@ import (
 
 var _ Checker = (*ReadyChecker)(nil)
 
-// NewReadyChecker waits on a condition.
+// NewReadyChecker returns a ReadyChecker.
+//
+// Until Ready is called, Check returns err.
 func NewReadyChecker(err error) *ReadyChecker {
 	return &ReadyChecker{err: err}
 }
 
-// ReadyChecker waits on a condition..
+// ReadyChecker reports a fixed error until it is marked ready.
 type ReadyChecker struct {
 	err  error
 	flag int32
 }
 
-// Check the if ready.
+// Check returns an error until Ready is called.
 func (c *ReadyChecker) Check(_ context.Context) error {
 	if c.notReady() {
 		return c.err
@@ -27,7 +29,7 @@ func (c *ReadyChecker) Check(_ context.Context) error {
 	return nil
 }
 
-// Ready marks the checker as done.
+// Ready marks the checker as ready.
 func (c *ReadyChecker) Ready() {
 	atomic.StoreInt32(&(c.flag), 1)
 }

@@ -2,12 +2,12 @@
 [![CircleCI](https://circleci.com/gh/alexfalkowski/go-health.svg?style=shield)](https://circleci.com/gh/alexfalkowski/go-health)
 [![codecov](https://codecov.io/gh/alexfalkowski/go-health/graph/badge.svg?token=Q7B3VZYL9K)](https://codecov.io/gh/alexfalkowski/go-health)
 [![Go Report Card](https://goreportcard.com/badge/github.com/alexfalkowski/go-health)](https://goreportcard.com/report/github.com/alexfalkowski/go-health)
-[![Go Reference](https://pkg.go.dev/badge/github.com/alexfalkowski/go-health.svg)](https://pkg.go.dev/github.com/alexfalkowski/go-health)
+[![Go Reference](https://pkg.go.dev/badge/github.com/alexfalkowski/go-health/v2.svg)](https://pkg.go.dev/github.com/alexfalkowski/go-health/v2)
 [![Stability: Active](https://masterminds.github.io/stability/active.svg)](https://masterminds.github.io/stability/active.html)
 
 # Health Monitoring Pattern
 
-This repository solves the health monitoring pattern in go.
+This repository solves the health monitoring pattern in Go.
 
 ## Background
 
@@ -28,14 +28,14 @@ So you are free to use any of these awesome solutions, though I had some require
 - The solution has to be asynchronous so that we don't DOS our dependencies (some of these solutions have this)
 - The solution is free from other dependencies.
 - Flexible enough to be able to implement any transport that is needed.
-- Not to provide an opinionated way to do heath monitoring across transports.
+- Not to provide an opinionated way to do health monitoring across transports.
 
 ### Types
 
 The types of monitoring that we want others to build is as follows:
 
 - White/Black box health
-- [Liveliness/Readiness](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/)
+- [Liveness/Readiness](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/)
 - [Health Check API](https://microservices.io/patterns/observability/health-check-api.html)
 
 ## Usage
@@ -43,38 +43,47 @@ The types of monitoring that we want others to build is as follows:
 To get going please add the dependency, as follows:
 
 ```sh
-go get github.com/alexfalkowski/go-health
+go get github.com/alexfalkowski/go-health/v2
 ```
 
-To uses it, please look at this example:
+To use it, please look at this example:
 
 ```go
 package main
 
 import (
-    "time"
+	"time"
 
-    "github.com/alexfalkowski/go-health/checker"
-    "github.com/alexfalkowski/go-health/server"
+	"github.com/alexfalkowski/go-health/v2/checker"
+	"github.com/alexfalkowski/go-health/v2/server"
 )
 
 func main() {
-    timeout := 5 * time.Second
-    s := server.NewServer()
+	timeout := 5 * time.Second
+	period := 500 * time.Millisecond
 
-    cc := checker.NewHTTPChecker("https://httpstat.us/200", timeout)
-    hr := server.NewRegistration("http", 0, cc)
-    tc := checker.NewTCPChecker("httpstat.us:80", timeout)
-    tr := server.NewRegistration("tcp", 0, tc)
+	s := server.NewServer()
 
-    s.Register("myservice", hr, tr)
-    _ = s.Observe("myservice", "livez", "http", "tcp")
+	httpChecker := checker.NewHTTPChecker("https://httpstat.us/200", timeout)
+	httpReg := server.NewRegistration("http", period, httpChecker)
 
-    s.Start()
-    defer s.Stop()
+	tcpChecker := checker.NewTCPChecker("httpstat.us:80", timeout)
+	tcpReg := server.NewRegistration("tcp", period, tcpChecker)
 
-    ob, _ := s.Observer("myservice", "livez")
-    ob.Error()  // This will update with an error or nil everything is OK.
-    ob.Errors() // This will give you all the errors.
+	s.Register("myservice", httpReg, tcpReg)
+	if err := s.Observe("myservice", "livez", httpReg.Name, tcpReg.Name); err != nil {
+		panic(err)
+	}
+
+	s.Start()
+	defer s.Stop()
+
+	ob, err := s.Observer("myservice", "livez")
+	if err != nil {
+		panic(err)
+	}
+
+	_ = ob.Error()  // All current non-nil errors joined into one.
+	_ = ob.Errors() // A copy of all current errors.
 }
 ```

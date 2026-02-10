@@ -4,15 +4,15 @@ import "context"
 
 var _ Checker = (*NoopChecker)(nil)
 
-// NewNoopChecker does nothing.
+// NewNoopChecker returns a Checker that always reports healthy.
 func NewNoopChecker() *NoopChecker {
 	return &NoopChecker{}
 }
 
-// NoopChecker does nothing..
+// NoopChecker is a Checker that always returns nil.
 type NoopChecker struct{}
 
-// Check does a NOOP.
+// Check always returns nil.
 func (c *NoopChecker) Check(_ context.Context) error {
 	return nil
 }

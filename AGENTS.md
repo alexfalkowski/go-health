@@ -131,10 +131,10 @@ Note: `make start/stop` shells out to `bin/build/docker/env` (`bin/build/make/go
 
 - Some tests make real network calls (e.g., `server/server_test.go` uses `https://www.google.com/`).
 - Tests also hit a local “status” HTTP service via `internal/test.StatusURL`:
-  - URL built from `STATUS_PORT` env var, defaulting to `6000` (`internal/test/test.go:9-13`).
+  - URL built from `STATUS_PORT` env var, defaulting to `6000` (`internal/test/test.go:10-13`).
   - CircleCI runs an `alexfalkowski/status:latest` container exposing that service (`.circleci/config.yml:7-10`).
 
-If tests fail locally with connection errors to `http://localhost:6000/...`, you likely need an equivalent status service running or to set `STATUS_PORT` appropriately.
+If tests fail locally with connection errors to `http://localhost:<port>/...`, ensure the status service is running on `STATUS_PORT` (or the default `6000`).
 
 ## Code conventions and patterns (observed)
 
@@ -144,8 +144,8 @@ If tests fail locally with connection errors to `http://localhost:6000/...`, you
 
 ### Errors
 
-- Errors are wrapped with context using `fmt.Errorf("<context>: %w", err)` in checkers (e.g., `checker/http.go:35-53`, `checker/tcp.go:33-39`, `checker/db.go:29-31`).
-- Aggregation uses `errors.Join` for combining probe errors (`subscriber/errors.go:13-26`).
+- Errors are wrapped with context using `fmt.Errorf("<context>: %w", err)` in checkers (e.g., `checker/http.go:35-49`, `checker/tcp.go:30-37`, `checker/db.go:27-33`).
+- Aggregation uses `errors.Join` for combining probe errors (`subscriber/errors.go:12-26`).
 
 ### Options pattern
 
@@ -154,9 +154,9 @@ If tests fail locally with connection errors to `http://localhost:6000/...`, you
 
 ### Concurrency model
 
-- `probe.Probe` periodically emits `*probe.Tick` to a buffered channel; it performs an immediate check on startup (`probe/probe.go:27-41`).
-- `server.Service` merges tick channels from probes into a single fan-in channel and forwards ticks to subscribers (`server/service.go:58-117`).
-- `subscriber.Observer` runs a goroutine reading ticks and updating an internal `Errors` map protected by an RWMutex (`subscriber/observer.go:6-46`).
+- `probe.Probe` periodically emits `*probe.Tick` to a buffered channel; it performs an immediate check on startup (`probe/probe.go:28-44`).
+- `server.Service` merges tick channels from probes into a single fan-in channel and forwards ticks to subscribers (`server/service.go:63-139`).
+- `subscriber.Observer` runs a goroutine reading ticks and updating an internal `Errors` map protected by an RWMutex (`subscriber/observer.go:5-46`).
 
 ### Formatting / whitespace
 
@@ -179,6 +179,6 @@ CircleCI job flow (`.circleci/config.yml`):
 
 Test reports are stored under `test/reports/`.
 
-## Documentation mismatch to be aware of
+## Documentation notes
 
-- The README usage snippet shows `go get github.com/alexfalkowski/go-health` and imports `github.com/alexfalkowski/go-health/...` (`README.md:45-59`), while `go.mod` declares the module path with `/v2` (`go.mod:1`). Use the module path observed in `go.mod` when adding imports in this repository.
+- README usage snippets should use the module path from `go.mod` (currently `github.com/alexfalkowski/go-health/v2`) and import `.../v2/...`.
