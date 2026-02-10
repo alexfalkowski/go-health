@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/alexfalkowski/go-health/v2/checker"
 	"github.com/alexfalkowski/go-health/v2/internal/test"
+	testsql "github.com/alexfalkowski/go-health/v2/internal/test/sql"
 	"github.com/alexfalkowski/go-health/v2/net"
 	"github.com/alexfalkowski/go-health/v2/server"
 	"github.com/stretchr/testify/require"
@@ -207,12 +207,7 @@ func TestValidDBChecker(t *testing.T) {
 	s := server.NewServer()
 	defer s.Stop()
 
-	db, _, err := sqlmock.New()
-	require.NoError(t, err)
-
-	defer db.Close()
-
-	checker := checker.NewDBChecker(db, timeout)
+	checker := checker.NewDBChecker(testsql.OKPinger{}, timeout)
 	r := server.NewRegistration("db", period, checker)
 	s.Register("test", r)
 
@@ -223,6 +218,27 @@ func TestValidDBChecker(t *testing.T) {
 	time.Sleep(wait)
 
 	require.NoError(t, ob.Error())
+}
+
+//nolint:err113
+func TestInvalidDBChecker(t *testing.T) {
+	s := server.NewServer()
+	defer s.Stop()
+
+	errPing := errors.New("ping failed")
+	checker := checker.NewDBChecker(testsql.ErrorPinger{Err: errPing}, timeout)
+	r := server.NewRegistration("db", period, checker)
+	s.Register("test", r)
+
+	_ = s.Observe("test", "livez", r.Name)
+	ob, _ := s.Observer("test", "livez")
+
+	s.Start()
+	time.Sleep(wait)
+
+	require.Error(t, ob.Error())
+	require.ErrorIs(t, ob.Error(), errPing)
+	require.ErrorIs(t, ob.Errors()["db"], errPing)
 }
 
 //nolint:err113
