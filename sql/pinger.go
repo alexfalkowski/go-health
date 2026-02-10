@@ -1,3 +1,4 @@
+// Package sql contains small SQL-related interfaces.
 package sql
 
 import "context"

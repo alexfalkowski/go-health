@@ -2,7 +2,7 @@ package subscriber
 
 import "sync"
 
-// NewObserver from probe names and subscriber.
+// NewObserver returns an Observer that tracks the latest errors for names.
 func NewObserver(names []string, sub *Subscriber) *Observer {
 	errors := make(Errors)
 	for _, n := range names {
@@ -22,7 +22,7 @@ type Observer struct {
 	mux    sync.RWMutex
 }
 
-// Error is the first error observed.
+// Error returns all non-nil errors combined into a single error.
 func (o *Observer) Error() error {
 	o.mux.RLock()
 	defer o.mux.RUnlock()
@@ -30,7 +30,7 @@ func (o *Observer) Error() error {
 	return o.errors.Error()
 }
 
-// Errors are a copy of rhe errors.
+// Errors returns a copy of the current error map.
 func (o *Observer) Errors() Errors {
 	o.mux.RLock()
 	defer o.mux.RUnlock()

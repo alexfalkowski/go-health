@@ -10,18 +10,20 @@ import (
 
 var _ Checker = (*DBChecker)(nil)
 
-// NewDBChecker for SQL.
+// NewDBChecker returns a DBChecker that pings pinger.
+//
+// The timeout is applied via context.WithTimeout during Check.
 func NewDBChecker(pinger sql.Pinger, t time.Duration) *DBChecker {
 	return &DBChecker{pinger: pinger, timeout: timeout(t)}
 }
 
-// DBChecker for SQL.
+// DBChecker checks a SQL database connection.
 type DBChecker struct {
 	pinger  sql.Pinger
 	timeout time.Duration
 }
 
-// Check the DB.
+// Check pings the database.
 func (c *DBChecker) Check(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()

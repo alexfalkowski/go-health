@@ -1,3 +1,4 @@
+// Package subscriber provides fan-out subscription and observer state tracking.
 package subscriber
 
 import (
@@ -8,7 +9,7 @@ import (
 	"github.com/alexfalkowski/go-health/v2/probe"
 )
 
-// NewSubscriber for multiple probes.
+// NewSubscriber returns a Subscriber for the given probe names.
 func NewSubscriber(names []string) *Subscriber {
 	return &Subscriber{names: names, ticks: make(chan *probe.Tick, 1)}
 }
@@ -21,12 +22,12 @@ type Subscriber struct {
 	once   sync.Once
 }
 
-// Receive from the subscriber.
+// Receive returns the tick channel.
 func (s *Subscriber) Receive() <-chan *probe.Tick {
 	return s.ticks
 }
 
-// Send tick to subscriber.
+// Send forwards tick to the subscriber if it matches a configured name.
 //
 // This is hardened to:
 // - be non-blocking (drops ticks if the subscriber is not keeping up)
@@ -46,7 +47,7 @@ func (s *Subscriber) Send(tick *probe.Tick) {
 	}
 }
 
-// Close the subscriber.
+// Close closes the subscriber.
 //
 // Close is idempotent and safe to call concurrently.
 func (s *Subscriber) Close() {

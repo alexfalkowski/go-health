@@ -1,8 +1,9 @@
+// Package checker provides health check implementations.
 package checker
 
 import "context"
 
-// Checker will check a system.
+// Checker checks a system.
 type Checker interface {
 	Check(ctx context.Context) error
 }

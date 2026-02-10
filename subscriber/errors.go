@@ -9,7 +9,7 @@ import (
 // Errors for observers.
 type Errors map[string]error
 
-// Error the combined errors as one.
+// Error returns all non-nil errors combined into a single error.
 func (e Errors) Error() error {
 	errs := make([]error, len(e))
 	i := 0
@@ -32,7 +32,7 @@ func (e Errors) Errors() Errors {
 	return errs
 }
 
-// Set the error at the name.
+// Set sets the error for name.
 func (e Errors) Set(name string, err error) {
 	e[name] = err
 }

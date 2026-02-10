@@ -1,22 +1,22 @@
 package probe
 
-// NewTick with name and error.
+// NewTick returns a Tick with the given name and error.
 func NewTick(name string, err error) *Tick {
 	return &Tick{name: name, err: err}
 }
 
-// Tick defines a tick in time for a probe.
+// Tick represents the result of a single probe execution.
 type Tick struct {
 	err  error
 	name string
 }
 
-// Name of the probe tick.
+// Name returns the probe name.
 func (t *Tick) Name() string {
 	return t.name
 }
 
-// Error of the probe tick.
+// Error returns the probe error.
 func (t *Tick) Error() error {
 	return t.err
 }

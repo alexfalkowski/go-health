@@ -6,7 +6,7 @@ import (
 	"github.com/alexfalkowski/go-health/v2/checker"
 )
 
-// NewOnlineRegistration for server.
+// NewOnlineRegistration returns a registration for an online checker.
 func NewOnlineRegistration(timeout, period time.Duration, opts ...checker.Option) *Registration {
 	return &Registration{
 		Name:    "online",
@@ -15,12 +15,12 @@ func NewOnlineRegistration(timeout, period time.Duration, opts ...checker.Option
 	}
 }
 
-// NewRegistration for server.
+// NewRegistration returns a registration for a checker.
 func NewRegistration(name string, period time.Duration, ch checker.Checker) *Registration {
 	return &Registration{Name: name, Period: period, Checker: ch}
 }
 
-// Registration for the server.
+// Registration describes a probe to run for a service.
 type Registration struct {
 	Checker checker.Checker
 	Name    string

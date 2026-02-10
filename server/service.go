@@ -11,7 +11,7 @@ import (
 // ErrObserverNotFound when the observer has not been registered.
 var ErrObserverNotFound = errors.New("health: observer not found")
 
-// NewService for health.
+// NewService returns a Service.
 func NewService() *Service {
 	return &Service{
 		registry:     make(map[string]*probe.Probe),
@@ -24,7 +24,7 @@ func NewService() *Service {
 	}
 }
 
-// Service will maintain all the probes and start and stop them.
+// Service maintains probes, subscribers and observers for a service.
 type Service struct {
 	registry     map[string]*probe.Probe
 	observers    map[string]*subscriber.Observer
@@ -35,14 +35,14 @@ type Service struct {
 	subscribers  []*subscriber.Subscriber
 }
 
-// Register all the registrations.
+// Register registers all the given probe registrations.
 func (s *Service) Register(regs ...*Registration) {
 	for _, reg := range regs {
 		s.registry[reg.Name] = probe.NewProbe(reg.Name, reg.Period, reg.Checker)
 	}
 }
 
-// Observer for kind.
+// Observer returns the observer for kind.
 func (s *Service) Observer(kind string) (*subscriber.Observer, error) {
 	observer, ok := s.observers[kind]
 	if !ok {
@@ -52,7 +52,7 @@ func (s *Service) Observer(kind string) (*subscriber.Observer, error) {
 	return observer, nil
 }
 
-// Observe a kind with the names of the probes.
+// Observe registers an observer kind that tracks the probes listed in names.
 func (s *Service) Observe(kind string, names ...string) {
 	_, ok := s.observers[kind]
 	if !ok {
@@ -60,7 +60,7 @@ func (s *Service) Observe(kind string, names ...string) {
 	}
 }
 
-// Start the service.
+// Start starts all registered probes and begins fan-out to subscribers.
 func (s *Service) Start() {
 	chs := []<-chan *probe.Tick{}
 	for _, p := range s.registry {
@@ -74,7 +74,7 @@ func (s *Service) Start() {
 	})
 }
 
-// Stop the server.
+// Stop stops all probes and closes all subscribers.
 func (s *Service) Stop() {
 	// Stop probes first so their tick channels can close and sendTick goroutines can exit cleanly.
 	for _, p := range s.registry {

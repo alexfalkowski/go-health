@@ -10,21 +10,23 @@ import (
 
 var _ Checker = (*TCPChecker)(nil)
 
-// NewTCPChecker with address, timeout.
+// NewTCPChecker returns a TCPChecker that connects to address.
+//
+// The timeout is applied via context.WithTimeout during Check.
 func NewTCPChecker(address string, timeout time.Duration, opts ...Option) *TCPChecker {
 	os := parseOptions(opts...)
 
 	return &TCPChecker{address: address, timeout: timeout, dialer: os.dialer}
 }
 
-// TCPChecker for an address.
+// TCPChecker checks TCP connectivity to an address.
 type TCPChecker struct {
 	dialer  net.Dialer
 	address string
 	timeout time.Duration
 }
 
-// Check the address.
+// Check attempts to connect to the configured address.
 func (c *TCPChecker) Check(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
