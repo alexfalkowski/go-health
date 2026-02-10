@@ -1,4 +1,3 @@
-// Package checker provides health check implementations.
 package checker
 
 import "context"

@@ -1,4 +1,3 @@
-// Package probe provides periodic execution of checkers.
 package probe
 
 import (

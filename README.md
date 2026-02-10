@@ -71,6 +71,9 @@ func main() {
 	tcpReg := server.NewRegistration("tcp", period, tcpChecker)
 
 	s.Register("myservice", httpReg, tcpReg)
+
+	// Observe returns an error if the service isn't registered.
+	// Once successful, the observer named "livez" will track these probe names.
 	if err := s.Observe("myservice", "livez", httpReg.Name, tcpReg.Name); err != nil {
 		panic(err)
 	}
