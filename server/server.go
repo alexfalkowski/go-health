@@ -1,4 +1,3 @@
-// Package server orchestrates probes and observers for multiple services.
 package server
 
 import (

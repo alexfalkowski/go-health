@@ -1,4 +1,3 @@
-// Package subscriber provides fan-out subscription and observer state tracking.
 package subscriber
 
 import (
