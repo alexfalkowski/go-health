@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v2.10.0](https://github.com/alexfalkowski/go-health/releases/tag/v2.10.0) - 2026-02-10
+
+- [`5e7c763`](https://github.com/alexfalkowski/go-health/commit/5e7c76352c1a21bcc0c10f8bf32117bc19479938) feat(docs): make sure they are accurate (#347)
+- [`741a198`](https://github.com/alexfalkowski/go-health/commit/741a198895fd98b820096c9f934ed5f74297440f) build(ci): use latest published images (#346)
+- [`4795317`](https://github.com/alexfalkowski/go-health/commit/4795317ed83b2357504d2aa6bce99b2519210eb7) build(deps): bump bin from `50ee2c1` to `dc92464` (#345)
+- [`ef91055`](https://github.com/alexfalkowski/go-health/commit/ef9105580c7c4449aa6adb8f713f2ec399754ec1) build(ci): use latest published images (#344)
+- [`547cde9`](https://github.com/alexfalkowski/go-health/commit/547cde900a4348f87246367dcf6608f1f4c62ea1) build(ci): use latest published images (#343)
+- [`979b7be`](https://github.com/alexfalkowski/go-health/commit/979b7be4fc9b8c4689b845c0b09ed54561a0a1fa) build(ci): use latest published images (#342)
+- [`17a88a4`](https://github.com/alexfalkowski/go-health/commit/17a88a4aada78c2a43972c45b8a0b82466392ad7) build(ci): use latest published images (#341)
+- [`ccc47ae`](https://github.com/alexfalkowski/go-health/commit/ccc47ae3e4922927d1698c1b5fbc8770885c6fb7) build(ci): use latest published images (#340)
+- [`03df48f`](https://github.com/alexfalkowski/go-health/commit/03df48f17f6dcf1faa239ccde9b2698302f3fd25) build(ci): use latest published images (#339)
+- [`c0a1ccf`](https://github.com/alexfalkowski/go-health/commit/c0a1ccfbc0001685e930b75fbee6f942577d7b19) build(ci): use latest published images (#338)
+
 ## [v2.9.0](https://github.com/alexfalkowski/go-health/releases/tag/v2.9.0) - 2026-01-20
 
 - [`255726d`](https://github.com/alexfalkowski/go-health/commit/255726d793aa362dd5067e19be6400d3e949f599) feat(subscriber): make sure we close when done (#337)
