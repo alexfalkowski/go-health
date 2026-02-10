@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v2.12.0](https://github.com/alexfalkowski/go-health/releases/tag/v2.12.0) - 2026-02-10
+
+- [`c1a5fb8`](https://github.com/alexfalkowski/go-health/commit/c1a5fb87f73f10c9b2349ecfa60093243713c4b4) feat(docs): make sure they are accurate (#349)
+
 ## [v2.11.0](https://github.com/alexfalkowski/go-health/releases/tag/v2.11.0) - 2026-02-10
 
 - [`9deaa28`](https://github.com/alexfalkowski/go-health/commit/9deaa286b0c03f3ab4ce52edbc8fb04e81b41aed) feat(db): remove github.com/DATA-DOG/go-sqlmock (#348)
