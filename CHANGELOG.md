@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v2.13.0](https://github.com/alexfalkowski/go-health/releases/tag/v2.13.0) - 2026-02-12
+
+- [`c79063c`](https://github.com/alexfalkowski/go-health/commit/c79063cf18199c8a7f41dd2415628a8e39aa8ac6) feat(go): use go v1.26 (#354)
+- [`508878b`](https://github.com/alexfalkowski/go-health/commit/508878b65451cf6be701d53036897b533ef54e56) build(ci): use arm.large (#353)
+- [`34064c8`](https://github.com/alexfalkowski/go-health/commit/34064c844d7318fe15761752e31a70d0d5f7a5ef) build(ci): use latest published images (#352)
+- [`f3c05f2`](https://github.com/alexfalkowski/go-health/commit/f3c05f2936b4ef74d12436871f635ec83ee8a3c3) build(ci): use latest published images (#351)
+- [`561a1ac`](https://github.com/alexfalkowski/go-health/commit/561a1aca0df93003237c00433f7cb3535e3c215c) build(deps): bump bin from `dc92464` to `f7a38fb` (#350)
+
 ## [v2.12.0](https://github.com/alexfalkowski/go-health/releases/tag/v2.12.0) - 2026-02-10
 
 - [`c1a5fb8`](https://github.com/alexfalkowski/go-health/commit/c1a5fb87f73f10c9b2349ecfa60093243713c4b4) feat(docs): make sure they are accurate (#349)
