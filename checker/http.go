@@ -44,7 +44,7 @@ func (c *HTTPChecker) Check(ctx context.Context) error {
 	}
 	defer response.Body.Close()
 
-	if response.StatusCode >= 400 && response.StatusCode <= 599 {
+	if response.StatusCode >= http.StatusBadRequest {
 		return fmt.Errorf("http checker: %w", ErrInvalidStatusCode)
 	}
 
