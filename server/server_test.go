@@ -288,7 +288,7 @@ func TestInvalidObserver(t *testing.T) {
 
 	cc := checker.NewHTTPChecker(test.StatusURL("400"), timeout)
 	hr := server.NewRegistration("http1", period, cc)
-	tc := checker.NewTCPChecker("httpstat.us:9000", timeout)
+	tc := checker.NewTCPChecker("google.com:9000", timeout)
 	tr := server.NewRegistration("tcp1", period, tc)
 	s.Register("test", hr, tr)
 
@@ -307,7 +307,7 @@ func TestValidObserver(t *testing.T) {
 
 	cc := checker.NewHTTPChecker(test.StatusURL("200"), timeout)
 	hr := server.NewRegistration("http", period, cc)
-	tc := checker.NewTCPChecker("httpstat.us:80", timeout)
+	tc := checker.NewTCPChecker("google.com:80", timeout)
 	tr := server.NewRegistration("tcp", period, tc)
 	s.Register("test", hr, tr)
 
@@ -326,7 +326,7 @@ func TestOneInvalidObserver(t *testing.T) {
 
 	cc := checker.NewHTTPChecker(test.StatusURL("500"), timeout)
 	hr := server.NewRegistration("http", period, cc)
-	tc := checker.NewTCPChecker("httpstat.us:80", timeout)
+	tc := checker.NewTCPChecker("google.com:80", timeout)
 	tr := server.NewRegistration("tcp", period, tc)
 	s.Register("test", hr, tr)
 
@@ -345,7 +345,7 @@ func TestNonExistentObserver(t *testing.T) {
 
 	cc := checker.NewHTTPChecker(test.StatusURL("200"), timeout)
 	hr := server.NewRegistration("http", period, cc)
-	tc := checker.NewTCPChecker("httpstat.us:80", timeout)
+	tc := checker.NewTCPChecker("google.com:80", timeout)
 	tr := server.NewRegistration("tcp", period, tc)
 	s.Register("test", hr, tr)
 
