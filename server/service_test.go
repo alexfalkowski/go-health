@@ -14,7 +14,7 @@ func TestServiceStartStopGuards(t *testing.T) {
 
 	registration := server.NewRegistration("noop", 10*time.Millisecond, checker.NewNoopChecker())
 	s.Register(registration)
-	s.Observe("livez", registration.Name)
+	require.NoError(t, s.Observe("livez", registration.Name))
 
 	require.NotPanics(t, func() {
 		s.Stop()
@@ -29,4 +29,17 @@ func TestServiceStartStopGuards(t *testing.T) {
 		s.Stop()
 		s.Stop()
 	})
+}
+
+func TestServiceObserveRejectsUnknownProbes(t *testing.T) {
+	s := server.NewService()
+
+	registration := server.NewRegistration("noop", 10*time.Millisecond, checker.NewNoopChecker())
+	s.Register(registration)
+
+	err := s.Observe("livez", registration.Name, "missing")
+	require.ErrorIs(t, err, server.ErrProbeNotFound)
+
+	_, err = s.Observer("livez")
+	require.ErrorIs(t, err, server.ErrObserverNotFound)
 }

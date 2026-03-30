@@ -72,7 +72,7 @@ func main() {
 
 	s.Register("myservice", httpReg, tcpReg)
 
-	// Observe returns an error if the service isn't registered.
+	// Observe returns an error if the service isn't registered or any probe name is unknown.
 	// Once successful, the observer named "livez" will track these probe names.
 	if err := s.Observe("myservice", "livez", httpReg.Name, tcpReg.Name); err != nil {
 		panic(err)

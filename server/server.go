@@ -66,8 +66,7 @@ func (s *Server) Observe(name, kind string, names ...string) error {
 		return ErrServiceNotFound
 	}
 
-	service.Observe(kind, names...)
-	return nil
+	return service.Observe(kind, names...)
 }
 
 // Start starts all registered services.

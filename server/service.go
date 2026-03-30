@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/alexfalkowski/go-health/v2/probe"
@@ -10,6 +11,9 @@ import (
 
 // ErrObserverNotFound when the observer has not been registered.
 var ErrObserverNotFound = errors.New("health: observer not found")
+
+// ErrProbeNotFound when the probe has not been registered.
+var ErrProbeNotFound = errors.New("health: probe not found")
 
 // NewService returns a Service.
 func NewService() *Service {
@@ -57,11 +61,19 @@ func (s *Service) Observer(kind string) (*subscriber.Observer, error) {
 }
 
 // Observe registers an observer kind that tracks the probes listed in names.
-func (s *Service) Observe(kind string, names ...string) {
+//
+// It returns an error if any probe name has not been registered.
+func (s *Service) Observe(kind string, names ...string) error {
 	_, ok := s.observers[kind]
 	if !ok {
+		if err := s.validateProbeNames(names...); err != nil {
+			return err
+		}
+
 		s.observers[kind] = subscriber.NewObserver(names, s.subscribe(kind, names...))
 	}
+
+	return nil
 }
 
 // Start starts all registered probes and begins fan-out to subscribers.
@@ -152,6 +164,16 @@ func (s *Service) prepareStart() {
 
 		s.subscribers = append(s.subscribers, sub)
 	}
+}
+
+func (s *Service) validateProbeNames(names ...string) error {
+	errs := make([]error, 0, len(names))
+	for _, name := range names {
+		if _, ok := s.registry[name]; !ok {
+			errs = append(errs, fmt.Errorf("%w: %s", ErrProbeNotFound, name))
+		}
+	}
+	return errors.Join(errs...)
 }
 
 func (s *Service) sendTick(ch <-chan *probe.Tick) {
