@@ -9,7 +9,7 @@ import (
 
 // NewSubscriber returns a Subscriber for the given probe names.
 func NewSubscriber(names []string) *Subscriber {
-	return &Subscriber{names: names, ticks: make(chan *probe.Tick, 1)}
+	return &Subscriber{names: slices.Clone(names), ticks: make(chan *probe.Tick, 1)}
 }
 
 // Subscriber subscribes to multiple probes.
