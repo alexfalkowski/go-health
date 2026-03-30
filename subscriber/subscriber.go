@@ -26,6 +26,14 @@ func (s *Subscriber) Receive() <-chan *probe.Tick {
 	return s.ticks
 }
 
+// Closed reports whether the subscriber has been closed.
+func (s *Subscriber) Closed() bool {
+	s.mux.RLock()
+	defer s.mux.RUnlock()
+
+	return s.closed
+}
+
 // Send forwards tick to the subscriber if it matches a configured name.
 //
 // This is hardened to:

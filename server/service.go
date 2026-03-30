@@ -14,25 +14,29 @@ var ErrObserverNotFound = errors.New("health: observer not found")
 // NewService returns a Service.
 func NewService() *Service {
 	return &Service{
-		registry:     make(map[string]*probe.Probe),
-		observers:    make(map[string]*subscriber.Observer),
-		subscribers:  []*subscriber.Subscriber{},
-		registryWG:   &sync.WaitGroup{},
-		subscriberWG: &sync.WaitGroup{},
-		ticks:        make(chan *probe.Tick, 1),
-		done:         make(chan struct{}),
+		registry:      make(map[string]*probe.Probe),
+		observers:     make(map[string]*subscriber.Observer),
+		subscriptions: make(map[string]*subscriber.Subscriber),
+		subscribers:   []*subscriber.Subscriber{},
+		registryWG:    &sync.WaitGroup{},
+		subscriberWG:  &sync.WaitGroup{},
+		ticks:         make(chan *probe.Tick, 1),
+		done:          make(chan struct{}),
 	}
 }
 
 // Service maintains probes, subscribers and observers for a service.
 type Service struct {
-	registry     map[string]*probe.Probe
-	observers    map[string]*subscriber.Observer
-	done         chan struct{}
-	ticks        chan *probe.Tick
-	registryWG   *sync.WaitGroup
-	subscriberWG *sync.WaitGroup
-	subscribers  []*subscriber.Subscriber
+	registry      map[string]*probe.Probe
+	observers     map[string]*subscriber.Observer
+	subscriptions map[string]*subscriber.Subscriber
+	done          chan struct{}
+	ticks         chan *probe.Tick
+	registryWG    *sync.WaitGroup
+	subscriberWG  *sync.WaitGroup
+	subscribers   []*subscriber.Subscriber
+	mux           sync.Mutex
+	running       bool
 }
 
 // Register registers all the given probe registrations.
@@ -56,15 +60,23 @@ func (s *Service) Observer(kind string) (*subscriber.Observer, error) {
 func (s *Service) Observe(kind string, names ...string) {
 	_, ok := s.observers[kind]
 	if !ok {
-		s.observers[kind] = subscriber.NewObserver(names, s.subscribe(names...))
+		s.observers[kind] = subscriber.NewObserver(names, s.subscribe(kind, names...))
 	}
 }
 
 // Start starts all registered probes and begins fan-out to subscribers.
 func (s *Service) Start() {
+	s.mux.Lock()
+	defer s.mux.Unlock()
+
+	if s.running {
+		return
+	}
+
+	s.prepareStart()
+
 	chs := []<-chan *probe.Tick{}
 	for _, p := range s.registry {
-		s.registryWG.Add(1)
 		chs = append(chs, p.Start())
 	}
 
@@ -72,10 +84,19 @@ func (s *Service) Start() {
 	s.subscriberWG.Go(func() {
 		s.sendToSubscribers()
 	})
+
+	s.running = true
 }
 
 // Stop stops all probes and closes all subscribers.
 func (s *Service) Stop() {
+	s.mux.Lock()
+	defer s.mux.Unlock()
+
+	if !s.running {
+		return
+	}
+
 	// Stop probes first so their tick channels can close and sendTick goroutines can exit cleanly.
 	for _, p := range s.registry {
 		p.Stop()
@@ -90,23 +111,50 @@ func (s *Service) Stop() {
 
 	// Wait for the fan-out goroutine to drain/exit and close all subscribers.
 	s.subscriberWG.Wait()
+
+	// Ensure observers have finished draining their subscriber channels before a restart.
+	for _, observer := range s.observers {
+		observer.Wait()
+	}
+
+	s.running = false
 }
 
-func (s *Service) subscribe(names ...string) *subscriber.Subscriber {
+func (s *Service) subscribe(kind string, names ...string) *subscriber.Subscriber {
 	sub := subscriber.NewSubscriber(names)
+	s.subscriptions[kind] = sub
 	s.subscribers = append(s.subscribers, sub)
 	return sub
 }
 
 func (s *Service) mergeChannels(chs []<-chan *probe.Tick) {
 	for _, ch := range chs {
-		go s.sendTick(ch)
+		s.registryWG.Go(func() {
+			s.sendTick(ch)
+		})
+	}
+}
+
+func (s *Service) prepareStart() {
+	s.done = make(chan struct{})
+	s.ticks = make(chan *probe.Tick, 1)
+	s.registryWG = &sync.WaitGroup{}
+	s.subscriberWG = &sync.WaitGroup{}
+
+	s.subscribers = make([]*subscriber.Subscriber, 0, len(s.observers))
+	for kind, observer := range s.observers {
+		sub, ok := s.subscriptions[kind]
+		if !ok || sub.Closed() {
+			sub = subscriber.NewSubscriber(observer.Names())
+			s.subscriptions[kind] = sub
+			observer.Restart(sub)
+		}
+
+		s.subscribers = append(s.subscribers, sub)
 	}
 }
 
 func (s *Service) sendTick(ch <-chan *probe.Tick) {
-	defer s.registryWG.Done()
-
 	for {
 		select {
 		case <-s.done:
