@@ -3,7 +3,6 @@ package subscriber
 import (
 	"slices"
 	"sync"
-	"sync/atomic"
 
 	"github.com/alexfalkowski/go-health/v2/probe"
 )
@@ -17,7 +16,8 @@ func NewSubscriber(names []string) *Subscriber {
 type Subscriber struct {
 	ticks  chan *probe.Tick
 	names  []string
-	closed atomic.Bool
+	closed bool
+	mux    sync.RWMutex
 	once   sync.Once
 }
 
@@ -32,17 +32,21 @@ func (s *Subscriber) Receive() <-chan *probe.Tick {
 // - be non-blocking (drops ticks if the subscriber is not keeping up)
 // - avoid panics when Close races with Send.
 func (s *Subscriber) Send(tick *probe.Tick) {
-	if s.closed.Load() {
+	if !slices.Contains(s.names, tick.Name()) {
 		return
 	}
 
-	if slices.Contains(s.names, tick.Name()) {
-		// Best-effort delivery. If the buffer is full, drop.
-		select {
-		case s.ticks <- tick:
-		default:
-		}
+	s.mux.RLock()
+	defer s.mux.RUnlock()
+
+	if s.closed {
 		return
+	}
+
+	// Best-effort delivery. If the buffer is full, drop.
+	select {
+	case s.ticks <- tick:
+	default:
 	}
 }
 
@@ -51,7 +55,10 @@ func (s *Subscriber) Send(tick *probe.Tick) {
 // Close is idempotent and safe to call concurrently.
 func (s *Subscriber) Close() {
 	s.once.Do(func() {
-		s.closed.Store(true)
+		s.mux.Lock()
+		defer s.mux.Unlock()
+
+		s.closed = true
 		close(s.ticks)
 	})
 }
