@@ -1,30 +1,38 @@
-// Package subscriber provides subscription and observer state tracking for probe ticks.
+// Package subscriber provides fan-out and state tracking for probe ticks.
 //
-// A subscriber consumes ticks (typically produced by the probe package) and maintains
-// the latest health state per probe name. The primary type is Observer, which runs a
-// goroutine that reads ticks and updates an internal error map.
+// Subscriber is the transport layer for ticks inside a service: it accepts probe
+// results for a configured set of names and forwards matching ticks to a channel.
+// Observer is the stateful layer on top of that channel: it consumes ticks in a
+// goroutine and remembers the latest error for each tracked probe.
 //
-// Observers are commonly used by higher-level orchestration (see the server package)
-// to aggregate health across multiple probes into a single "kind" (e.g. "livez" or
-// "readyz").
+// This package is typically used indirectly through the server package, but the
+// types are also useful when you want to build custom aggregation or expose
+// health state yourself.
 //
-// # Errors and aggregation
+// # Error views
 //
-// An Observer exposes:
-//   - Error(): a single error representing the current unhealthy state (if any),
-//     typically produced by joining individual probe errors.
-//   - Errors(): a snapshot copy of the current per-probe errors.
+// Observer exposes two views of the current state:
 //
-// The exact aggregation behavior is defined by this package; callers should treat
-// Error() as a convenient summary and Errors() as the detailed view.
+//   - Error returns a joined summary error of all unhealthy probes.
+//   - Errors returns a copy of the per-probe error map.
 //
-// # Concurrency
+// Joined errors are annotated with the probe name so they are still useful when
+// logged or returned directly.
 //
-// Observers are safe for concurrent use: tick processing happens in a dedicated
-// goroutine, and reads of the current state are protected internally.
+// # Delivery semantics
 //
-// # Lifecycle
+// Subscriber.Send is best-effort and non-blocking. If the buffer is full, the
+// tick is dropped rather than back-pressuring the producer. This keeps probe
+// execution decoupled from slow observers.
 //
-// Observers are usually started by orchestration code. Ensure they are stopped when
-// no longer needed to avoid leaking goroutines.
+// # Example
+//
+//	sub := subscriber.NewSubscriber([]string{"db"})
+//	ob := subscriber.NewObserver([]string{"db"}, sub)
+//
+//	sub.Send(probe.NewTick("db", errors.New("ping failed")))
+//	sub.Close()
+//	ob.Wait()
+//
+//	fmt.Println(ob.Error() != nil)
 package subscriber

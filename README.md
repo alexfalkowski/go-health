@@ -7,51 +7,76 @@
 
 # Health Monitoring Pattern
 
-This repository solves the health monitoring pattern in Go.
+`go-health` is a small Go library for building asynchronous health monitoring.
+It separates the problem into four layers:
 
-## Background
+1. `checker`: how to test one dependency.
+2. `probe`: when to run that test.
+3. `subscriber`: how to keep the latest probe state.
+4. `server`: how to orchestrate probes and observers for a service.
 
-To understand the background please have a read of [Health Endpoint Monitoring pattern](https://docs.microsoft.com/en-us/azure/architecture/patterns/health-endpoint-monitoring).
+This keeps the pieces reusable. You can use a single checker directly, wire
+your own probe loop, or use the `server` package for a complete "register,
+observe, start, stop" workflow.
 
-### Rationale
+## Why this library
 
-You might be asking yourself why create another health solution as there seems to be a few. You are right these are the ones I could find.
+This repository focuses on a few constraints:
 
-- [docker/go-healthcheck](https://github.com/docker/go-healthcheck)
-- [InVisionApp/go-health](https://github.com/InVisionApp/go-health)
-- [etherlabsio/healthcheck](https://github.com/etherlabsio/healthcheck)
-- [heptiolabs/healthcheck](https://github.com/heptiolabs/healthcheck)
-- [hellofresh/health-go](https://github.com/hellofresh/health-go)
+- Health checks should run asynchronously so a health endpoint does not trigger a fresh dependency check for every request.
+- The public API should stay small and transport-agnostic.
+- The core packages should be easy to compose into custom liveness, readiness, or dependency-specific health views.
+- The implementation should stay lightweight and friendly to tests.
 
-So you are free to use any of these awesome solutions, though I had some requirements that I wanted met. These are as follows:
+Related background:
 
-- The solution has to be asynchronous so that we don't DOS our dependencies (some of these solutions have this)
-- The solution is free from other dependencies.
-- Flexible enough to be able to implement any transport that is needed.
-- Not to provide an opinionated way to do health monitoring across transports.
+- [Health Endpoint Monitoring pattern](https://learn.microsoft.com/azure/architecture/patterns/health-endpoint-monitoring)
+- [Kubernetes liveness and readiness probes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/)
+- [Health Check API pattern](https://microservices.io/patterns/observability/health-check-api.html)
 
-### Types
-
-The types of monitoring that we want others to build is as follows:
-
-- White/Black box health
-- [Liveness/Readiness](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/)
-- [Health Check API](https://microservices.io/patterns/observability/health-check-api.html)
-
-## Usage
-
-To get going please add the dependency, as follows:
+## Installation
 
 ```sh
 go get github.com/alexfalkowski/go-health/v2
 ```
 
-To use it, please look at this example:
+The module path includes `/v2`:
+
+```go
+import "github.com/alexfalkowski/go-health/v2/server"
+```
+
+## Package overview
+
+| Package | Purpose |
+| --- | --- |
+| `checker` | Reusable health checks for HTTP, TCP, SQL ping, online connectivity, readiness gates, and no-op checks. |
+| `probe` | Periodically runs a checker and emits ticks. |
+| `subscriber` | Tracks the latest error for a selected set of probe names. |
+| `server` | Registers probes per service, creates observers, and manages lifecycle. |
+| `net` | Small interfaces used to customize network dialing. |
+| `sql` | Small interfaces used to customize database pinging. |
+
+## Key behaviors
+
+- `probe.Start` performs an immediate check before the periodic loop continues.
+- A probe with an invalid period emits a single error tick and closes.
+- `HTTPChecker`, `TCPChecker`, `DBChecker`, and `OnlineChecker` use a default timeout of `30s` when you pass `0`.
+- `OnlineChecker` reports healthy if any configured URL returns `200 OK` or `204 No Content`.
+- `subscriber.Observer` starts with `nil` errors for every tracked probe name and updates as ticks arrive.
+- `server.Service` and `server.Server` keep observer instances across stop/start cycles, so existing observers continue receiving ticks after a restart.
+
+## End-to-end example
+
+The `server` package is the usual entry point when you want one or more health
+views for a service:
 
 ```go
 package main
 
 import (
+	"errors"
+	"log"
 	"time"
 
 	"github.com/alexfalkowski/go-health/v2/checker"
@@ -59,34 +84,172 @@ import (
 )
 
 func main() {
-	timeout := 5 * time.Second
-	period := 500 * time.Millisecond
+	const (
+		timeout = 5 * time.Second
+		period  = 30 * time.Second
+	)
 
 	s := server.NewServer()
 
-	httpChecker := checker.NewHTTPChecker("https://httpstat.us/200", timeout)
-	httpReg := server.NewRegistration("http", period, httpChecker)
+	readyChecker := checker.NewReadyChecker(errors.New("starting up"))
+	apiChecker := checker.NewHTTPChecker("https://example.com/health", timeout)
+	cacheChecker := checker.NewTCPChecker("cache.internal:6379", timeout)
 
-	tcpChecker := checker.NewTCPChecker("httpstat.us:80", timeout)
-	tcpReg := server.NewRegistration("tcp", period, tcpChecker)
+	apiRegistration := server.NewRegistration("api", period, apiChecker)
+	cacheRegistration := server.NewRegistration("cache", period, cacheChecker)
+	readyRegistration := server.NewRegistration("ready", time.Second, readyChecker)
 
-	s.Register("myservice", httpReg, tcpReg)
+	s.Register("payments", apiRegistration, cacheRegistration, readyRegistration)
 
-	// Observe returns an error if the service isn't registered or any probe name is unknown.
-	// Once successful, the observer named "livez" will track these probe names.
-	if err := s.Observe("myservice", "livez", httpReg.Name, tcpReg.Name); err != nil {
-		panic(err)
+	if err := s.Observe("payments", "livez", apiRegistration.Name, cacheRegistration.Name); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := s.Observe("payments", "readyz", apiRegistration.Name, cacheRegistration.Name, readyRegistration.Name); err != nil {
+		log.Fatal(err)
 	}
 
 	s.Start()
 	defer s.Stop()
 
-	ob, err := s.Observer("myservice", "livez")
+	readyChecker.Ready()
+
+	livez, err := s.Observer("payments", "livez")
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
-	_ = ob.Error()  // All current non-nil errors joined into one.
-	_ = ob.Errors() // A copy of all current errors.
+	readyz, err := s.Observer("payments", "readyz")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err := livez.Error(); err != nil {
+		log.Printf("livez unhealthy: %v", err)
+	}
+
+	for name, err := range readyz.Errors() {
+		log.Printf("readyz %s = %v", name, err)
+	}
 }
 ```
+
+Notes:
+
+- `Observe` validates that the service exists and every named probe was registered.
+- The first meaningful observer state arrives after the initial probe tick is processed.
+- Calling `Observe` again with the same service and kind is a no-op; it does not replace the existing observer.
+
+## Direct checker examples
+
+### HTTP checker
+
+```go
+check := checker.NewHTTPChecker("https://example.com/health", 5*time.Second)
+
+if err := check.Check(context.Background()); err != nil {
+	log.Printf("endpoint unhealthy: %v", err)
+}
+```
+
+Use `checker.WithRoundTripper` when you need a custom transport:
+
+```go
+transport := &http.Transport{}
+check := checker.NewHTTPChecker(
+	"https://example.com/health",
+	5*time.Second,
+	checker.WithRoundTripper(transport),
+)
+```
+
+### Online checker
+
+`OnlineChecker` is useful when the question is "can this process reach the
+outside world?" rather than "is this exact upstream healthy?"
+
+```go
+check := checker.NewOnlineChecker(
+	5*time.Second,
+	checker.WithURLs(
+		"https://google.com/generate_204",
+		"https://cp.cloudflare.com/generate_204",
+	),
+)
+
+if err := check.Check(context.Background()); err != nil {
+	log.Printf("no outbound connectivity: %v", err)
+}
+```
+
+### Readiness gate
+
+`ReadyChecker` lets your application control readiness explicitly:
+
+```go
+ready := checker.NewReadyChecker(errors.New("warming caches"))
+
+if err := ready.Check(context.Background()); err != nil {
+	log.Printf("not ready yet: %v", err)
+}
+
+// Later, once startup work is complete.
+ready.Ready()
+```
+
+## Manual probe usage
+
+If you do not need the `server` package, you can work directly with a probe:
+
+```go
+p := probe.NewProbe("api", 10*time.Second, checker.NewNoopChecker())
+ticks := p.Start()
+defer p.Stop()
+
+tick := <-ticks
+log.Printf("%s healthy=%t", tick.Name(), tick.Error() == nil)
+```
+
+## Working with observers
+
+Observers give you both a summary and a detailed view:
+
+```go
+summary := observer.Error()  // joined error across unhealthy probes
+details := observer.Errors() // copy of the latest per-probe error map
+```
+
+`Errors()` returns a copy, so callers can inspect or mutate the returned map
+without affecting the observer's internal state.
+
+## Development
+
+This repository uses a `bin/` git submodule for shared build tooling. Before
+running the `make` targets, initialize the submodule:
+
+```sh
+git submodule sync
+git submodule update --init
+```
+
+Common commands:
+
+```sh
+make dep
+make lint
+make sec
+make specs
+make coverage
+```
+
+Local test notes:
+
+- Some tests make real network calls.
+- Some tests expect a local status service on `STATUS_PORT`, defaulting to `6000`.
+- CircleCI starts `alexfalkowski/status:latest` for that service during CI.
+
+## Documentation
+
+- Package documentation lives in `doc.go` files and exported symbol comments.
+- Runnable pkg.go.dev examples live in `example_test.go` files.
+- README examples should always import `github.com/alexfalkowski/go-health/v2/...`.

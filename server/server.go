@@ -9,15 +9,18 @@ import (
 	"github.com/alexfalkowski/go-sync"
 )
 
-// ErrServiceNotFound when the service has not been registered.
+// ErrServiceNotFound is returned when a service name has not been registered.
 var ErrServiceNotFound = errors.New("health: service not found")
 
-// NewServer returns a Server.
+// NewServer returns a Server with no registered services.
 func NewServer() *Server {
 	return &Server{services: make(map[string]*Service), mux: sync.Mutex{}}
 }
 
-// Server maintains registered services and can start/stop them.
+// Server maintains registered services and can start or stop them as a group.
+//
+// Register and Observe are intended for setup time. Call Start once the server
+// has been configured, and Stop when the process is shutting down.
 type Server struct {
 	services map[string]*Service
 	mux      sync.Mutex
@@ -25,6 +28,8 @@ type Server struct {
 }
 
 // Register adds a service with name and registrations.
+//
+// If a service already exists for name, it is replaced.
 func (s *Server) Register(name string, regs ...*Registration) {
 	service := NewService()
 	service.Register(regs...)
@@ -32,6 +37,8 @@ func (s *Server) Register(name string, regs ...*Registration) {
 }
 
 // Observers returns all observers of the given kind.
+//
+// Services that do not have that observer kind are skipped.
 func (s *Server) Observers(kind string) iter.Seq2[string, *subscriber.Observer] {
 	return func(yield func(string, *subscriber.Observer) bool) {
 		for name, service := range maps.All(s.services) {
@@ -59,7 +66,8 @@ func (s *Server) Observer(name, kind string) (*subscriber.Observer, error) {
 
 // Observe registers an observer kind for the service name.
 //
-// The observer will track the probes listed in names.
+// The observer will track the probes listed in names. Repeated calls with the
+// same service and kind are idempotent.
 func (s *Server) Observe(name, kind string, names ...string) error {
 	service, ok := s.services[name]
 	if !ok {
@@ -70,6 +78,8 @@ func (s *Server) Observe(name, kind string, names ...string) error {
 }
 
 // Start starts all registered services.
+//
+// Start is idempotent.
 func (s *Server) Start() {
 	s.mux.Lock()
 	defer s.mux.Unlock()
@@ -85,6 +95,8 @@ func (s *Server) Start() {
 }
 
 // Stop stops all registered services.
+//
+// Stop is idempotent.
 func (s *Server) Stop() {
 	s.mux.Lock()
 	defer s.mux.Unlock()

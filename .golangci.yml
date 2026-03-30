@@ -9,6 +9,7 @@ linters:
   default: all
   disable:
     - depguard
+    - err113
     - exhaustruct
     - funcorder
     - gochecknoglobals

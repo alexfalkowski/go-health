@@ -11,12 +11,14 @@ type Tick struct {
 	name string
 }
 
-// Name returns the probe name.
+// Name returns the probe name that produced this result.
 func (t *Tick) Name() string {
 	return t.name
 }
 
-// Error returns the probe error.
+// Error returns the checker error for this execution.
+//
+// A nil result means the probe was healthy for this tick.
 func (t *Tick) Error() error {
 	return t.err
 }

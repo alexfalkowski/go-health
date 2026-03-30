@@ -10,10 +10,13 @@ import (
 	"github.com/alexfalkowski/go-sync"
 )
 
-// ErrInvalidPeriod when the probe period is not greater than zero.
+// ErrInvalidPeriod is reported when a probe is configured with a period less
+// than or equal to zero.
 var ErrInvalidPeriod = errors.New("health: invalid period")
 
 // NewProbe returns a Probe that runs ch at the given period.
+//
+// The probe does not start until Start is called.
 func NewProbe(name string, period time.Duration, ch checker.Checker) *Probe {
 	return &Probe{name: name, period: period, checker: ch, ticker: nil, ch: nil, mux: sync.Mutex{}}
 }
@@ -32,7 +35,9 @@ type Probe struct {
 
 // Start begins running checks and returns a channel of ticks.
 //
-// Start performs an initial check before starting the periodic checks.
+// Start performs an initial check before returning so callers can observe an
+// immediate result. If the probe is already running, Start returns the existing
+// channel.
 func (p *Probe) Start() <-chan *Tick {
 	ch, ready := p.ensureStarted()
 	if ready != nil {
@@ -74,6 +79,10 @@ func (p *Probe) ensureStarted() (<-chan *Tick, <-chan struct{}) {
 }
 
 // Stop stops the probe.
+//
+// Stop is safe to call before Start and safe to call multiple times. It cancels
+// any in-flight check, closes the tick channel once the worker exits, and waits
+// for the probe goroutine to finish.
 func (p *Probe) Stop() {
 	p.mux.Lock()
 	defer p.mux.Unlock()

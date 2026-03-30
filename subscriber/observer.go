@@ -7,6 +7,11 @@ import (
 )
 
 // NewObserver returns an Observer that tracks the latest errors for names.
+//
+// The observer starts consuming the subscriber immediately in a background
+// goroutine. The names slice is cloned and used to seed the error map with nil
+// values for all tracked probes, so the observer appears healthy until matching
+// ticks arrive.
 func NewObserver(names []string, sub *Subscriber) *Observer {
 	names = slices.Clone(names)
 	errors := make(Errors)
@@ -20,7 +25,7 @@ func NewObserver(names []string, sub *Subscriber) *Observer {
 	return ob
 }
 
-// Observer represents a subscriber that maintains state about probes.
+// Observer maintains the latest health state for a set of probes.
 type Observer struct {
 	errors Errors
 	names  []string
@@ -29,6 +34,8 @@ type Observer struct {
 }
 
 // Error returns all non-nil errors combined into a single error.
+//
+// Each individual error is annotated with the probe name before being joined.
 func (o *Observer) Error() error {
 	o.mux.RLock()
 	defer o.mux.RUnlock()
@@ -50,6 +57,8 @@ func (o *Observer) Names() []string {
 }
 
 // Restart waits for the current subscriber to finish and starts observing sub.
+//
+// Existing error state is retained until new ticks arrive.
 func (o *Observer) Restart(sub *Subscriber) {
 	o.wg.Wait()
 	o.start(sub)

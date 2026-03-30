@@ -12,13 +12,14 @@ import (
 
 var _ Checker = (*OnlineChecker)(nil)
 
-// ErrNotOnline when the system is not online.
+// ErrNotOnline is returned when none of the configured connectivity URLs appear healthy.
 var ErrNotOnline = errors.New("not online")
 
 // NewOnlineChecker returns an OnlineChecker that checks whether any configured URL
 // is reachable.
 //
-// It uses the default URL list unless overridden via WithURLs.
+// Passing 0 uses the package default timeout of 30 seconds. It uses the default
+// URL list unless overridden via WithURLs.
 func NewOnlineChecker(t time.Duration, opts ...Option) *OnlineChecker {
 	os := parseOptions(opts...)
 
@@ -30,12 +31,20 @@ func NewOnlineChecker(t time.Duration, opts ...Option) *OnlineChecker {
 
 // OnlineChecker checks a list of URLs concurrently and returns ErrNotOnline if none
 // of them respond with 200 OK or 204 No Content.
+//
+// The intent is to answer "can this process reach the outside world?" rather than
+// "is one specific upstream healthy?" Any single successful response is enough for
+// the checker to report healthy.
 type OnlineChecker struct {
 	client *http.Client
 	urls   []string
 }
 
 // Check performs the online check.
+//
+// Requests are issued concurrently with the supplied context. Individual request
+// errors are ignored unless every configured URL fails or returns an unexpected
+// status code.
 func (c *OnlineChecker) Check(ctx context.Context) error {
 	var counter sync.Int32
 	var wg sync.WaitGroup

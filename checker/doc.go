@@ -1,33 +1,54 @@
-// Package checker provides health check implementations.
+// Package checker provides reusable health check implementations.
 //
-// A checker is a small unit of work that reports health by returning nil (healthy)
-// or a non-nil error (unhealthy). All checkers implement the Checker interface:
-//
-//	Checker.Check(ctx) error
-//
-// The implementations in this package are intentionally transport-agnostic and
-// dependency-light so you can compose them into higher-level orchestration
-// (for example, via the server and probe packages).
-//
-// # Timeouts
-//
-// Most checkers accept a timeout duration. A zero timeout uses a sensible default.
-//
-// # Options
-//
-// Some checkers accept functional options (see Option) to configure shared
-// dependencies such as HTTP transports or dialers.
+// A Checker is a small unit of work that reports health by returning nil when the
+// dependency is healthy or a non-nil error when it is not. The package keeps the
+// checkers focused on "how to check" rather than "when to check", which makes
+// them easy to reuse directly or through higher-level orchestration such as the
+// probe and server packages.
 //
 // # Common implementations
 //
-// The package includes, among others:
+// The package includes:
 //
-//   - HTTPChecker: performs an HTTP GET and fails on 4xx/5xx responses.
-//   - TCPChecker: dials a TCP address to verify connectivity.
-//   - DBChecker: pings an SQL-like dependency via the sql.Pinger interface.
-//   - OnlineChecker: periodically validates external connectivity using HTTP.
-//   - ReadyChecker: reports an error until explicitly marked ready.
-//   - NoopChecker: always reports healthy.
+//   - HTTPChecker for HTTP GET health endpoints.
+//   - TCPChecker for simple TCP connectivity checks.
+//   - DBChecker for SQL-like dependencies that expose PingContext.
+//   - OnlineChecker for best-effort external connectivity checks across a list
+//     of URLs.
+//   - ReadyChecker for application-managed readiness gates.
+//   - NoopChecker for always-healthy checks.
 //
-// Checkers should be safe to call concurrently unless documented otherwise.
+// # Timeouts and defaults
+//
+// HTTPChecker, TCPChecker, DBChecker, and OnlineChecker accept a timeout
+// duration. Passing 0 uses a default timeout of 30 seconds.
+//
+// OnlineChecker uses a built-in list of connectivity endpoints unless you
+// override it with WithURLs. HTTPChecker and OnlineChecker use
+// http.DefaultTransport by default, and TCPChecker uses net.DefaultDialer by
+// default.
+//
+// # Options
+//
+// Some constructors accept functional options so shared dependencies can be
+// injected without wrapping the checker:
+//
+//   - WithRoundTripper customizes the HTTP transport.
+//   - WithDialer customizes TCP dialing.
+//   - WithURLs replaces the OnlineChecker URL list.
+//
+// # Example
+//
+// End-to-end usage usually looks like:
+//
+//	httpChecker := checker.NewHTTPChecker("https://example.com/health", 5*time.Second)
+//	readyChecker := checker.NewReadyChecker(errors.New("starting up"))
+//
+//	if err := httpChecker.Check(context.Background()); err != nil {
+//		log.Printf("dependency unhealthy: %v", err)
+//	}
+//
+//	readyChecker.Ready()
+//
+// All exported checker implementations are safe for concurrent use.
 package checker

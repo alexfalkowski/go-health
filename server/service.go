@@ -9,13 +9,13 @@ import (
 	"github.com/alexfalkowski/go-sync"
 )
 
-// ErrObserverNotFound when the observer has not been registered.
+// ErrObserverNotFound is returned when an observer kind has not been registered.
 var ErrObserverNotFound = errors.New("health: observer not found")
 
-// ErrProbeNotFound when the probe has not been registered.
+// ErrProbeNotFound is returned when a probe name has not been registered.
 var ErrProbeNotFound = errors.New("health: probe not found")
 
-// NewService returns a Service.
+// NewService returns a Service with no registered probes or observers.
 func NewService() *Service {
 	return &Service{
 		registry:      make(map[string]*probe.Probe),
@@ -29,7 +29,11 @@ func NewService() *Service {
 	}
 }
 
-// Service maintains probes, subscribers and observers for a service.
+// Service maintains probes, subscribers, and observers for a single service.
+//
+// Register and Observe are typically called during setup. Start begins running
+// all probes and fan-outs their ticks to subscribers. Stop tears everything down
+// and preserves observers so the service can be started again later.
 type Service struct {
 	registry      map[string]*probe.Probe
 	observers     map[string]*subscriber.Observer
@@ -44,6 +48,8 @@ type Service struct {
 }
 
 // Register registers all the given probe registrations.
+//
+// Later registrations with the same name replace earlier ones.
 func (s *Service) Register(regs ...*Registration) {
 	for _, reg := range regs {
 		s.registry[reg.Name] = probe.NewProbe(reg.Name, reg.Period, reg.Checker)
@@ -62,7 +68,8 @@ func (s *Service) Observer(kind string) (*subscriber.Observer, error) {
 
 // Observe registers an observer kind that tracks the probes listed in names.
 //
-// It returns an error if any probe name has not been registered.
+// It returns an error if any probe name has not been registered. Repeated calls
+// with the same kind are idempotent and keep the original probe set.
 func (s *Service) Observe(kind string, names ...string) error {
 	_, ok := s.observers[kind]
 	if !ok {
@@ -77,6 +84,9 @@ func (s *Service) Observe(kind string, names ...string) error {
 }
 
 // Start starts all registered probes and begins fan-out to subscribers.
+//
+// Existing observers continue receiving updates if the service is stopped and
+// started again later.
 func (s *Service) Start() {
 	s.mux.Lock()
 	defer s.mux.Unlock()
@@ -101,6 +111,8 @@ func (s *Service) Start() {
 }
 
 // Stop stops all probes and closes all subscribers.
+//
+// Stop waits for in-flight fan-in and fan-out work to finish before returning.
 func (s *Service) Stop() {
 	s.mux.Lock()
 	defer s.mux.Unlock()

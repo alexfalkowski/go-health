@@ -8,11 +8,14 @@ import (
 )
 
 // NewSubscriber returns a Subscriber for the given probe names.
+//
+// The names slice is cloned so later caller mutations do not change the
+// subscription.
 func NewSubscriber(names []string) *Subscriber {
 	return &Subscriber{names: slices.Clone(names), ticks: make(chan *probe.Tick, 1)}
 }
 
-// Subscriber subscribes to multiple probes.
+// Subscriber forwards matching probe ticks to interested consumers.
 type Subscriber struct {
 	ticks  chan *probe.Tick
 	names  []string
@@ -21,7 +24,7 @@ type Subscriber struct {
 	once   sync.Once
 }
 
-// Receive returns the tick channel.
+// Receive returns the tick channel for this subscription.
 func (s *Subscriber) Receive() <-chan *probe.Tick {
 	return s.ticks
 }
@@ -36,9 +39,9 @@ func (s *Subscriber) Closed() bool {
 
 // Send forwards tick to the subscriber if it matches a configured name.
 //
-// This is hardened to:
-// - be non-blocking (drops ticks if the subscriber is not keeping up)
-// - avoid panics when Close races with Send.
+// Delivery is best-effort:
+//   - it is non-blocking, so ticks are dropped if the subscriber is not keeping up
+//   - it avoids panics when Close races with Send
 func (s *Subscriber) Send(tick *probe.Tick) {
 	if !slices.Contains(s.names, tick.Name()) {
 		return

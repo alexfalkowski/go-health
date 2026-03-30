@@ -2,183 +2,189 @@
 
 ## Project overview
 
-This repository is a Go library implementing a **health monitoring pattern** (asynchronous checks, observers, and status aggregation).
+This repository is a Go library for asynchronous health monitoring. It lets you
+build reusable health checks, schedule them periodically, aggregate their latest
+results, and expose multiple health views such as `livez` and `readyz`.
 
-- Module: `github.com/alexfalkowski/go-health/v2` (see `go.mod:1`)
-- Go version: `go 1.25.0` (see `go.mod:3`)
-- CI: CircleCI (`.circleci/config.yml`)
+- Module path: `github.com/alexfalkowski/go-health/v2`
+- Go version: `1.26.0`
+- Primary CI: CircleCI via `.circleci/config.yml`
 
 ## Repository layout
 
 Top-level packages:
 
-- `checker/`: health check implementations (HTTP/TCP/DB/online/ready/noop).
-- `probe/`: periodic execution of a `checker.Checker` producing ticks.
-- `subscriber/`: subscription + observer state tracking of probe ticks.
-- `server/`: orchestration layer: register probes per service, create observers, start/stop.
-- `net/`: small interfaces/wrappers (e.g., `Dialer`).
-- `sql/`: small interfaces/wrappers (e.g., `Pinger`).
-- `internal/test/`: test helpers (e.g., building status URLs from env).
+- `checker/`: concrete health check implementations and checker options.
+- `probe/`: periodic execution of a `checker.Checker`, producing `probe.Tick` values.
+- `subscriber/`: best-effort tick fan-out plus observer state tracking.
+- `server/`: orchestration for registering probes per service, creating observers, and managing start/stop lifecycle.
+- `net/`: small network-related interfaces used by checkers.
+- `sql/`: small SQL-related interfaces used by checkers.
+- `internal/test/`: test helpers such as building URLs for the local status service.
 
-Notable non-code:
+Notable non-code paths:
 
-- `bin/`: **git submodule** with shared build tooling (see `.gitmodules`).
-- `.golangci.yml`: golangci-lint configuration.
-- `.gosec`: gosec exclusions.
-- `test/`: test configs and report outputs (e.g., `test/reports/`).
+- `README.md`: user-facing overview and examples.
+- `Makefile`: includes targets from the `bin/` submodule.
+- `bin/`: git submodule with shared build tooling.
+- `.circleci/config.yml`: CI workflow and service containers.
+- `.golangci.yml`: lint configuration, formatter configuration, and gosec exclusions.
+- `test/`: test inputs, certificates, and generated reports under `test/reports/`.
 
-## Build / test / lint commands
+## Runtime model
 
-Most workflows are driven via `make`. The root `Makefile` only includes targets from the `bin/` submodule:
+The library is layered. This is the mental model to keep in sync when editing
+docs or examples:
 
-- `Makefile:1-2` includes `bin/build/make/go.mak` and `bin/build/make/git.mak`.
+1. A `checker.Checker` runs one synchronous health check and returns `nil` or an error.
+2. A `probe.Probe` runs a checker immediately on `Start`, then periodically on its configured interval.
+3. A `subscriber.Subscriber` forwards matching probe ticks on a best-effort, non-blocking channel.
+4. A `subscriber.Observer` tracks the latest error for each configured probe name.
+5. A `server.Service` wires probes to subscribers and observers for one service.
+6. A `server.Server` manages multiple services.
+
+Important behavior details:
+
+- `probe.Start` waits for the initial check to finish before returning the tick channel.
+- A probe with a non-positive period emits one error tick wrapping `probe.ErrInvalidPeriod` and then closes.
+- `subscriber.Observer` initializes tracked probe names with `nil` errors until ticks arrive.
+- `server.Service` and `server.Server` preserve observer instances across stop/start cycles.
+- `server.Server.Observe` and `server.Service.Observe` are idempotent for an existing observer kind; they do not replace the original probe set.
+
+## Build, test, and lint
+
+Most workflows go through `make`. The root `Makefile` includes:
+
+- `bin/build/make/go.mak`
+- `bin/build/make/git.mak`
 
 ### Submodule setup
 
-Many `make` targets depend on scripts under `./bin/...`.
-
-- Initialize and update submodule:
+Many `make` targets rely on scripts in `bin/`, so initialize the submodule first:
 
 ```sh
 git submodule sync
 git submodule update --init
 ```
 
-CircleCI runs these steps explicitly (`.circleci/config.yml:15-16`).
+CircleCI runs those commands before any build steps.
 
-### Dependency management
-
-From `bin/build/make/go.mak`:
+### Common commands
 
 ```sh
 make dep          # go mod download + tidy + vendor
 make clean-dep    # go clean -cache -testcache -fuzzcache -modcache
-make clean-lint   # clear golangci-lint cache via bin script
-make clean        # repo-specific clean via ./bin/build/go/clean
+make clean-lint   # clear golangci-lint cache through the bin helper
+make clean        # repo-specific clean helper from bin/build/go/clean
+
+make format       # go fmt ./...
+make lint         # fieldalignment + golangci-lint
+make fix-lint     # auto-fix what can be fixed
+make sec          # govulncheck -show verbose -test ./...
+make specs        # gotestsum + go test -race -mod vendor + coverage
+make coverage     # generate HTML and function coverage summaries
 ```
 
-Notes:
+`make specs` writes reports to:
 
-- `make dep` creates/updates `vendor/` and many commands run with `-mod vendor`.
+- `test/reports/specs.xml`
+- `test/reports/profile.cov`
+- `test/reports/final.cov` as part of the coverage post-processing flow used by the build tooling
 
-### Testing
+### Useful focused verification
 
-From `bin/build/make/go.mak`:
+When you only change docs, examples, or small package behavior, targeted `go test`
+commands are often faster than the full `make specs` run. Examples:
 
 ```sh
-make specs
+go test ./checker ./probe ./subscriber ./net ./sql
+go test ./probe -run Example -count=1
+go test ./server -run TestRestartKeepsObserverReceivingTicks -count=1
 ```
 
-`make specs` runs `gotestsum` and then `go test` with:
-
-- `-race`
-- `-mod vendor`
-- coverage output to `test/reports/profile.cov` and junit XML to `test/reports/specs.xml` (`bin/build/make/go.mak:62-63`).
-
-Coverage helpers:
-
-```sh
-make coverage      # generates test/reports/coverage.html and prints func coverage
-make html-coverage
-make func-coverage
-```
-
-### Linting / formatting
-
-Lint targets (`bin/build/make/go.mak`):
-
-```sh
-make lint          # fieldalignment + golangci-lint
-make fix-lint      # attempts auto-fixes (fieldalignment + golangci-lint --fix)
-```
-
-Formatting:
-
-```sh
-make format        # go fmt ./...
-```
-
-`golangci-lint` configuration is in `.golangci.yml` (default: all linters; several disabled).
-
-### Security
-
-```sh
-make sec           # govulncheck -show verbose -test ./...
-```
-
-Gosec exclusions are listed in `.gosec`.
-
-### Other useful make targets (if tools are installed)
-
-From `bin/build/make/go.mak`:
-
-```sh
-make benchmark package=<pkgdir>
-make benchmark-pprof
-make outdated-dep
-make encode-config kind=<name>
-make create-certs
-make create-diagram package=<pkgdir>
-make analyse
-make money
-make start
-make stop
-```
-
-Note: `make start/stop` shells out to `bin/build/docker/env` (`bin/build/make/go.mak:130-135`). That script clones/updates `git@github.com:alexfalkowski/docker.git` (`bin/build/docker/env:10-16`), which requires SSH access to GitHub.
+Use the vendored or CI-style flow when you want parity with the main build.
 
 ## Testing gotchas
 
-- Some tests make real network calls (e.g., `server/server_test.go` uses `https://www.google.com/`).
-- Tests also hit a local “status” HTTP service via `internal/test.StatusURL`:
-  - URL built from `STATUS_PORT` env var, defaulting to `6000` (`internal/test/test.go:10-13`).
-  - CircleCI runs an `alexfalkowski/status:latest` container exposing that service (`.circleci/config.yml:7-10`).
+- Some tests make real network calls, including requests to `https://www.google.com/`.
+- Some tests expect a local status service on `STATUS_PORT`; if unset, the default is `6000`.
+- `internal/test.StatusURL` builds URLs like `http://localhost:<port>/v1/status/<code>`.
+- CircleCI starts `alexfalkowski/status:latest` to provide that service during the `build` job.
 
-If tests fail locally with connection errors to `http://localhost:<port>/...`, ensure the status service is running on `STATUS_PORT` (or the default `6000`).
+If tests fail with connection errors to `localhost:6000`, the status service is
+probably not running locally.
 
-## Code conventions and patterns (observed)
+## CI notes
 
-### Package boundaries
+The main CircleCI `build` job does the following, in order:
 
-- Tests use an external test package name (`package server_test`) to validate public API behavior (see `server/server_test.go:1`).
+1. Checks out the repository.
+2. Syncs and initializes the `bin/` submodule.
+3. Runs `make source-key`.
+4. Restores caches.
+5. Runs `make clean`.
+6. Runs `make dep`.
+7. Runs `make lint`.
+8. Runs `make sec`.
+9. Runs `make specs`.
+10. Runs `make coverage`.
+11. Uploads coverage and stores test reports.
+
+There are also `sync`, `version`, and `wait-all` jobs in `.circleci/config.yml`.
+
+## Code conventions and patterns
 
 ### Errors
 
-- Errors are wrapped with context using `fmt.Errorf("<context>: %w", err)` in checkers (e.g., `checker/http.go:35-49`, `checker/tcp.go:30-37`, `checker/db.go:27-33`).
-- Aggregation uses `errors.Join` for combining probe errors (`subscriber/errors.go:12-26`).
+- Checkers wrap underlying failures with context, usually using `fmt.Errorf("<checker>: %w", err)`.
+- Aggregated observer errors use `errors.Join`.
+- `subscriber.Errors.Error` annotates each joined error with the probe name.
 
 ### Options pattern
 
-- Checkers support functional options via an `Option` interface + `optionFunc` (`checker/options.go:9-45`).
-- `parseOptions` provides defaults (HTTP transport, dialer, and online-check URLs) (`checker/options.go:47-67`).
+- Checker options are implemented through the `checker.Option` interface and `optionFunc`.
+- `checker.WithRoundTripper` affects `HTTPChecker` and `OnlineChecker`.
+- `checker.WithDialer` affects `TCPChecker`.
+- `checker.WithURLs` replaces the `OnlineChecker` default URL list.
 
 ### Concurrency model
 
-- `probe.Probe` periodically emits `*probe.Tick` to a buffered channel; it performs an immediate check on startup (`probe/probe.go:28-44`).
-- `server.Service` merges tick channels from probes into a single fan-in channel and forwards ticks to subscribers (`server/service.go:63-139`).
-- `subscriber.Observer` runs a goroutine reading ticks and updating an internal `Errors` map protected by an RWMutex (`subscriber/observer.go:5-46`).
+- `probe.Probe` runs its scheduling loop in a goroutine and cancels in-flight checks on `Stop`.
+- `subscriber.Subscriber` is intentionally best-effort and may drop ticks if its buffer is full.
+- `subscriber.Observer` consumes subscriber ticks in a goroutine and protects reads with an RW mutex.
+- `server.Service` fans in probe tick channels and then fans ticks out to subscribers.
 
-### Formatting / whitespace
+### Formatting
 
-- `.editorconfig` indicates Go files use tabs (`.editorconfig:14-16`); Makefiles use tabs.
+- `.editorconfig` uses tabs for `*.go` files and `Makefile`, spaces elsewhere.
+- Follow standard Go doc comment style: start comments with the identifier name and describe observable behavior, not implementation trivia.
 
-## CI notes (CircleCI)
+## Documentation maintenance
 
-CircleCI job flow (`.circleci/config.yml`):
+When changing code, keep these documentation surfaces aligned:
 
-- Updates submodules
-- Runs:
-  - `make source-key`
-  - `make clean`
-  - `make dep`
-  - `make lint`
-  - `make sec`
-  - `make specs`
-  - `make coverage`
-  - `make codecov-upload`
+1. Package docs in `doc.go` files.
+2. Exported symbol comments in package source files.
+3. Runnable examples in `example_test.go`.
+4. Top-level usage guidance in `README.md`.
+5. Agent-specific maintenance guidance in this file.
 
-Test reports are stored under `test/reports/`.
+Documentation expectations:
 
-## Documentation notes
+- Use the module path with `/v2` in all README and Go doc examples.
+- Prefer examples that compile and run locally without external services when possible.
+- If an example depends on asynchronous state, make the wait explicit in the example.
+- Call out important defaults such as the `30s` timeout and `STATUS_PORT=6000`.
+- Mention behaviors that are easy to miss, such as observer state starting at `nil` and restart-safe observers.
 
-- README usage snippets should use the module path from `go.mod` (currently `github.com/alexfalkowski/go-health/v2`) and import `.../v2/...`.
+## External tooling notes
+
+- `make start` and `make stop` shell out to `bin/build/docker/env`.
+- That helper clones or updates the sibling `../docker` repository via SSH: `git@github.com:alexfalkowski/docker.git`.
+- Expect those commands to require GitHub SSH access and a writable parent directory.
+
+## Scope note
+
+The `bin/` directory is a git submodule. Treat changes there as changes to shared
+build tooling, not to this library itself. Update the top-level docs in this
+repository by default unless the task explicitly includes submodule maintenance.

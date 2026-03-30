@@ -1,38 +1,38 @@
 // Package probe provides periodic execution of health checkers.
 //
-// A Probe runs a checker.Checker on a fixed interval and emits a Tick containing
-// the probe name and the resulting error (nil meaning healthy). Probes are
-// typically used as building blocks for higher-level orchestration (for example,
-// the server package), where multiple probes are registered per service and their
-// ticks are aggregated by observers.
+// A Probe runs a checker.Checker on a fixed interval and emits Tick values on a
+// channel. Probes are the scheduling layer of the library: the checker package
+// defines what to run, while this package defines when to run it.
 //
-// # Emitted ticks
+// # Tick model
 //
-// Each execution produces a Tick:
+// Each execution produces a Tick with accessor methods:
 //
-//   - Name identifies the probe that produced the result.
-//   - Err is the error returned by the underlying checker (nil if healthy).
+//   - Name() identifies the probe that produced the result.
+//   - Error() returns the latest checker error, or nil when healthy.
 //
-// Ticks are sent on a channel so consumers can process results asynchronously.
+// Ticks are delivered asynchronously on a channel so higher-level code can fan
+// them out to observers or aggregate them into service-level health.
 //
 // # Scheduling behavior
 //
-// Probes perform an initial check when started, then continue checking on the
-// configured period. The check itself is executed with a context passed in by the
-// caller or created by orchestration code.
+// Start performs an initial check before returning the channel, then continues on
+// the configured period until Stop is called. If the period is zero or negative,
+// Start returns a closed channel after emitting a single tick whose error wraps
+// ErrInvalidPeriod.
 //
-// # Concurrency and lifecycle
+// # Lifecycle
 //
-// Probes run their scheduling loop in a goroutine. Call Stop (directly or via
-// orchestration code) when the probe is no longer needed to avoid leaking
-// goroutines and timers.
+// Start is idempotent while a probe is running: repeated calls return the same
+// channel. Stop is also idempotent and cancels any in-flight check before waiting
+// for the probe goroutine to exit.
 //
-// # Usage
+// # Example
 //
-// Typical usage is to construct probes indirectly via the server package.
-// If you use probe directly, you generally:
+//	p := probe.NewProbe("cache", 10*time.Second, checker.NewNoopChecker())
+//	ticks := p.Start()
+//	defer p.Stop()
 //
-//  1. Create a Probe with a name, period, and checker.
-//  2. Start it.
-//  3. Read ticks from its channel until you stop it.
+//	tick := <-ticks
+//	fmt.Println(tick.Name(), tick.Error() == nil)
 package probe
