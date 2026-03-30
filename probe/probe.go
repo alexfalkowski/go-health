@@ -10,7 +10,7 @@ import (
 
 // NewProbe returns a Probe that runs ch at the given period.
 func NewProbe(name string, period time.Duration, ch checker.Checker) *Probe {
-	return &Probe{name: name, period: period, checker: ch, ticker: nil, ch: nil, done: nil, mux: sync.Mutex{}}
+	return &Probe{name: name, period: period, checker: ch, ticker: nil, ch: nil, mux: sync.Mutex{}}
 }
 
 // Probe periodically runs a Checker and emits ticks.
@@ -18,7 +18,7 @@ type Probe struct {
 	checker checker.Checker
 	ticker  *time.Ticker
 	ch      chan *Tick
-	done    chan struct{}
+	cancel  context.CancelFunc
 	name    string
 	period  time.Duration
 	mux     sync.Mutex
@@ -29,24 +29,35 @@ type Probe struct {
 //
 // Start performs an initial check before starting the periodic checks.
 func (p *Probe) Start() <-chan *Tick {
+	ch, ready := p.ensureStarted()
+	if ready != nil {
+		<-ready
+	}
+	return ch
+}
+
+func (p *Probe) ensureStarted() (<-chan *Tick, <-chan struct{}) {
 	p.mux.Lock()
 	defer p.mux.Unlock()
 
-	done := make(chan struct{})
+	if p.cancel != nil {
+		return p.ch, nil
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
 	ch := make(chan *Tick, 1)
 	ticker := time.NewTicker(p.period)
+	ready := make(chan struct{})
 
-	p.done = done
 	p.ch = ch
 	p.ticker = ticker
+	p.cancel = cancel
 
-	// Check on startup.
-	p.tick(ch, done)
 	p.wg.Go(func() {
-		p.start(ch, done, ticker)
+		p.start(ctx, ch, ticker, ready)
 	})
 
-	return ch
+	return ch, ready
 }
 
 // Stop stops the probe.
@@ -54,40 +65,56 @@ func (p *Probe) Stop() {
 	p.mux.Lock()
 	defer p.mux.Unlock()
 
-	if p.done == nil {
+	if p.cancel == nil {
 		return
 	}
 
-	done := p.done
 	ticker := p.ticker
+	cancel := p.cancel
 
-	p.done = nil
 	p.ch = nil
 	p.ticker = nil
+	p.cancel = nil
 
+	cancel()
 	ticker.Stop()
-	close(done)
 	p.wg.Wait()
 }
 
-func (p *Probe) start(ch chan *Tick, done <-chan struct{}, ticker *time.Ticker) {
+func (p *Probe) start(ctx context.Context, ch chan *Tick, ticker *time.Ticker, ready chan<- struct{}) {
 	defer close(ch)
+
+	// Check on startup before periodic checks begin.
+	if !p.tick(ctx, ch) {
+		close(ready)
+		return
+	}
+	close(ready)
 
 	for {
 		select {
-		case <-done:
+		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			p.tick(ch, done)
+			if !p.tick(ctx, ch) {
+				return
+			}
 		}
 	}
 }
 
-func (p *Probe) tick(ch chan<- *Tick, done <-chan struct{}) {
-	tick := NewTick(p.name, p.checker.Check(context.Background()))
+func (p *Probe) tick(ctx context.Context, ch chan<- *Tick) bool {
+	// Run the check first so we can observe cancellation that happens while Check is blocked.
+	err := p.checker.Check(ctx)
+	// If Stop canceled the context during Check, drop the stale result instead of emitting a tick.
+	if ctx.Err() != nil {
+		return false
+	}
 
 	select {
-	case <-done:
-	case ch <- tick:
+	case <-ctx.Done():
+		return false
+	case ch <- NewTick(p.name, err):
+		return true
 	}
 }
