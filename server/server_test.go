@@ -463,6 +463,8 @@ func BenchmarkValidHTTPChecker(b *testing.B) {
 	b.ResetTimer()
 
 	for b.Loop() {
-		require.Error(b, ob.Error())
+		if err := ob.Error(); err != nil {
+			b.Fatal(err)
+		}
 	}
 }
