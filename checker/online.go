@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"sync"
-	"sync/atomic"
 	"time"
+
+	"github.com/alexfalkowski/go-sync"
 )
 
 var _ Checker = (*OnlineChecker)(nil)
@@ -37,7 +37,7 @@ type OnlineChecker struct {
 
 // Check performs the online check.
 func (c *OnlineChecker) Check(ctx context.Context) error {
-	var counter atomic.Uint64
+	var counter sync.Int32
 	var wg sync.WaitGroup
 
 	for _, url := range c.urls {

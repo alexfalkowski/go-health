@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/alexfalkowski/go-health/v2/checker"
+	"github.com/alexfalkowski/go-sync"
 )
 
 // ErrInvalidPeriod when the probe period is not greater than zero.

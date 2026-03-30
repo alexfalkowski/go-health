@@ -2,7 +2,8 @@ package subscriber
 
 import (
 	"slices"
-	"sync"
+
+	"github.com/alexfalkowski/go-sync"
 )
 
 // NewObserver returns an Observer that tracks the latest errors for names.

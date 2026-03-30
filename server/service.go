@@ -3,10 +3,10 @@ package server
 import (
 	"errors"
 	"fmt"
-	"sync"
 
 	"github.com/alexfalkowski/go-health/v2/probe"
 	"github.com/alexfalkowski/go-health/v2/subscriber"
+	"github.com/alexfalkowski/go-sync"
 )
 
 // ErrObserverNotFound when the observer has not been registered.
