@@ -1,15 +1,19 @@
-// Package net contains small network-related interfaces and adapters.
+// Package net contains small network-related interfaces used by the health
+// checkers.
 //
-// This package exists to decouple health check implementations from the standard
-// library's concrete networking types. By depending on small interfaces (for
-// example, Dialer) other packages can accept custom implementations in tests or
-// alternate transports without pulling in heavier dependencies.
+// The package exists to decouple checker implementations from the concrete types
+// in the standard library. Callers can pass the default adapter in production or
+// provide a small fake in tests.
 //
-// The checker package uses these interfaces to perform TCP connectivity checks
-// and to allow injecting custom dialing behavior.
+// # Example
 //
-// # Defaults
+//	import stdnet "net"
 //
-// Where appropriate, this package provides default implementations backed by the
-// Go standard library (for example, DefaultDialer).
+//	type fakeDialer struct{}
+//
+//	func (fakeDialer) DialContext(ctx context.Context, network, address string) (stdnet.Conn, error) {
+//		return nil, errors.New("dial failed")
+//	}
+//
+//	checker.NewTCPChecker("cache:6379", time.Second, checker.WithDialer(fakeDialer{}))
 package net

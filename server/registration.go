@@ -7,6 +7,9 @@ import (
 )
 
 // NewOnlineRegistration returns a registration for an online checker.
+//
+// The registration name is fixed to "online". If you need a different name, use
+// NewRegistration with checker.NewOnlineChecker directly.
 func NewOnlineRegistration(timeout, period time.Duration, opts ...checker.Option) *Registration {
 	return &Registration{
 		Name:    "online",

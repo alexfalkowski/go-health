@@ -6,7 +6,10 @@ import (
 	"github.com/alexfalkowski/go-health/v2/net"
 )
 
-// Option for checker.
+// Option configures checkers created by the constructors in this package.
+//
+// The supported options depend on the checker type. Unsupported options are
+// ignored by constructors that do not use them.
 type Option interface {
 	apply(opts *options)
 }
@@ -38,6 +41,8 @@ func WithDialer(dialer net.Dialer) Option {
 }
 
 // WithURLs sets the list of URLs used by OnlineChecker.
+//
+// Providing at least one URL replaces the package defaults entirely.
 func WithURLs(urls ...string) Option {
 	return optionFunc(func(o *options) {
 		o.urls = urls
