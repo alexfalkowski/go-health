@@ -70,6 +70,23 @@ func TestStopCancelsInFlightCheck(t *testing.T) {
 	require.False(t, ok)
 }
 
+func TestStartWithInvalidPeriodReturnsErrorTick(t *testing.T) {
+	p := probe.NewProbe("noop", 0, checker.NewNoopChecker())
+
+	require.NotPanics(t, func() {
+		ticks := p.Start()
+
+		tick, ok := <-ticks
+		require.True(t, ok)
+		require.Equal(t, "noop", tick.Name())
+		require.ErrorIs(t, tick.Error(), probe.ErrInvalidPeriod)
+		require.ErrorContains(t, tick.Error(), "0s")
+
+		_, ok = <-ticks
+		require.False(t, ok)
+	})
+}
+
 type blockingChecker struct {
 	started  chan struct{}
 	canceled chan struct{}

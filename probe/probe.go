@@ -2,11 +2,16 @@ package probe
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"sync"
 	"time"
 
 	"github.com/alexfalkowski/go-health/v2/checker"
 )
+
+// ErrInvalidPeriod when the probe period is not greater than zero.
+var ErrInvalidPeriod = errors.New("health: invalid period")
 
 // NewProbe returns a Probe that runs ch at the given period.
 func NewProbe(name string, period time.Duration, ch checker.Checker) *Probe {
@@ -44,10 +49,18 @@ func (p *Probe) ensureStarted() (<-chan *Tick, <-chan struct{}) {
 		return p.ch, nil
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
 	ch := make(chan *Tick, 1)
-	ticker := time.NewTicker(p.period)
 	ready := make(chan struct{})
+
+	if p.period <= 0 {
+		ch <- NewTick(p.name, fmt.Errorf("%w: %s", ErrInvalidPeriod, p.period))
+		close(ch)
+		close(ready)
+		return ch, ready
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	ticker := time.NewTicker(p.period)
 
 	p.ch = ch
 	p.ticker = ticker
