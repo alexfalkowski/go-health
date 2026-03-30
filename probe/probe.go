@@ -22,6 +22,7 @@ type Probe struct {
 	name    string
 	period  time.Duration
 	mux     sync.Mutex
+	wg      sync.WaitGroup
 }
 
 // Start begins running checks and returns a channel of ticks.
@@ -31,15 +32,21 @@ func (p *Probe) Start() <-chan *Tick {
 	p.mux.Lock()
 	defer p.mux.Unlock()
 
-	p.done = make(chan struct{}, 1)
-	p.ch = make(chan *Tick, 1)
-	p.ticker = time.NewTicker(p.period)
+	done := make(chan struct{})
+	ch := make(chan *Tick, 1)
+	ticker := time.NewTicker(p.period)
+
+	p.done = done
+	p.ch = ch
+	p.ticker = ticker
 
 	// Check on startup.
-	p.tick()
-	go p.start()
+	p.tick(ch, done)
+	p.wg.Go(func() {
+		p.start(ch, done, ticker)
+	})
 
-	return p.ch
+	return ch
 }
 
 // Stop stops the probe.
@@ -47,23 +54,40 @@ func (p *Probe) Stop() {
 	p.mux.Lock()
 	defer p.mux.Unlock()
 
-	p.ticker.Stop()
-	close(p.done)
+	if p.done == nil {
+		return
+	}
+
+	done := p.done
+	ticker := p.ticker
+
+	p.done = nil
+	p.ch = nil
+	p.ticker = nil
+
+	ticker.Stop()
+	close(done)
+	p.wg.Wait()
 }
 
-func (p *Probe) start() {
-	defer close(p.ch)
+func (p *Probe) start(ch chan *Tick, done <-chan struct{}, ticker *time.Ticker) {
+	defer close(ch)
 
 	for {
 		select {
-		case <-p.done:
+		case <-done:
 			return
-		case <-p.ticker.C:
-			p.tick()
+		case <-ticker.C:
+			p.tick(ch, done)
 		}
 	}
 }
 
-func (p *Probe) tick() {
-	p.ch <- NewTick(p.name, p.checker.Check(context.Background()))
+func (p *Probe) tick(ch chan<- *Tick, done <-chan struct{}) {
+	tick := NewTick(p.name, p.checker.Check(context.Background()))
+
+	select {
+	case <-done:
+	case ch <- tick:
+	}
 }
