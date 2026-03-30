@@ -13,10 +13,10 @@ var _ Checker = (*TCPChecker)(nil)
 // NewTCPChecker returns a TCPChecker that connects to address.
 //
 // The timeout is applied via context.WithTimeout during Check.
-func NewTCPChecker(address string, timeout time.Duration, opts ...Option) *TCPChecker {
+func NewTCPChecker(address string, t time.Duration, opts ...Option) *TCPChecker {
 	os := parseOptions(opts...)
 
-	return &TCPChecker{address: address, timeout: timeout, dialer: os.dialer}
+	return &TCPChecker{address: address, timeout: timeout(t), dialer: os.dialer}
 }
 
 // TCPChecker checks TCP connectivity to an address.
