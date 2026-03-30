@@ -8,8 +8,9 @@ import (
 
 	"github.com/alexfalkowski/go-health/v2/checker"
 	"github.com/alexfalkowski/go-health/v2/internal/test"
-	testsql "github.com/alexfalkowski/go-health/v2/internal/test/sql"
+	"github.com/alexfalkowski/go-health/v2/internal/test/sql"
 	"github.com/alexfalkowski/go-health/v2/net"
+	"github.com/alexfalkowski/go-health/v2/probe"
 	"github.com/alexfalkowski/go-health/v2/server"
 	"github.com/stretchr/testify/require"
 )
@@ -164,6 +165,26 @@ func TestTimeoutHTTPChecker(t *testing.T) {
 	require.Error(t, ob.Error())
 }
 
+func TestInvalidPeriod(t *testing.T) {
+	s := server.NewServer()
+	defer s.Stop()
+
+	registration := server.NewRegistration("noop", 0, checker.NewNoopChecker())
+	s.Register("test", registration)
+
+	require.NoError(t, s.Observe("test", "livez", registration.Name))
+	ob, _ := s.Observer("test", "livez")
+
+	require.NotPanics(t, func() {
+		s.Start()
+	})
+
+	require.Eventually(t, func() bool {
+		return ob.Error() != nil
+	}, time.Second, 10*time.Millisecond)
+	require.ErrorIs(t, ob.Error(), probe.ErrInvalidPeriod)
+}
+
 func TestValidTCPChecker(t *testing.T) {
 	s := server.NewServer()
 	defer s.Stop()
@@ -207,7 +228,7 @@ func TestValidDBChecker(t *testing.T) {
 	s := server.NewServer()
 	defer s.Stop()
 
-	checker := checker.NewDBChecker(testsql.OKPinger{}, timeout)
+	checker := checker.NewDBChecker(sql.OKPinger{}, timeout)
 	r := server.NewRegistration("db", period, checker)
 	s.Register("test", r)
 
@@ -226,7 +247,7 @@ func TestInvalidDBChecker(t *testing.T) {
 	defer s.Stop()
 
 	errPing := errors.New("ping failed")
-	checker := checker.NewDBChecker(testsql.ErrorPinger{Err: errPing}, timeout)
+	checker := checker.NewDBChecker(sql.ErrorPinger{Err: errPing}, timeout)
 	r := server.NewRegistration("db", period, checker)
 	s.Register("test", r)
 
