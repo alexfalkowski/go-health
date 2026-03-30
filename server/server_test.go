@@ -339,7 +339,7 @@ func TestOneInvalidObserver(t *testing.T) {
 	require.NoError(t, ob.Error())
 }
 
-func TestNonExistentObserver(t *testing.T) {
+func TestObserveUnknownProbeNames(t *testing.T) {
 	s := server.NewServer()
 	defer s.Stop()
 
@@ -349,10 +349,13 @@ func TestNonExistentObserver(t *testing.T) {
 	tr := server.NewRegistration("tcp", period, tc)
 	s.Register("test", hr, tr)
 
-	_ = s.Observe("test", "livez", "http1", "tcp1")
-	ob, _ := s.Observer("test", "livez")
+	err := s.Observe("test", "livez", "http1", "tcp1")
+	require.ErrorIs(t, err, server.ErrProbeNotFound)
+	require.ErrorContains(t, err, "http1")
+	require.ErrorContains(t, err, "tcp1")
 
-	require.NoError(t, ob.Error())
+	_, err = s.Observer("test", "livez")
+	require.ErrorIs(t, err, server.ErrObserverNotFound)
 }
 
 func TestLivezObservers(t *testing.T) {
@@ -412,12 +415,10 @@ func TestInvalidObservers(t *testing.T) {
 	)
 	r := server.NewRegistration("google", period, checker)
 	s.Register("test", r)
-
 	require.Error(t, s.Observe("bob", "livez", r.Name))
 
 	_ = s.Observe("test", "livez", r.Name)
 	_, err := s.Observer("bob", "livez")
-
 	require.Error(t, err)
 }
 
