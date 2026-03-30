@@ -1,11 +1,11 @@
 package subscriber_test
 
 import (
-	"sync"
 	"testing"
 
 	"github.com/alexfalkowski/go-health/v2/probe"
 	"github.com/alexfalkowski/go-health/v2/subscriber"
+	"github.com/alexfalkowski/go-sync"
 	"github.com/stretchr/testify/require"
 )
 

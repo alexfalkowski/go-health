@@ -2,9 +2,9 @@ package subscriber
 
 import (
 	"slices"
-	"sync"
 
 	"github.com/alexfalkowski/go-health/v2/probe"
+	"github.com/alexfalkowski/go-sync"
 )
 
 // NewSubscriber returns a Subscriber for the given probe names.

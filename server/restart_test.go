@@ -3,11 +3,11 @@ package server_test
 import (
 	"context"
 	"errors"
-	"sync"
 	"testing"
 	"time"
 
 	"github.com/alexfalkowski/go-health/v2/server"
+	"github.com/alexfalkowski/go-sync"
 	"github.com/stretchr/testify/require"
 )
 

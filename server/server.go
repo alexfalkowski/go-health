@@ -4,9 +4,9 @@ import (
 	"errors"
 	"iter"
 	"maps"
-	"sync"
 
 	"github.com/alexfalkowski/go-health/v2/subscriber"
+	"github.com/alexfalkowski/go-sync"
 )
 
 // ErrServiceNotFound when the service has not been registered.

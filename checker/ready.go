@@ -2,7 +2,8 @@ package checker
 
 import (
 	"context"
-	"sync/atomic"
+
+	"github.com/alexfalkowski/go-sync"
 )
 
 var _ Checker = (*ReadyChecker)(nil)
@@ -17,7 +18,7 @@ func NewReadyChecker(err error) *ReadyChecker {
 // ReadyChecker reports a fixed error until it is marked ready.
 type ReadyChecker struct {
 	err  error
-	flag int32
+	flag sync.Int32
 }
 
 // Check returns an error until Ready is called.
@@ -31,9 +32,9 @@ func (c *ReadyChecker) Check(_ context.Context) error {
 
 // Ready marks the checker as ready.
 func (c *ReadyChecker) Ready() {
-	atomic.StoreInt32(&(c.flag), 1)
+	c.flag.Store(1)
 }
 
 func (c *ReadyChecker) notReady() bool {
-	return atomic.LoadInt32(&(c.flag)) == 0
+	return c.flag.Load() == 0
 }
