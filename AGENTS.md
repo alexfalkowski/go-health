@@ -137,6 +137,7 @@ There are also `sync`, `version`, and `wait-all` jobs in `.circleci/config.yml`.
 ### Errors
 
 - Checkers wrap underlying failures with context, usually using `fmt.Errorf("<checker>: %w", err)`.
+- `checker.DBChecker` and `checker.TCPChecker` use `checker.ErrTimeout` as the cause for their derived timeout contexts.
 - Aggregated observer errors use `errors.Join`.
 - `subscriber.Errors.Error` annotates each joined error with the probe name.
 

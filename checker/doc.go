@@ -22,6 +22,9 @@
 //
 // HTTPChecker, TCPChecker, DBChecker, and OnlineChecker accept a timeout
 // duration. Passing 0 uses a default timeout of 30 seconds.
+// DBChecker and TCPChecker derive per-call contexts using [context.WithTimeoutCause].
+// If their underlying dependency returns [context.Cause] after that timeout
+// expires, the resulting error matches [ErrTimeout].
 //
 // OnlineChecker uses a built-in list of connectivity endpoints unless you
 // override it with WithURLs. HTTPChecker and OnlineChecker use
