@@ -1,5 +1,12 @@
 # AGENTS.md
 
+## Shared skill
+
+Use the shared `coding-standards` skill from `./bin/skills/coding-standards`
+for cross-repository coding, review, testing, documentation, and PR
+conventions. Treat this `AGENTS.md` as the repo-specific companion to that
+skill.
+
 ## Project overview
 
 This repository is a Go library for asynchronous health monitoring. It lets you
