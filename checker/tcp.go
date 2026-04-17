@@ -12,9 +12,9 @@ var _ Checker = (*TCPChecker)(nil)
 
 // NewTCPChecker returns a TCPChecker that connects to address.
 //
-// The timeout is applied via context.WithTimeout during Check. Passing 0 uses
-// the package default of 30 seconds. Use WithDialer to override the dialing
-// implementation.
+// The timeout is applied via [context.WithTimeoutCause] during Check. Passing 0
+// uses the package default of 30 seconds. Use WithDialer to override the
+// dialing implementation.
 func NewTCPChecker(address string, t time.Duration, opts ...Option) *TCPChecker {
 	os := parseOptions(opts...)
 
@@ -32,8 +32,11 @@ type TCPChecker struct {
 }
 
 // Check attempts to connect to the configured address with a per-call timeout.
+//
+// If the timeout expires and the dialer returns [context.Cause], the returned
+// error matches [ErrTimeout].
 func (c *TCPChecker) Check(ctx context.Context) error {
-	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	ctx, cancel := context.WithTimeoutCause(ctx, c.timeout, ErrTimeout)
 	defer cancel()
 
 	conn, err := c.dialer.DialContext(ctx, "tcp", c.address)

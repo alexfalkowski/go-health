@@ -3,7 +3,7 @@ module github.com/alexfalkowski/go-health/v2
 go 1.26.0
 
 require (
-	github.com/alexfalkowski/go-sync v1.19.3
+	github.com/alexfalkowski/go-sync v1.20.0
 	github.com/stretchr/testify v1.11.1
 )
 
