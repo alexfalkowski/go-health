@@ -32,8 +32,9 @@ func NewService() *Service {
 // Service maintains probes, subscribers, and observers for a single service.
 //
 // Register and Observe are typically called during setup. Start begins running
-// all probes and fan-outs their ticks to subscribers. Stop tears everything down
-// and preserves observers so the service can be started again later.
+// all probes, waits for their initial checks, and fan-outs their ticks to
+// subscribers. Stop tears everything down after Start has returned and preserves
+// observers so the service can be started again later.
 type Service struct {
 	registry      map[string]*probe.Probe
 	observers     map[string]*subscriber.Observer
@@ -86,7 +87,8 @@ func (s *Service) Observe(kind string, names ...string) error {
 // Start starts all registered probes and begins fan-out to subscribers.
 //
 // Existing observers continue receiving updates if the service is stopped and
-// started again later.
+// started again later. Start waits for each probe's initial check before
+// returning; call Stop after Start has returned during normal shutdown.
 func (s *Service) Start() {
 	s.mux.Lock()
 	defer s.mux.Unlock()

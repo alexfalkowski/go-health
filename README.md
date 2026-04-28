@@ -60,6 +60,8 @@ import "github.com/alexfalkowski/go-health/v2/server"
 ## Key behaviors
 
 - `probe.Start` performs an immediate check before the periodic loop continues.
+- `server.Start` waits for each service's initial checks before returning; call
+  `Stop` after `Start` returns, typically during process shutdown.
 - A probe with an invalid period emits a single error tick and closes.
 - `HTTPChecker`, `TCPChecker`, `DBChecker`, and `OnlineChecker` use a default timeout of `30s` when you pass `0`.
 - `DBChecker` and `TCPChecker` use `checker.ErrTimeout` as the timeout cause for their derived per-call contexts.

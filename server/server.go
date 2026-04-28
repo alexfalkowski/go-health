@@ -20,7 +20,8 @@ func NewServer() *Server {
 // Server maintains registered services and can start or stop them as a group.
 //
 // Register and Observe are intended for setup time. Call Start once the server
-// has been configured, and Stop when the process is shutting down.
+// has been configured, and Stop after Start has returned when the process is
+// shutting down.
 type Server struct {
 	services map[string]*Service
 	mux      sync.Mutex
@@ -79,7 +80,8 @@ func (s *Server) Observe(name, kind string, names ...string) error {
 
 // Start starts all registered services.
 //
-// Start is idempotent.
+// Start is idempotent. It waits for each service's initial checks before
+// returning; call Stop after Start has returned during normal shutdown.
 func (s *Server) Start() {
 	s.mux.Lock()
 	defer s.mux.Unlock()
