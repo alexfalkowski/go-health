@@ -31,10 +31,10 @@ func NewService() *Service {
 
 // Service maintains probes, subscribers, and observers for a single service.
 //
-// Register and Observe are typically called during setup. Start begins running
-// all probes, waits for their initial checks, and fan-outs their ticks to
-// subscribers. Stop tears everything down after Start has returned and preserves
-// observers so the service can be started again later.
+// Register and Observe are setup-time calls. Start begins running all probes,
+// waits for their initial checks, and fan-outs their ticks to subscribers. Stop
+// tears everything down after Start has returned and preserves observers so the
+// service can be started again later.
 type Service struct {
 	registry      map[string]*probe.Probe
 	observers     map[string]*subscriber.Observer
@@ -50,7 +50,8 @@ type Service struct {
 
 // Register registers all the given probe registrations.
 //
-// Later registrations with the same name replace earlier ones.
+// Register is intended for setup before Start. Later registrations with the same
+// name replace earlier ones.
 func (s *Service) Register(regs ...*Registration) {
 	for _, reg := range regs {
 		s.registry[reg.Name] = probe.NewProbe(reg.Name, reg.Period, reg.Checker)
@@ -69,8 +70,9 @@ func (s *Service) Observer(kind string) (*subscriber.Observer, error) {
 
 // Observe registers an observer kind that tracks the probes listed in names.
 //
-// It returns an error if any probe name has not been registered. Repeated calls
-// with the same kind are idempotent and keep the original probe set.
+// Observe is intended for setup before Start. It returns an error if any probe
+// name has not been registered. Repeated calls with the same kind are idempotent
+// and keep the original probe set.
 func (s *Service) Observe(kind string, names ...string) error {
 	_, ok := s.observers[kind]
 	if !ok {

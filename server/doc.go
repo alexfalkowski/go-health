@@ -12,7 +12,7 @@
 // create one or more observers, usually named after an endpoint such as "livez"
 // or "readyz", that watch a subset of those probe names.
 //
-// Configure services and observers during setup, then call Start to run the
+// Register services and observers during setup, then call Start to run the
 // orchestration. Start waits for initial checks to finish before returning. Call
 // Stop after Start has returned, typically from process shutdown. Existing
 // observers continue to work across service restarts.

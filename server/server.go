@@ -19,9 +19,9 @@ func NewServer() *Server {
 
 // Server maintains registered services and can start or stop them as a group.
 //
-// Register and Observe are intended for setup time. Call Start once the server
-// has been configured, and Stop after Start has returned when the process is
-// shutting down.
+// Register and Observe are setup-time calls. Call Start once the server has
+// been configured, and Stop after Start has returned when the process is shutting
+// down.
 type Server struct {
 	services map[string]*Service
 	mux      sync.Mutex
@@ -30,7 +30,8 @@ type Server struct {
 
 // Register adds a service with name and registrations.
 //
-// If a service already exists for name, it is replaced.
+// Register is intended for setup before Start. If a service already exists for
+// name, it is replaced.
 func (s *Server) Register(name string, regs ...*Registration) {
 	service := NewService()
 	service.Register(regs...)
@@ -67,8 +68,8 @@ func (s *Server) Observer(name, kind string) (*subscriber.Observer, error) {
 
 // Observe registers an observer kind for the service name.
 //
-// The observer will track the probes listed in names. Repeated calls with the
-// same service and kind are idempotent.
+// Observe is intended for setup before Start. The observer will track the probes
+// listed in names. Repeated calls with the same service and kind are idempotent.
 func (s *Server) Observe(name, kind string, names ...string) error {
 	service, ok := s.services[name]
 	if !ok {
