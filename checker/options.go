@@ -2,6 +2,7 @@ package checker
 
 import (
 	"net/http"
+	"slices"
 
 	"github.com/alexfalkowski/go-health/v2/net"
 )
@@ -45,7 +46,7 @@ func WithDialer(dialer net.Dialer) Option {
 // Providing at least one URL replaces the package defaults entirely.
 func WithURLs(urls ...string) Option {
 	return optionFunc(func(o *options) {
-		o.urls = urls
+		o.urls = slices.Clone(urls)
 	})
 }
 
