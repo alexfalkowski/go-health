@@ -60,6 +60,8 @@ import "github.com/alexfalkowski/go-health/v2/server"
 ## Key behaviors
 
 - `probe.Start` performs an immediate check before the periodic loop continues.
+- `server.Register` and `server.Observe` are setup-time calls; finish
+  registration before calling `Start`.
 - `server.Start` waits for each service's initial checks before returning; call
   `Stop` after `Start` returns, typically during process shutdown.
 - A probe with an invalid period emits a single error tick and closes.
