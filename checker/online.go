@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"time"
-
-	"github.com/alexfalkowski/go-sync"
 )
 
 var _ Checker = (*OnlineChecker)(nil)
@@ -46,32 +44,41 @@ type OnlineChecker struct {
 // errors are ignored unless every configured URL fails or returns an unexpected
 // status code.
 func (c *OnlineChecker) Check(ctx context.Context) error {
-	var counter sync.Int32
-	var wg sync.WaitGroup
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
+	results := make(chan bool, len(c.urls))
 	for _, url := range c.urls {
-		wg.Go(func() {
-			req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
-			if err != nil {
-				return
+		go func() {
+			healthy := c.check(ctx, url)
+			if healthy {
+				cancel()
 			}
 
-			resp, err := c.client.Do(req)
-			if err != nil {
-				return
-			}
-			defer resp.Body.Close()
-
-			if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusNoContent {
-				counter.Add(1)
-			}
-		})
+			results <- healthy
+		}()
 	}
 
-	wg.Wait()
-
-	if counter.Load() == 0 {
-		return fmt.Errorf("online checker: %w", ErrNotOnline)
+	for range c.urls {
+		if <-results {
+			return nil
+		}
 	}
-	return nil
+
+	return fmt.Errorf("online checker: %w", ErrNotOnline)
+}
+
+func (c *OnlineChecker) check(ctx context.Context, url string) bool {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
+	if err != nil {
+		return false
+	}
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return false
+	}
+	defer resp.Body.Close()
+
+	return resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusNoContent
 }
