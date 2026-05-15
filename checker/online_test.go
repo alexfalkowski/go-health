@@ -28,3 +28,35 @@ func TestOnlineCheckerClonesURLs(t *testing.T) {
 
 	require.NoError(t, check.Check(t.Context()))
 }
+
+func TestOnlineCheckerReturnsOnFirstHealthyURL(t *testing.T) {
+	slowStarted := make(chan struct{})
+	slowCanceled := make(chan struct{})
+	slow := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		close(slowStarted)
+		<-r.Context().Done()
+		close(slowCanceled)
+	}))
+	t.Cleanup(slow.Close)
+
+	healthy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		<-slowStarted
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	t.Cleanup(healthy.Close)
+
+	check := checker.NewOnlineChecker(5*time.Second, checker.WithURLs(slow.URL, healthy.URL))
+
+	started := time.Now()
+	require.NoError(t, check.Check(t.Context()))
+
+	require.Less(t, time.Since(started), 500*time.Millisecond)
+	require.Eventually(t, func() bool {
+		select {
+		case <-slowCanceled:
+			return true
+		default:
+			return false
+		}
+	}, time.Second, 10*time.Millisecond)
+}
