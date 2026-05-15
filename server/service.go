@@ -101,12 +101,7 @@ func (s *Service) Start() {
 
 	s.prepareStart()
 
-	chs := []<-chan *probe.Tick{}
-	for _, p := range s.registry {
-		chs = append(chs, p.Start())
-	}
-
-	s.mergeChannels(chs)
+	s.mergeChannels(s.startProbes())
 	s.subscriberWG.Go(func() {
 		s.sendToSubscribers()
 	})
@@ -153,6 +148,26 @@ func (s *Service) subscribe(kind string, names ...string) *subscriber.Subscriber
 	s.subscriptions[kind] = sub
 	s.subscribers = append(s.subscribers, sub)
 	return sub
+}
+
+func (s *Service) startProbes() []<-chan *probe.Tick {
+	chs := make([]<-chan *probe.Tick, len(s.registry))
+
+	var wg sync.WaitGroup
+	i := 0
+	for _, p := range s.registry {
+		startProbe(&wg, chs, i, p)
+		i++
+	}
+	wg.Wait()
+
+	return chs
+}
+
+func startProbe(wg *sync.WaitGroup, chs []<-chan *probe.Tick, i int, p *probe.Probe) {
+	wg.Go(func() {
+		chs[i] = p.Start()
+	})
 }
 
 func (s *Service) mergeChannels(chs []<-chan *probe.Tick) {
