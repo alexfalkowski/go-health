@@ -1,6 +1,7 @@
 package server_test
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -28,8 +29,13 @@ func ExampleNewServer() {
 		return
 	}
 
-	s.Start()
-	defer s.Stop()
+	if err := s.Start(context.Background()); err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer func() {
+		_ = s.Stop(context.Background())
+	}()
 
 	fmt.Println(waitForCondition(func() bool {
 		return errors.Is(observer.Error(), errNotReady)

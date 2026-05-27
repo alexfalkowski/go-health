@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -91,56 +92,73 @@ func (s *Service) Observe(kind string, names ...string) error {
 // Existing observers continue receiving updates if the service is stopped and
 // started again later. Start waits for each probe's initial check before
 // returning; call Stop after Start has returned during normal shutdown.
-func (s *Service) Start() {
+func (s *Service) Start(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	s.mux.Lock()
 	defer s.mux.Unlock()
 
 	if s.running {
-		return
+		return nil
 	}
 
 	s.prepareStart()
 
-	s.mergeChannels(s.startProbes())
+	chs, err := s.startProbes(ctx)
+	if err != nil {
+		s.cleanupStartFailure(ctx)
+		return err
+	}
+
+	s.mergeChannels(chs)
 	s.subscriberWG.Go(func() {
 		s.sendToSubscribers()
 	})
 
 	s.running = true
+	return nil
 }
 
 // Stop stops all probes and closes all subscribers.
 //
 // Stop waits for in-flight fan-in and fan-out work to finish before returning.
-func (s *Service) Stop() {
+func (s *Service) Stop(ctx context.Context) error {
 	s.mux.Lock()
 	defer s.mux.Unlock()
 
 	if !s.running {
 		s.closeSubscriptions()
-		s.waitObservers()
-		return
+		return s.waitObservers(ctx)
 	}
 
 	// Stop probes first so their tick channels can close and sendTick goroutines can exit cleanly.
-	for _, p := range s.registry {
-		p.Stop()
+	if err := s.stopProbes(ctx); err != nil {
+		return err
 	}
 
 	// Signal all sendTick goroutines to stop and wait for them to finish.
 	close(s.done)
-	s.registryWG.Wait()
+	if err := wait(ctx, s.registryWG); err != nil {
+		return err
+	}
 
 	// Now it is safe to close the fan-in channel: no further sends can occur.
 	close(s.ticks)
 
 	// Wait for the fan-out goroutine to drain/exit and close all subscribers.
-	s.subscriberWG.Wait()
+	if err := wait(ctx, s.subscriberWG); err != nil {
+		return err
+	}
 
 	// Ensure observers have finished draining their subscriber channels before a restart.
-	s.waitObservers()
+	if err := s.waitObservers(ctx); err != nil {
+		return err
+	}
 
 	s.running = false
+	return nil
 }
 
 func (s *Service) subscribe(kind string, names ...string) *subscriber.Subscriber {
@@ -156,30 +174,41 @@ func (s *Service) closeSubscriptions() {
 	}
 }
 
-func (s *Service) waitObservers() {
+func (s *Service) waitObservers(ctx context.Context) error {
+	var wg sync.WaitGroup
 	for _, observer := range s.observers {
-		observer.Wait()
+		wg.Go(func() {
+			observer.Wait()
+		})
 	}
+
+	return wait(ctx, &wg)
 }
 
-func (s *Service) startProbes() []<-chan *probe.Tick {
+func (s *Service) startProbes(ctx context.Context) ([]<-chan *probe.Tick, error) {
 	chs := make([]<-chan *probe.Tick, len(s.registry))
+	errs := make([]error, len(s.registry))
+	probes := make([]*probe.Probe, 0, len(s.registry))
+	for _, p := range s.registry {
+		probes = append(probes, p)
+	}
 
 	var wg sync.WaitGroup
-	i := 0
-	for _, p := range s.registry {
-		startProbe(&wg, chs, i, p)
-		i++
+	for i, p := range probes {
+		wg.Go(func() {
+			chs[i], errs[i] = p.Start(ctx)
+		})
 	}
 	wg.Wait()
 
-	return chs
-}
+	if err := errors.Join(errs...); err != nil {
+		if stopErr := s.stopProbes(context.WithoutCancel(ctx)); stopErr != nil {
+			return nil, errors.Join(err, stopErr)
+		}
+		return nil, err
+	}
 
-func startProbe(wg *sync.WaitGroup, chs []<-chan *probe.Tick, i int, p *probe.Probe) {
-	wg.Go(func() {
-		chs[i] = p.Start()
-	})
+	return chs, nil
 }
 
 func (s *Service) mergeChannels(chs []<-chan *probe.Tick) {
@@ -207,6 +236,33 @@ func (s *Service) prepareStart() {
 
 		s.subscribers = append(s.subscribers, sub)
 	}
+}
+
+func (s *Service) cleanupStartFailure(ctx context.Context) {
+	s.closeSubscriptions()
+	_ = s.waitObservers(context.WithoutCancel(ctx))
+	close(s.done)
+	close(s.ticks)
+}
+
+func (s *Service) stopProbes(ctx context.Context) error {
+	errs := make([]error, 0, len(s.registry))
+	errc := make(chan error, len(s.registry))
+
+	var wg sync.WaitGroup
+	for _, p := range s.registry {
+		wg.Go(func() {
+			errc <- p.Stop(ctx)
+		})
+	}
+	wg.Wait()
+	close(errc)
+
+	for err := range errc {
+		errs = append(errs, err)
+	}
+
+	return errors.Join(errs...)
 }
 
 func (s *Service) validateProbeNames(names ...string) error {
@@ -248,5 +304,20 @@ func (s *Service) sendToSubscribers() {
 
 	for _, sub := range s.subscribers {
 		sub.Close()
+	}
+}
+
+func wait(ctx context.Context, wg *sync.WaitGroup) error {
+	done := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-done:
+		return nil
 	}
 }

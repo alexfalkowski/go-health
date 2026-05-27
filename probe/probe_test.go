@@ -1,6 +1,7 @@
 package probe_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -15,7 +16,7 @@ func TestStopWithoutStartDoesNotPanic(t *testing.T) {
 	p := probe.NewProbe("noop", 10*time.Millisecond, checker.NewNoopChecker())
 
 	require.NotPanics(t, func() {
-		p.Stop()
+		_ = p.Stop(t.Context())
 	})
 }
 
@@ -32,6 +33,7 @@ func TestStopCancelsInFlightCheck(t *testing.T) {
 	testchecker.WaitForCanceled(t, ch.Canceled)
 
 	result := testprobe.WaitForStart(t, started, "start")
+	require.NoError(t, result.Err)
 
 	_, ok := <-result.Ticks
 	require.False(t, ok)
@@ -40,7 +42,7 @@ func TestStopCancelsInFlightCheck(t *testing.T) {
 func TestConcurrentStartWaitsForInitialCheck(t *testing.T) {
 	ch := testchecker.NewReleasableChecker()
 	p := probe.NewProbe("blocking", time.Hour, ch)
-	t.Cleanup(p.Stop)
+	t.Cleanup(func() { _ = p.Stop(context.Background()) })
 
 	first := testprobe.StartProbe(p)
 	testchecker.WaitForStarted(t, ch.Started)
@@ -52,14 +54,89 @@ func TestConcurrentStartWaitsForInitialCheck(t *testing.T) {
 	firstResult := testprobe.WaitForStart(t, first, "first start")
 	secondResult := testprobe.WaitForStart(t, second, "second start")
 
+	require.NoError(t, firstResult.Err)
+	require.NoError(t, secondResult.Err)
 	require.Equal(t, firstResult.Ticks, secondResult.Ticks)
+}
+
+func TestStartWithCanceledContextReturnsContextError(t *testing.T) {
+	p := probe.NewProbe("noop", time.Hour, checker.NewNoopChecker())
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+
+	ticks, err := p.Start(ctx)
+
+	require.ErrorIs(t, err, context.Canceled)
+	require.Nil(t, ticks)
+}
+
+func TestStartReturnsContextError(t *testing.T) {
+	ch := testchecker.NewBlockingChecker()
+	p := probe.NewProbe("blocking", time.Hour, ch)
+
+	ctx, cancel := context.WithCancel(t.Context())
+	started := make(chan testprobe.StartResult, 1)
+	go func() {
+		ticks, err := p.Start(ctx)
+		started <- testprobe.StartResult{Ticks: ticks, Err: err}
+	}()
+
+	testchecker.WaitForStarted(t, ch.Started)
+	cancel()
+	testchecker.WaitForCanceled(t, ch.Canceled)
+
+	result := testprobe.WaitForStart(t, started, "start")
+	require.ErrorIs(t, result.Err, context.Canceled)
+	require.Nil(t, result.Ticks)
+}
+
+func TestCanceledConcurrentStartDoesNotStopExistingStart(t *testing.T) {
+	ch := testchecker.NewReleasableChecker()
+	p := probe.NewProbe("blocking", time.Hour, ch)
+	t.Cleanup(func() { _ = p.Stop(context.Background()) })
+
+	first := testprobe.StartProbe(p)
+	testchecker.WaitForStarted(t, ch.Started)
+
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+
+	ticks, err := p.Start(ctx)
+	require.ErrorIs(t, err, context.Canceled)
+	require.Nil(t, ticks)
+
+	close(ch.Release)
+
+	result := testprobe.WaitForStart(t, first, "first start")
+	require.NoError(t, result.Err)
+	require.NotNil(t, <-result.Ticks)
+}
+
+func TestStopReturnsContextError(t *testing.T) {
+	ch := testchecker.NewBlockingPeriodicChecker()
+	p := probe.NewProbe("blocking", time.Millisecond, ch)
+	t.Cleanup(func() {
+		close(ch.Release)
+		_ = p.Stop(context.Background())
+	})
+
+	ticks, err := p.Start(t.Context())
+	require.NoError(t, err)
+	require.NotNil(t, <-ticks)
+	testchecker.WaitForStarted(t, ch.PeriodicStarted)
+
+	ctx, cancel := context.WithTimeout(t.Context(), time.Millisecond)
+	defer cancel()
+
+	require.ErrorIs(t, p.Stop(ctx), context.DeadlineExceeded)
 }
 
 func TestStartWithInvalidPeriodReturnsErrorTick(t *testing.T) {
 	p := probe.NewProbe("noop", 0, checker.NewNoopChecker())
 
 	require.NotPanics(t, func() {
-		ticks := p.Start()
+		ticks, err := p.Start(t.Context())
+		require.NoError(t, err)
 
 		tick, ok := <-ticks
 		require.True(t, ok)

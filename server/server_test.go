@@ -1,6 +1,7 @@
 package server_test
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"testing"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/alexfalkowski/go-health/v2/checker"
 	"github.com/alexfalkowski/go-health/v2/internal/test"
+	testchecker "github.com/alexfalkowski/go-health/v2/internal/test/checker"
 	"github.com/alexfalkowski/go-health/v2/internal/test/sql"
 	testsubscriber "github.com/alexfalkowski/go-health/v2/internal/test/subscriber"
 	"github.com/alexfalkowski/go-health/v2/net"
@@ -27,7 +29,7 @@ var invalidURL = string([]byte{0x7f})
 
 func TestDoubleStart(t *testing.T) {
 	s := server.NewServer()
-	defer s.Stop()
+	defer func() { _ = s.Stop(context.Background()) }()
 
 	checker := checker.NewHTTPChecker(
 		"https://www.google.com/",
@@ -43,15 +45,74 @@ func TestDoubleStart(t *testing.T) {
 	_ = s.Observe("test", "livez", r.Name)
 	ob, _ := s.Observer("test", "livez")
 
-	s.Start()
-	s.Start()
+	_ = s.Start(context.Background())
+	_ = s.Start(context.Background())
 
 	testsubscriber.RequireObserverNoError(t, ob)
 }
 
+func TestStartWithCanceledContextReturnsContextError(t *testing.T) {
+	s := server.NewServer()
+	registration := server.NewRegistration("noop", time.Hour, checker.NewNoopChecker())
+	s.Register("test", registration)
+
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+
+	err := s.Start(ctx)
+
+	require.ErrorIs(t, err, context.Canceled)
+	require.NoError(t, s.Start(t.Context()))
+	t.Cleanup(func() { _ = s.Stop(context.Background()) })
+}
+
+func TestStartReturnsServiceStartError(t *testing.T) {
+	s := server.NewServer()
+	ch := testchecker.NewBlockingChecker()
+
+	registration := server.NewRegistration("blocking", time.Hour, ch)
+	s.Register("test", registration)
+
+	ctx, cancel := context.WithCancel(t.Context())
+	errc := make(chan error, 1)
+	go func() {
+		errc <- s.Start(ctx)
+	}()
+
+	testchecker.WaitForStarted(t, ch.Started)
+	cancel()
+
+	require.ErrorIs(t, <-errc, context.Canceled)
+	testchecker.WaitForCanceled(t, ch.Canceled)
+
+	registration = server.NewRegistration("blocking", time.Hour, checker.NewNoopChecker())
+	s.Register("test", registration)
+	require.NoError(t, s.Start(t.Context()))
+	t.Cleanup(func() { _ = s.Stop(context.Background()) })
+}
+
+func TestStopReturnsContextError(t *testing.T) {
+	s := server.NewServer()
+	ch := testchecker.NewBlockingPeriodicChecker()
+
+	registration := server.NewRegistration("blocking", time.Millisecond, ch)
+	s.Register("test", registration)
+	require.NoError(t, s.Start(t.Context()))
+	testchecker.WaitForStarted(t, ch.PeriodicStarted)
+	t.Cleanup(func() {
+		close(ch.Release)
+		_ = s.Stop(context.Background())
+	})
+
+	ctx, cancel := context.WithTimeout(t.Context(), time.Millisecond)
+	defer cancel()
+
+	require.ErrorIs(t, s.Stop(ctx), context.DeadlineExceeded)
+}
+
 func TestOnlineChecker(t *testing.T) {
 	s := server.NewServer()
-	defer s.Stop()
+	defer func() { _ = s.Stop(context.Background()) }()
 
 	r := server.NewOnlineRegistration(0, period)
 	s.Register("test", r)
@@ -59,14 +120,14 @@ func TestOnlineChecker(t *testing.T) {
 	_ = s.Observe("test", "livez", r.Name)
 	ob, _ := s.Observer("test", "livez")
 
-	s.Start()
+	_ = s.Start(t.Context())
 
 	testsubscriber.RequireObserverNoError(t, ob)
 }
 
 func TestInvalidOnlineChecker(t *testing.T) {
 	s := server.NewServer()
-	defer s.Stop()
+	defer func() { _ = s.Stop(context.Background()) }()
 
 	r := server.NewOnlineRegistration(0, period, checker.WithURLs(invalidURL, "https://www.assaaasss.com/"))
 	s.Register("test", r)
@@ -74,14 +135,14 @@ func TestInvalidOnlineChecker(t *testing.T) {
 	_ = s.Observe("test", "livez", r.Name)
 	ob, _ := s.Observer("test", "livez")
 
-	s.Start()
+	_ = s.Start(t.Context())
 
 	testsubscriber.RequireObserverError(t, ob)
 }
 
 func TestValidHTTPChecker(t *testing.T) {
 	s := server.NewServer()
-	defer s.Stop()
+	defer func() { _ = s.Stop(context.Background()) }()
 
 	checker := checker.NewHTTPChecker("https://www.google.com/", 0)
 	r := server.NewRegistration("google", period, checker)
@@ -90,14 +151,14 @@ func TestValidHTTPChecker(t *testing.T) {
 	_ = s.Observe("test", "livez", r.Name)
 	ob, _ := s.Observer("test", "livez")
 
-	s.Start()
+	_ = s.Start(t.Context())
 
 	testsubscriber.RequireObserverNoError(t, ob)
 }
 
 func TestInvalidURLHTTPChecker(t *testing.T) {
 	s := server.NewServer()
-	defer s.Stop()
+	defer func() { _ = s.Stop(context.Background()) }()
 
 	checker := checker.NewHTTPChecker("https://www.assaaasss.com/", timeout)
 	r := server.NewRegistration("assaaasss", period, checker)
@@ -106,14 +167,14 @@ func TestInvalidURLHTTPChecker(t *testing.T) {
 	_ = s.Observe("test", "livez", r.Name)
 	ob, _ := s.Observer("test", "livez")
 
-	s.Start()
+	_ = s.Start(t.Context())
 
 	testsubscriber.RequireObserverError(t, ob)
 }
 
 func TestMalformedURLHTTPChecker(t *testing.T) {
 	s := server.NewServer()
-	defer s.Stop()
+	defer func() { _ = s.Stop(context.Background()) }()
 
 	checker := checker.NewHTTPChecker(invalidURL, timeout)
 	r := server.NewRegistration("assaaasss", period, checker)
@@ -122,14 +183,14 @@ func TestMalformedURLHTTPChecker(t *testing.T) {
 	_ = s.Observe("test", "livez", r.Name)
 	ob, _ := s.Observer("test", "livez")
 
-	s.Start()
+	_ = s.Start(t.Context())
 
 	testsubscriber.RequireObserverError(t, ob)
 }
 
 func TestInvalidCodeHTTPChecker(t *testing.T) {
 	s := server.NewServer()
-	defer s.Stop()
+	defer func() { _ = s.Stop(context.Background()) }()
 
 	checker := checker.NewHTTPChecker(test.StatusURL("400"), timeout)
 	r := server.NewRegistration("http400", period, checker)
@@ -138,14 +199,14 @@ func TestInvalidCodeHTTPChecker(t *testing.T) {
 	_ = s.Observe("test", "livez", r.Name)
 	ob, _ := s.Observer("test", "livez")
 
-	s.Start()
+	_ = s.Start(t.Context())
 
 	testsubscriber.RequireObserverError(t, ob)
 }
 
 func TestTimeoutHTTPChecker(t *testing.T) {
 	s := server.NewServer()
-	defer s.Stop()
+	defer func() { _ = s.Stop(context.Background()) }()
 
 	checker := checker.NewHTTPChecker(test.StatusURL("200?sleep=5s"), timeout)
 	r := server.NewRegistration("http200", period, checker)
@@ -154,14 +215,14 @@ func TestTimeoutHTTPChecker(t *testing.T) {
 	_ = s.Observe("test", "livez", r.Name)
 	ob, _ := s.Observer("test", "livez")
 
-	s.Start()
+	_ = s.Start(t.Context())
 
 	testsubscriber.RequireObserverError(t, ob)
 }
 
 func TestInvalidPeriod(t *testing.T) {
 	s := server.NewServer()
-	defer s.Stop()
+	defer func() { _ = s.Stop(context.Background()) }()
 
 	registration := server.NewRegistration("noop", 0, checker.NewNoopChecker())
 	s.Register("test", registration)
@@ -170,7 +231,7 @@ func TestInvalidPeriod(t *testing.T) {
 	ob, _ := s.Observer("test", "livez")
 
 	require.NotPanics(t, func() {
-		s.Start()
+		_ = s.Start(t.Context())
 	})
 
 	require.Eventually(t, func() bool {
@@ -181,7 +242,7 @@ func TestInvalidPeriod(t *testing.T) {
 
 func TestValidTCPChecker(t *testing.T) {
 	s := server.NewServer()
-	defer s.Stop()
+	defer func() { _ = s.Stop(context.Background()) }()
 
 	checker := checker.NewTCPChecker(
 		"www.google.com:80",
@@ -194,14 +255,14 @@ func TestValidTCPChecker(t *testing.T) {
 	_ = s.Observe("test", "livez", r.Name)
 	ob, _ := s.Observer("test", "livez")
 
-	s.Start()
+	_ = s.Start(t.Context())
 
 	testsubscriber.RequireObserverNoError(t, ob)
 }
 
 func TestInvalidAddressTCPChecker(t *testing.T) {
 	s := server.NewServer()
-	defer s.Stop()
+	defer func() { _ = s.Stop(context.Background()) }()
 
 	checker := checker.NewTCPChecker("www.assaaasss.com:80", timeout)
 	r := server.NewRegistration("tcp-assaaasss", period, checker)
@@ -210,7 +271,7 @@ func TestInvalidAddressTCPChecker(t *testing.T) {
 	_ = s.Observe("test", "livez", r.Name)
 	ob, _ := s.Observer("test", "livez")
 
-	s.Start()
+	_ = s.Start(t.Context())
 
 	testsubscriber.RequireObserverError(t, ob)
 	require.Error(t, ob.Errors()["tcp-assaaasss"])
@@ -219,7 +280,7 @@ func TestInvalidAddressTCPChecker(t *testing.T) {
 func TestValidDBChecker(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		s := server.NewServer()
-		t.Cleanup(s.Stop)
+		t.Cleanup(func() { _ = s.Stop(context.Background()) })
 
 		checker := checker.NewDBChecker(sql.OKPinger{}, timeout)
 		r := server.NewRegistration("db", period, checker)
@@ -228,7 +289,7 @@ func TestValidDBChecker(t *testing.T) {
 		_ = s.Observe("test", "livez", r.Name)
 		ob, _ := s.Observer("test", "livez")
 
-		s.Start()
+		_ = s.Start(t.Context())
 		synctest.Wait()
 
 		require.NoError(t, ob.Error())
@@ -239,7 +300,7 @@ func TestValidDBChecker(t *testing.T) {
 func TestInvalidDBChecker(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		s := server.NewServer()
-		t.Cleanup(s.Stop)
+		t.Cleanup(func() { _ = s.Stop(context.Background()) })
 
 		errPing := errors.New("ping failed")
 		checker := checker.NewDBChecker(sql.ErrorPinger{Err: errPing}, timeout)
@@ -249,7 +310,7 @@ func TestInvalidDBChecker(t *testing.T) {
 		_ = s.Observe("test", "livez", r.Name)
 		ob, _ := s.Observer("test", "livez")
 
-		s.Start()
+		_ = s.Start(t.Context())
 		synctest.Wait()
 
 		require.Error(t, ob.Error())
@@ -262,7 +323,7 @@ func TestInvalidDBChecker(t *testing.T) {
 func TestValidReadyChecker(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		s := server.NewServer()
-		t.Cleanup(s.Stop)
+		t.Cleanup(func() { _ = s.Stop(context.Background()) })
 
 		errNotReady := errors.New("not ready")
 		checker := checker.NewReadyChecker(errNotReady)
@@ -272,7 +333,7 @@ func TestValidReadyChecker(t *testing.T) {
 		_ = s.Observe("test", "livez", r.Name)
 		ob, _ := s.Observer("test", "livez")
 
-		s.Start()
+		_ = s.Start(t.Context())
 		synctest.Wait()
 
 		require.Error(t, ob.Error())
@@ -288,7 +349,7 @@ func TestValidReadyChecker(t *testing.T) {
 func TestValidNoopChecker(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		s := server.NewServer()
-		t.Cleanup(s.Stop)
+		t.Cleanup(func() { _ = s.Stop(context.Background()) })
 
 		checker := checker.NewNoopChecker()
 		r := server.NewRegistration("noop", period, checker)
@@ -297,7 +358,7 @@ func TestValidNoopChecker(t *testing.T) {
 		_ = s.Observe("test", "livez", r.Name)
 		ob, _ := s.Observer("test", "livez")
 
-		s.Start()
+		_ = s.Start(t.Context())
 		synctest.Wait()
 
 		require.NoError(t, ob.Error())
@@ -306,7 +367,7 @@ func TestValidNoopChecker(t *testing.T) {
 
 func TestInvalidObserver(t *testing.T) {
 	s := server.NewServer()
-	defer s.Stop()
+	defer func() { _ = s.Stop(context.Background()) }()
 
 	cc := checker.NewHTTPChecker(test.StatusURL("400"), timeout)
 	hr := server.NewRegistration("http1", period, cc)
@@ -317,14 +378,14 @@ func TestInvalidObserver(t *testing.T) {
 	_ = s.Observe("test", "livez", hr.Name, tr.Name)
 	ob, _ := s.Observer("test", "livez")
 
-	s.Start()
+	_ = s.Start(t.Context())
 
 	testsubscriber.RequireObserverError(t, ob)
 }
 
 func TestValidObserver(t *testing.T) {
 	s := server.NewServer()
-	defer s.Stop()
+	defer func() { _ = s.Stop(context.Background()) }()
 
 	cc := checker.NewHTTPChecker(test.StatusURL("200"), timeout)
 	hr := server.NewRegistration("http", period, cc)
@@ -335,14 +396,14 @@ func TestValidObserver(t *testing.T) {
 	_ = s.Observe("test", "livez", hr.Name, tr.Name)
 	ob, _ := s.Observer("test", "livez")
 
-	s.Start()
+	_ = s.Start(t.Context())
 
 	testsubscriber.RequireObserverNoError(t, ob)
 }
 
 func TestOneInvalidObserver(t *testing.T) {
 	s := server.NewServer()
-	defer s.Stop()
+	defer func() { _ = s.Stop(context.Background()) }()
 
 	cc := checker.NewHTTPChecker(test.StatusURL("500"), timeout)
 	hr := server.NewRegistration("http", period, cc)
@@ -353,14 +414,14 @@ func TestOneInvalidObserver(t *testing.T) {
 	_ = s.Observe("test", "livez", tr.Name)
 	ob, _ := s.Observer("test", "livez")
 
-	s.Start()
+	_ = s.Start(t.Context())
 
 	testsubscriber.RequireObserverNoError(t, ob)
 }
 
 func TestObserveUnknownProbeNames(t *testing.T) {
 	s := server.NewServer()
-	defer s.Stop()
+	defer func() { _ = s.Stop(context.Background()) }()
 
 	cc := checker.NewHTTPChecker(test.StatusURL("200"), timeout)
 	hr := server.NewRegistration("http", period, cc)
@@ -379,7 +440,7 @@ func TestObserveUnknownProbeNames(t *testing.T) {
 
 func TestLivezObservers(t *testing.T) {
 	s := server.NewServer()
-	defer s.Stop()
+	defer func() { _ = s.Stop(context.Background()) }()
 
 	checker := checker.NewHTTPChecker(
 		"https://www.google.com/",
@@ -402,7 +463,7 @@ func TestLivezObservers(t *testing.T) {
 
 func TestGRPCObservers(t *testing.T) {
 	s := server.NewServer()
-	defer s.Stop()
+	defer func() { _ = s.Stop(context.Background()) }()
 
 	checker := checker.NewHTTPChecker(
 		"https://www.google.com/",
@@ -425,7 +486,7 @@ func TestGRPCObservers(t *testing.T) {
 
 func TestInvalidObservers(t *testing.T) {
 	s := server.NewServer()
-	defer s.Stop()
+	defer func() { _ = s.Stop(context.Background()) }()
 
 	checker := checker.NewHTTPChecker(
 		"https://www.google.com/",
@@ -445,7 +506,7 @@ func BenchmarkValidHTTPChecker(b *testing.B) {
 	b.ReportAllocs()
 
 	s := server.NewServer()
-	defer s.Stop()
+	defer func() { _ = s.Stop(context.Background()) }()
 
 	checker := checker.NewHTTPChecker("https://www.google.com/", period)
 
@@ -455,7 +516,7 @@ func BenchmarkValidHTTPChecker(b *testing.B) {
 	_ = s.Observe("test", "livez", r.Name)
 	ob, _ := s.Observer("test", "livez")
 
-	s.Start()
+	_ = s.Start(b.Context())
 	testsubscriber.WaitObserverNoError(b, ob)
 
 	b.ResetTimer()

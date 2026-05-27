@@ -13,9 +13,10 @@
 // or "readyz", that watch a subset of those probe names.
 //
 // Register services and observers during setup, then call Start to run the
-// orchestration. Start waits for initial checks to finish before returning. Call
-// Stop after Start has returned, typically from process shutdown. Existing
-// observers continue to work across service restarts.
+// orchestration. Start waits for initial checks to finish or the supplied context
+// to be canceled before returning. Call Stop after Start has returned, typically
+// from process shutdown. Existing observers continue to work across service
+// restarts.
 //
 // # Example
 //
@@ -30,8 +31,10 @@
 //		log.Fatal(err)
 //	}
 //
-//	s.Start()
-//	defer s.Stop()
+//	if err := s.Start(context.Background()); err != nil {
+//		log.Fatal(err)
+//	}
+//	defer s.Stop(context.Background())
 //
 //	ob, err := s.Observer("payments", "livez")
 //	if err != nil {

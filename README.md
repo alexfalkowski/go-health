@@ -80,6 +80,7 @@ views for a service:
 package main
 
 import (
+	"context"
 	"errors"
 	"log"
 	"time"
@@ -114,8 +115,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	s.Start()
-	defer s.Stop()
+	if err := s.Start(context.Background()); err != nil {
+		log.Fatal(err)
+	}
+	defer s.Stop(context.Background())
 
 	livez, err := s.Observer("payments", "livez")
 	if err != nil {
@@ -217,8 +220,11 @@ If you do not need the `server` package, you can work directly with a probe:
 
 ```go
 p := probe.NewProbe("api", 10*time.Second, checker.NewNoopChecker())
-ticks := p.Start()
-defer p.Stop()
+ticks, err := p.Start(context.Background())
+if err != nil {
+	log.Fatal(err)
+}
+defer p.Stop(context.Background())
 
 tick := <-ticks
 log.Printf("%s healthy=%t", tick.Name(), tick.Error() == nil)

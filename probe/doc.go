@@ -16,22 +16,25 @@
 //
 // # Scheduling behavior
 //
-// Start performs an initial check before returning the channel, then continues on
-// the configured period until Stop is called. If the period is zero or negative,
-// Start returns a closed channel after emitting a single tick whose error wraps
-// ErrInvalidPeriod.
+// Start performs an initial check with the supplied context before returning the
+// channel, then continues on the configured period until Stop is called. If the
+// period is zero or negative, Start returns a closed channel after emitting a
+// single tick whose error wraps ErrInvalidPeriod.
 //
 // # Lifecycle
 //
 // Start is idempotent while a probe is running: repeated calls return the same
 // channel. Stop is also idempotent and cancels any in-flight check before waiting
-// for the probe goroutine to exit.
+// for the probe goroutine to exit or the supplied context to expire.
 //
 // # Example
 //
 //	p := probe.NewProbe("cache", 10*time.Second, checker.NewNoopChecker())
-//	ticks := p.Start()
-//	defer p.Stop()
+//	ticks, err := p.Start(context.Background())
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//	defer p.Stop(context.Background())
 //
 //	tick := <-ticks
 //	fmt.Println(tick.Name(), tick.Error() == nil)

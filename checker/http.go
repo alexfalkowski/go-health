@@ -39,6 +39,10 @@ type HTTPChecker struct {
 
 // Check performs the HTTP GET request with the supplied context.
 func (c *HTTPChecker) Check(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, c.url, http.NoBody)
 	if err != nil {
 		return fmt.Errorf("http checker: %w", err)
@@ -46,6 +50,10 @@ func (c *HTTPChecker) Check(ctx context.Context) error {
 
 	response, err := c.client.Do(request)
 	if err != nil {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+
 		return fmt.Errorf("http checker: %w", err)
 	}
 	defer response.Body.Close()

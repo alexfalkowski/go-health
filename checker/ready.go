@@ -26,8 +26,12 @@ type ReadyChecker struct {
 	flag sync.Int32
 }
 
-// Check returns the configured error until Ready is called.
-func (c *ReadyChecker) Check(_ context.Context) error {
+// Check returns the configured error until Ready is called unless ctx is canceled.
+func (c *ReadyChecker) Check(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	if c.notReady() {
 		return c.err
 	}
