@@ -1,11 +1,12 @@
 package probe_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
 	"github.com/alexfalkowski/go-health/v2/checker"
+	testchecker "github.com/alexfalkowski/go-health/v2/internal/test/checker"
+	testprobe "github.com/alexfalkowski/go-health/v2/internal/test/probe"
 	"github.com/alexfalkowski/go-health/v2/probe"
 	"github.com/stretchr/testify/require"
 )
@@ -19,55 +20,39 @@ func TestStopWithoutStartDoesNotPanic(t *testing.T) {
 }
 
 func TestStopCancelsInFlightCheck(t *testing.T) {
-	ch := &blockingChecker{
-		started:  make(chan struct{}),
-		canceled: make(chan struct{}),
-	}
+	ch := testchecker.NewBlockingChecker()
 	p := probe.NewProbe("blocking", time.Hour, ch)
 
-	started := make(chan startResult, 1)
-	// Start blocks until the initial check finishes, so run it in the background.
-	go func() {
-		started <- startResult{ticks: p.Start()}
-	}()
+	started := testprobe.StartProbe(p)
+	testprobe.RequireNoStartResult(t, started, "start returned before the initial check was canceled")
+	testchecker.WaitForStarted(t, ch.Started)
 
-	select {
-	case <-started:
-		require.Fail(t, "start returned before the initial check was canceled")
-	case <-ch.started:
-	case <-time.After(time.Second):
-		require.Fail(t, "checker did not start")
-	}
+	stopped := testprobe.StopProbe(p)
+	testprobe.WaitForStopped(t, stopped)
+	testchecker.WaitForCanceled(t, ch.Canceled)
 
-	stopped := make(chan struct{})
-	// Stop should cancel the in-flight check rather than waiting forever.
-	go func() {
-		p.Stop()
-		close(stopped)
-	}()
+	result := testprobe.WaitForStart(t, started, "start")
 
-	select {
-	case <-stopped:
-	case <-time.After(time.Second):
-		require.Fail(t, "stop did not cancel the in-flight check")
-	}
-
-	select {
-	case <-ch.canceled:
-	case <-time.After(time.Second):
-		require.Fail(t, "checker did not observe cancellation")
-	}
-
-	var result startResult
-	// Once the initial check is canceled, Start should return and the probe channel should close.
-	select {
-	case result = <-started:
-	case <-time.After(time.Second):
-		require.Fail(t, "start did not return after cancellation")
-	}
-
-	_, ok := <-result.ticks
+	_, ok := <-result.Ticks
 	require.False(t, ok)
+}
+
+func TestConcurrentStartWaitsForInitialCheck(t *testing.T) {
+	ch := testchecker.NewReleasableChecker()
+	p := probe.NewProbe("blocking", time.Hour, ch)
+	t.Cleanup(p.Stop)
+
+	first := testprobe.StartProbe(p)
+	testchecker.WaitForStarted(t, ch.Started)
+
+	second := testprobe.StartProbe(p)
+
+	close(ch.Release)
+
+	firstResult := testprobe.WaitForStart(t, first, "first start")
+	secondResult := testprobe.WaitForStart(t, second, "second start")
+
+	require.Equal(t, firstResult.Ticks, secondResult.Ticks)
 }
 
 func TestStartWithInvalidPeriodReturnsErrorTick(t *testing.T) {
@@ -85,20 +70,4 @@ func TestStartWithInvalidPeriodReturnsErrorTick(t *testing.T) {
 		_, ok = <-ticks
 		require.False(t, ok)
 	})
-}
-
-type blockingChecker struct {
-	started  chan struct{}
-	canceled chan struct{}
-}
-
-type startResult struct {
-	ticks <-chan *probe.Tick
-}
-
-func (c *blockingChecker) Check(ctx context.Context) error {
-	close(c.started)
-	<-ctx.Done()
-	close(c.canceled)
-	return ctx.Err()
 }

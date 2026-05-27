@@ -4,11 +4,13 @@ import (
 	"errors"
 	"net/http"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/alexfalkowski/go-health/v2/checker"
 	"github.com/alexfalkowski/go-health/v2/internal/test"
 	"github.com/alexfalkowski/go-health/v2/internal/test/sql"
+	testsubscriber "github.com/alexfalkowski/go-health/v2/internal/test/subscriber"
 	"github.com/alexfalkowski/go-health/v2/net"
 	"github.com/alexfalkowski/go-health/v2/probe"
 	"github.com/alexfalkowski/go-health/v2/server"
@@ -43,9 +45,8 @@ func TestDoubleStart(t *testing.T) {
 
 	s.Start()
 	s.Start()
-	time.Sleep(wait)
 
-	require.NoError(t, ob.Error())
+	testsubscriber.RequireObserverNoError(t, ob)
 }
 
 func TestOnlineChecker(t *testing.T) {
@@ -59,9 +60,8 @@ func TestOnlineChecker(t *testing.T) {
 	ob, _ := s.Observer("test", "livez")
 
 	s.Start()
-	time.Sleep(wait)
 
-	require.NoError(t, ob.Error())
+	testsubscriber.RequireObserverNoError(t, ob)
 }
 
 func TestInvalidOnlineChecker(t *testing.T) {
@@ -75,9 +75,8 @@ func TestInvalidOnlineChecker(t *testing.T) {
 	ob, _ := s.Observer("test", "livez")
 
 	s.Start()
-	time.Sleep(wait)
 
-	require.Error(t, ob.Error())
+	testsubscriber.RequireObserverError(t, ob)
 }
 
 func TestValidHTTPChecker(t *testing.T) {
@@ -92,9 +91,8 @@ func TestValidHTTPChecker(t *testing.T) {
 	ob, _ := s.Observer("test", "livez")
 
 	s.Start()
-	time.Sleep(wait)
 
-	require.NoError(t, ob.Error())
+	testsubscriber.RequireObserverNoError(t, ob)
 }
 
 func TestInvalidURLHTTPChecker(t *testing.T) {
@@ -109,9 +107,8 @@ func TestInvalidURLHTTPChecker(t *testing.T) {
 	ob, _ := s.Observer("test", "livez")
 
 	s.Start()
-	time.Sleep(wait)
 
-	require.Error(t, ob.Error())
+	testsubscriber.RequireObserverError(t, ob)
 }
 
 func TestMalformedURLHTTPChecker(t *testing.T) {
@@ -126,9 +123,8 @@ func TestMalformedURLHTTPChecker(t *testing.T) {
 	ob, _ := s.Observer("test", "livez")
 
 	s.Start()
-	time.Sleep(wait)
 
-	require.Error(t, ob.Error())
+	testsubscriber.RequireObserverError(t, ob)
 }
 
 func TestInvalidCodeHTTPChecker(t *testing.T) {
@@ -143,9 +139,8 @@ func TestInvalidCodeHTTPChecker(t *testing.T) {
 	ob, _ := s.Observer("test", "livez")
 
 	s.Start()
-	time.Sleep(wait)
 
-	require.Error(t, ob.Error())
+	testsubscriber.RequireObserverError(t, ob)
 }
 
 func TestTimeoutHTTPChecker(t *testing.T) {
@@ -160,9 +155,8 @@ func TestTimeoutHTTPChecker(t *testing.T) {
 	ob, _ := s.Observer("test", "livez")
 
 	s.Start()
-	time.Sleep(wait)
 
-	require.Error(t, ob.Error())
+	testsubscriber.RequireObserverError(t, ob)
 }
 
 func TestInvalidPeriod(t *testing.T) {
@@ -201,9 +195,8 @@ func TestValidTCPChecker(t *testing.T) {
 	ob, _ := s.Observer("test", "livez")
 
 	s.Start()
-	time.Sleep(wait)
 
-	require.NoError(t, ob.Error())
+	testsubscriber.RequireObserverNoError(t, ob)
 }
 
 func TestInvalidAddressTCPChecker(t *testing.T) {
@@ -218,89 +211,97 @@ func TestInvalidAddressTCPChecker(t *testing.T) {
 	ob, _ := s.Observer("test", "livez")
 
 	s.Start()
-	time.Sleep(wait)
 
-	require.Error(t, ob.Error())
+	testsubscriber.RequireObserverError(t, ob)
 	require.Error(t, ob.Errors()["tcp-assaaasss"])
 }
 
 func TestValidDBChecker(t *testing.T) {
-	s := server.NewServer()
-	defer s.Stop()
+	synctest.Test(t, func(t *testing.T) {
+		s := server.NewServer()
+		t.Cleanup(s.Stop)
 
-	checker := checker.NewDBChecker(sql.OKPinger{}, timeout)
-	r := server.NewRegistration("db", period, checker)
-	s.Register("test", r)
+		checker := checker.NewDBChecker(sql.OKPinger{}, timeout)
+		r := server.NewRegistration("db", period, checker)
+		s.Register("test", r)
 
-	_ = s.Observe("test", "livez", r.Name)
-	ob, _ := s.Observer("test", "livez")
+		_ = s.Observe("test", "livez", r.Name)
+		ob, _ := s.Observer("test", "livez")
 
-	s.Start()
-	time.Sleep(wait)
+		s.Start()
+		synctest.Wait()
 
-	require.NoError(t, ob.Error())
+		require.NoError(t, ob.Error())
+	})
 }
 
 //nolint:err113
 func TestInvalidDBChecker(t *testing.T) {
-	s := server.NewServer()
-	defer s.Stop()
+	synctest.Test(t, func(t *testing.T) {
+		s := server.NewServer()
+		t.Cleanup(s.Stop)
 
-	errPing := errors.New("ping failed")
-	checker := checker.NewDBChecker(sql.ErrorPinger{Err: errPing}, timeout)
-	r := server.NewRegistration("db", period, checker)
-	s.Register("test", r)
+		errPing := errors.New("ping failed")
+		checker := checker.NewDBChecker(sql.ErrorPinger{Err: errPing}, timeout)
+		r := server.NewRegistration("db", period, checker)
+		s.Register("test", r)
 
-	_ = s.Observe("test", "livez", r.Name)
-	ob, _ := s.Observer("test", "livez")
+		_ = s.Observe("test", "livez", r.Name)
+		ob, _ := s.Observer("test", "livez")
 
-	s.Start()
-	time.Sleep(wait)
+		s.Start()
+		synctest.Wait()
 
-	require.Error(t, ob.Error())
-	require.ErrorIs(t, ob.Error(), errPing)
-	require.ErrorIs(t, ob.Errors()["db"], errPing)
+		require.Error(t, ob.Error())
+		require.ErrorIs(t, ob.Error(), errPing)
+		require.ErrorIs(t, ob.Errors()["db"], errPing)
+	})
 }
 
 //nolint:err113
 func TestValidReadyChecker(t *testing.T) {
-	s := server.NewServer()
-	defer s.Stop()
+	synctest.Test(t, func(t *testing.T) {
+		s := server.NewServer()
+		t.Cleanup(s.Stop)
 
-	errNotReady := errors.New("not ready")
-	checker := checker.NewReadyChecker(errNotReady)
-	r := server.NewRegistration("ready", period, checker)
-	s.Register("test", r)
+		errNotReady := errors.New("not ready")
+		checker := checker.NewReadyChecker(errNotReady)
+		r := server.NewRegistration("ready", period, checker)
+		s.Register("test", r)
 
-	_ = s.Observe("test", "livez", r.Name)
-	ob, _ := s.Observer("test", "livez")
+		_ = s.Observe("test", "livez", r.Name)
+		ob, _ := s.Observer("test", "livez")
 
-	s.Start()
-	time.Sleep(wait)
+		s.Start()
+		synctest.Wait()
 
-	require.Error(t, ob.Error())
+		require.Error(t, ob.Error())
 
-	checker.Ready()
-	time.Sleep(wait)
+		checker.Ready()
+		time.Sleep(period)
+		synctest.Wait()
 
-	require.NoError(t, ob.Error())
+		require.NoError(t, ob.Error())
+	})
 }
 
 func TestValidNoopChecker(t *testing.T) {
-	s := server.NewServer()
-	defer s.Stop()
+	synctest.Test(t, func(t *testing.T) {
+		s := server.NewServer()
+		t.Cleanup(s.Stop)
 
-	checker := checker.NewNoopChecker()
-	r := server.NewRegistration("noop", period, checker)
-	s.Register("test", r)
+		checker := checker.NewNoopChecker()
+		r := server.NewRegistration("noop", period, checker)
+		s.Register("test", r)
 
-	_ = s.Observe("test", "livez", r.Name)
-	ob, _ := s.Observer("test", "livez")
+		_ = s.Observe("test", "livez", r.Name)
+		ob, _ := s.Observer("test", "livez")
 
-	s.Start()
-	time.Sleep(wait)
+		s.Start()
+		synctest.Wait()
 
-	require.NoError(t, ob.Error())
+		require.NoError(t, ob.Error())
+	})
 }
 
 func TestInvalidObserver(t *testing.T) {
@@ -317,9 +318,8 @@ func TestInvalidObserver(t *testing.T) {
 	ob, _ := s.Observer("test", "livez")
 
 	s.Start()
-	time.Sleep(wait)
 
-	require.Error(t, ob.Error())
+	testsubscriber.RequireObserverError(t, ob)
 }
 
 func TestValidObserver(t *testing.T) {
@@ -336,9 +336,8 @@ func TestValidObserver(t *testing.T) {
 	ob, _ := s.Observer("test", "livez")
 
 	s.Start()
-	time.Sleep(wait)
 
-	require.NoError(t, ob.Error())
+	testsubscriber.RequireObserverNoError(t, ob)
 }
 
 func TestOneInvalidObserver(t *testing.T) {
@@ -355,9 +354,8 @@ func TestOneInvalidObserver(t *testing.T) {
 	ob, _ := s.Observer("test", "livez")
 
 	s.Start()
-	time.Sleep(wait)
 
-	require.NoError(t, ob.Error())
+	testsubscriber.RequireObserverNoError(t, ob)
 }
 
 func TestObserveUnknownProbeNames(t *testing.T) {
@@ -458,7 +456,7 @@ func BenchmarkValidHTTPChecker(b *testing.B) {
 	ob, _ := s.Observer("test", "livez")
 
 	s.Start()
-	time.Sleep(wait)
+	testsubscriber.WaitObserverNoError(b, ob)
 
 	b.ResetTimer()
 

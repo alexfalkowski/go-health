@@ -1,12 +1,15 @@
 package server_test
 
 import (
-	"context"
+	"errors"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/alexfalkowski/go-health/v2/checker"
+	"github.com/alexfalkowski/go-health/v2/internal/test"
+	testchecker "github.com/alexfalkowski/go-health/v2/internal/test/checker"
+	testsubscriber "github.com/alexfalkowski/go-health/v2/internal/test/subscriber"
 	"github.com/alexfalkowski/go-health/v2/server"
 	"github.com/stretchr/testify/require"
 )
@@ -46,13 +49,36 @@ func TestServiceObserveRejectsUnknownProbes(t *testing.T) {
 	require.ErrorIs(t, err, server.ErrObserverNotFound)
 }
 
+//nolint:err113
+func TestServiceStopBeforeStartClosesObservers(t *testing.T) {
+	s := server.NewService()
+	errNotReady := errors.New("not ready")
+
+	registration := server.NewRegistration("ready", 10*time.Millisecond, checker.NewReadyChecker(errNotReady))
+	s.Register(registration)
+	require.NoError(t, s.Observe("livez", registration.Name))
+
+	observer, err := s.Observer("livez")
+	require.NoError(t, err)
+
+	s.Stop()
+	testsubscriber.RequireObserverStopped(t, observer)
+
+	s.Start()
+	t.Cleanup(s.Stop)
+
+	require.Eventually(t, func() bool {
+		return errors.Is(observer.Error(), errNotReady)
+	}, time.Second, 10*time.Millisecond)
+}
+
 func TestServiceStartRunsInitialChecksConcurrently(t *testing.T) {
 	s := server.NewService()
 	release := make(chan struct{})
 	var releaseOnce sync.Once
 
-	first := &blockingStartChecker{started: make(chan struct{}), release: release}
-	second := &blockingStartChecker{started: make(chan struct{}), release: release}
+	first := testchecker.NewReleasableStartChecker(release)
+	second := testchecker.NewReleasableStartChecker(release)
 
 	s.Register(
 		server.NewRegistration("first", time.Hour, first),
@@ -79,7 +105,7 @@ func TestServiceStartRunsInitialChecksConcurrently(t *testing.T) {
 	}()
 
 	require.Eventually(t, func() bool {
-		return channelClosed(first.started) && channelClosed(second.started)
+		return test.ChannelClosed(first.Started) && test.ChannelClosed(second.Started)
 	}, time.Second, 10*time.Millisecond)
 
 	releaseOnce.Do(func() {
@@ -87,31 +113,6 @@ func TestServiceStartRunsInitialChecksConcurrently(t *testing.T) {
 	})
 
 	require.Eventually(t, func() bool {
-		return channelClosed(started)
+		return test.ChannelClosed(started)
 	}, time.Second, 10*time.Millisecond)
-}
-
-type blockingStartChecker struct {
-	started chan struct{}
-	release <-chan struct{}
-}
-
-func (c *blockingStartChecker) Check(ctx context.Context) error {
-	close(c.started)
-
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	case <-c.release:
-		return nil
-	}
-}
-
-func channelClosed(ch <-chan struct{}) bool {
-	select {
-	case <-ch:
-		return true
-	default:
-		return false
-	}
 }

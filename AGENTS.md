@@ -120,6 +120,14 @@ Use the vendored or CI-style flow when you want parity with the main build.
 If tests fail with connection errors to `localhost:6000`, the status service is
 probably not running locally.
 
+### Intentional test coverage
+
+- Server tests intentionally include live external-network checks for real HTTP,
+  TCP, DNS, and default online-checker behavior. Do not flag those tests merely
+  for using `google.com`, default connectivity-check URLs, or outbound network
+  access. Only report them if the task is specifically about removing live
+  integration coverage or if there is a separate concrete bug.
+
 ## CI notes
 
 The main CircleCI `build` job does the following, in order:
