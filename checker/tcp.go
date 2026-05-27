@@ -36,11 +36,19 @@ type TCPChecker struct {
 // If the timeout expires and the dialer returns [context.Cause], the returned
 // error matches [ErrTimeout].
 func (c *TCPChecker) Check(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	ctx, cancel := context.WithTimeoutCause(ctx, c.timeout, ErrTimeout)
 	defer cancel()
 
 	conn, err := c.dialer.DialContext(ctx, "tcp", c.address)
 	if err != nil {
+		if ctx.Err() != nil {
+			return context.Cause(ctx)
+		}
+
 		return fmt.Errorf("tcp checker: %w", err)
 	}
 	defer conn.Close()

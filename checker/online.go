@@ -44,13 +44,17 @@ type OnlineChecker struct {
 // errors are ignored unless every configured URL fails or returns an unexpected
 // status code.
 func (c *OnlineChecker) Check(ctx context.Context) error {
-	ctx, cancel := context.WithCancel(ctx)
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	checkCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	results := make(chan bool, len(c.urls))
 	for _, url := range c.urls {
 		go func() {
-			healthy := c.check(ctx, url)
+			healthy := c.check(checkCtx, url)
 			if healthy {
 				cancel()
 			}
@@ -60,8 +64,13 @@ func (c *OnlineChecker) Check(ctx context.Context) error {
 	}
 
 	for range c.urls {
-		if <-results {
-			return nil
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case healthy := <-results:
+			if healthy {
+				return nil
+			}
 		}
 	}
 

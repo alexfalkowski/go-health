@@ -15,7 +15,11 @@ func NewNoopChecker() *NoopChecker {
 // NoopChecker is a Checker that always returns nil.
 type NoopChecker struct{}
 
-// Check always returns nil.
-func (c *NoopChecker) Check(_ context.Context) error {
+// Check always returns nil unless ctx is canceled.
+func (c *NoopChecker) Check(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	return nil
 }

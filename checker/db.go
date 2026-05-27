@@ -32,10 +32,18 @@ type DBChecker struct {
 // If the timeout expires and the pinger returns [context.Cause], the returned
 // error matches [ErrTimeout].
 func (c *DBChecker) Check(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	ctx, cancel := context.WithTimeoutCause(ctx, c.timeout, ErrTimeout)
 	defer cancel()
 
 	if err := c.pinger.PingContext(ctx); err != nil {
+		if ctx.Err() != nil {
+			return context.Cause(ctx)
+		}
+
 		return fmt.Errorf("db checker: %w", err)
 	}
 

@@ -1,8 +1,8 @@
 package server_test
 
 import (
+	"context"
 	"errors"
-	"sync"
 	"testing"
 	"time"
 
@@ -11,6 +11,7 @@ import (
 	testchecker "github.com/alexfalkowski/go-health/v2/internal/test/checker"
 	testsubscriber "github.com/alexfalkowski/go-health/v2/internal/test/subscriber"
 	"github.com/alexfalkowski/go-health/v2/server"
+	"github.com/alexfalkowski/go-sync"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,17 +23,17 @@ func TestServiceStartStopGuards(t *testing.T) {
 	require.NoError(t, s.Observe("livez", registration.Name))
 
 	require.NotPanics(t, func() {
-		s.Stop()
+		_ = s.Stop(t.Context())
 	})
 
 	require.NotPanics(t, func() {
-		s.Start()
-		s.Start()
+		_ = s.Start(t.Context())
+		_ = s.Start(t.Context())
 	})
 
 	require.NotPanics(t, func() {
-		s.Stop()
-		s.Stop()
+		_ = s.Stop(t.Context())
+		_ = s.Stop(t.Context())
 	})
 }
 
@@ -61,11 +62,11 @@ func TestServiceStopBeforeStartClosesObservers(t *testing.T) {
 	observer, err := s.Observer("livez")
 	require.NoError(t, err)
 
-	s.Stop()
+	_ = s.Stop(t.Context())
 	testsubscriber.RequireObserverStopped(t, observer)
 
-	s.Start()
-	t.Cleanup(s.Stop)
+	_ = s.Start(t.Context())
+	t.Cleanup(func() { _ = s.Stop(context.Background()) })
 
 	require.Eventually(t, func() bool {
 		return errors.Is(observer.Error(), errNotReady)
@@ -93,14 +94,14 @@ func TestServiceStartRunsInitialChecksConcurrently(t *testing.T) {
 
 		select {
 		case <-started:
-			s.Stop()
+			_ = s.Stop(t.Context())
 		case <-time.After(time.Second):
 			require.Fail(t, "service did not finish starting")
 		}
 	}()
 
 	go func() {
-		s.Start()
+		_ = s.Start(t.Context())
 		close(started)
 	}()
 

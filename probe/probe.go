@@ -18,20 +18,24 @@ var ErrInvalidPeriod = errors.New("health: invalid period")
 //
 // The probe does not start until Start is called.
 func NewProbe(name string, period time.Duration, ch checker.Checker) *Probe {
-	return &Probe{name: name, period: period, checker: ch, ticker: nil, ch: nil, mux: sync.Mutex{}}
+	return &Probe{name: name, period: period, checker: ch, mux: sync.Mutex{}}
 }
 
 // Probe periodically runs a Checker and emits ticks.
 type Probe struct {
 	checker checker.Checker
-	ticker  *time.Ticker
-	ch      chan *Tick
-	ready   <-chan struct{}
-	cancel  context.CancelFunc
+	active  *activeProbe
 	name    string
 	period  time.Duration
 	mux     sync.Mutex
-	wg      sync.WaitGroup
+}
+
+type activeProbe struct {
+	ticker *time.Ticker
+	ch     chan *Tick
+	ready  chan struct{}
+	cancel context.CancelFunc
+	wg     *sync.WaitGroup
 }
 
 // Start begins running checks and returns a channel of ticks.
@@ -39,20 +43,37 @@ type Probe struct {
 // Start performs an initial check before returning so callers can observe an
 // immediate result. If the probe is already running, Start returns the existing
 // channel.
-func (p *Probe) Start() <-chan *Tick {
-	ch, ready := p.ensureStarted()
-	if ready != nil {
-		<-ready
+func (p *Probe) Start(ctx context.Context) (<-chan *Tick, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
 	}
-	return ch
+
+	ch, ready, started := p.ensureStarted(ctx)
+	if ready != nil {
+		select {
+		case <-ctx.Done():
+			if started {
+				_ = p.Stop(context.WithoutCancel(ctx))
+			}
+			return nil, ctx.Err()
+		case <-ready:
+			if err := ctx.Err(); err != nil {
+				if started {
+					_ = p.Stop(context.WithoutCancel(ctx))
+				}
+				return nil, err
+			}
+		}
+	}
+	return ch, nil
 }
 
-func (p *Probe) ensureStarted() (<-chan *Tick, <-chan struct{}) {
+func (p *Probe) ensureStarted(ctx context.Context) (<-chan *Tick, <-chan struct{}, bool) {
 	p.mux.Lock()
 	defer p.mux.Unlock()
 
-	if p.cancel != nil {
-		return p.ch, p.ready
+	if p.active != nil {
+		return p.active.ch, p.active.ready, false
 	}
 
 	ch := make(chan *Tick, 1)
@@ -62,22 +83,19 @@ func (p *Probe) ensureStarted() (<-chan *Tick, <-chan struct{}) {
 		ch <- NewTick(p.name, fmt.Errorf("%w: %s", ErrInvalidPeriod, p.period))
 		close(ch)
 		close(ready)
-		return ch, ready
+		return ch, ready, false
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	runCtx, cancel := context.WithCancel(context.Background())
 	ticker := time.NewTicker(p.period)
+	wg := &sync.WaitGroup{}
 
-	p.ch = ch
-	p.ready = ready
-	p.ticker = ticker
-	p.cancel = cancel
-
-	p.wg.Go(func() {
-		p.start(ctx, ch, ticker, ready)
+	p.active = &activeProbe{ch: ch, ready: ready, ticker: ticker, cancel: cancel, wg: wg}
+	wg.Go(func() {
+		p.start(runCtx, ctx, ch, ticker, ready)
 	})
 
-	return ch, ready
+	return ch, ready, true
 }
 
 // Stop stops the probe.
@@ -85,43 +103,65 @@ func (p *Probe) ensureStarted() (<-chan *Tick, <-chan struct{}) {
 // Stop is safe to call before Start and safe to call multiple times. It cancels
 // any in-flight check, closes the tick channel once the worker exits, and waits
 // for the probe goroutine to finish.
-func (p *Probe) Stop() {
+func (p *Probe) Stop(ctx context.Context) error {
+	p.mux.Lock()
+
+	active := p.active
+	if active == nil {
+		p.mux.Unlock()
+		return nil
+	}
+
+	active.cancel()
+	active.ticker.Stop()
+	p.mux.Unlock()
+
+	done := make(chan struct{})
+	go func() {
+		active.wg.Wait()
+		p.clearActive(active)
+		close(done)
+	}()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-done:
+		return nil
+	}
+}
+
+func (p *Probe) clearActive(active *activeProbe) {
 	p.mux.Lock()
 	defer p.mux.Unlock()
 
-	if p.cancel == nil {
-		return
+	if p.active == active {
+		p.active = nil
 	}
-
-	ticker := p.ticker
-	cancel := p.cancel
-
-	p.ch = nil
-	p.ready = nil
-	p.ticker = nil
-	p.cancel = nil
-
-	cancel()
-	ticker.Stop()
-	p.wg.Wait()
 }
 
-func (p *Probe) start(ctx context.Context, ch chan *Tick, ticker *time.Ticker, ready chan<- struct{}) {
+func (p *Probe) start(runCtx, startCtx context.Context, ch chan *Tick, ticker *time.Ticker, ready chan<- struct{}) {
 	defer close(ch)
 
 	// Check on startup before periodic checks begin.
-	if !p.tick(ctx, ch) {
+	initialCtx, cancel := context.WithCancel(runCtx)
+	stop := context.AfterFunc(startCtx, cancel)
+	if !p.tick(initialCtx, ch) {
+		stop()
+		cancel()
 		close(ready)
 		return
 	}
+	stop()
+	cancel()
 	close(ready)
 
 	for {
 		select {
-		case <-ctx.Done():
+		case <-runCtx.Done():
 			return
 		case <-ticker.C:
-			if !p.tick(ctx, ch) {
+			if !p.tick(runCtx, ch) {
 				return
 			}
 		}

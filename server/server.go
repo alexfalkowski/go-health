@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"errors"
 	"iter"
 	"maps"
@@ -83,33 +84,59 @@ func (s *Server) Observe(name, kind string, names ...string) error {
 //
 // Start is idempotent. It waits for each service's initial checks before
 // returning; call Stop after Start has returned during normal shutdown.
-func (s *Server) Start() {
+func (s *Server) Start(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	s.mux.Lock()
 	defer s.mux.Unlock()
 
 	if s.running {
-		return
+		return nil
 	}
 
+	started := make([]*Service, 0, len(s.services))
 	for _, service := range s.services {
-		service.Start()
+		if err := service.Start(ctx); err != nil {
+			if stopErr := stopServices(context.WithoutCancel(ctx), started...); stopErr != nil {
+				return errors.Join(err, stopErr)
+			}
+			return err
+		}
+		started = append(started, service)
 	}
 	s.running = true
+	return nil
 }
 
 // Stop stops all registered services.
 //
 // Stop is idempotent.
-func (s *Server) Stop() {
+func (s *Server) Stop(ctx context.Context) error {
 	s.mux.Lock()
 	defer s.mux.Unlock()
 
 	if !s.running {
-		return
+		return nil
 	}
 
-	for _, service := range s.services {
-		service.Stop()
+	services := make([]*Service, 0, len(s.services))
+	for service := range maps.Values(s.services) {
+		services = append(services, service)
+	}
+	if err := stopServices(ctx, services...); err != nil {
+		return err
 	}
 	s.running = false
+	return nil
+}
+
+func stopServices(ctx context.Context, services ...*Service) error {
+	errs := []error{}
+	for _, service := range services {
+		errs = append(errs, service.Stop(ctx))
+	}
+
+	return errors.Join(errs...)
 }

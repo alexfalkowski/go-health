@@ -1,6 +1,7 @@
 package probe
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -11,13 +12,15 @@ import (
 // StartResult captures a probe Start result.
 type StartResult struct {
 	Ticks <-chan *probe.Tick
+	Err   error
 }
 
 // StartProbe starts p in a goroutine and returns its result channel.
 func StartProbe(p *probe.Probe) <-chan StartResult {
 	started := make(chan StartResult, 1)
 	go func() {
-		started <- StartResult{Ticks: p.Start()}
+		ticks, err := p.Start(context.Background())
+		started <- StartResult{Ticks: ticks, Err: err}
 	}()
 	return started
 }
@@ -50,7 +53,7 @@ func WaitForStart(t *testing.T, started <-chan StartResult, name string) StartRe
 func StopProbe(p *probe.Probe) <-chan struct{} {
 	stopped := make(chan struct{})
 	go func() {
-		p.Stop()
+		_ = p.Stop(context.Background())
 		close(stopped)
 	}()
 	return stopped

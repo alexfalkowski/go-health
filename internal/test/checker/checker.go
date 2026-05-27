@@ -2,10 +2,10 @@ package checker
 
 import (
 	"context"
-	"sync"
 	"testing"
 	"time"
 
+	"github.com/alexfalkowski/go-sync"
 	"github.com/stretchr/testify/require"
 )
 
@@ -26,6 +26,14 @@ type ReleasableChecker struct {
 type ReleasableStartChecker struct {
 	Started chan struct{}
 	Release <-chan struct{}
+}
+
+// BlockingPeriodicChecker returns once, then blocks future checks until Release is closed.
+type BlockingPeriodicChecker struct {
+	InitialStarted  chan struct{}
+	PeriodicStarted chan struct{}
+	Release         chan struct{}
+	periodicOnce    sync.Once
 }
 
 // NewBlockingChecker returns a BlockingChecker with initialized channels.
@@ -49,6 +57,15 @@ func NewReleasableStartChecker(release <-chan struct{}) *ReleasableStartChecker 
 	return &ReleasableStartChecker{
 		Started: make(chan struct{}),
 		Release: release,
+	}
+}
+
+// NewBlockingPeriodicChecker returns a BlockingPeriodicChecker with initialized channels.
+func NewBlockingPeriodicChecker() *BlockingPeriodicChecker {
+	return &BlockingPeriodicChecker{
+		InitialStarted:  make(chan struct{}),
+		PeriodicStarted: make(chan struct{}),
+		Release:         make(chan struct{}),
 	}
 }
 
@@ -84,6 +101,21 @@ func (c *ReleasableStartChecker) Check(ctx context.Context) error {
 	case <-c.Release:
 		return nil
 	}
+}
+
+// Check returns immediately the first time, then blocks until Release is closed.
+func (c *BlockingPeriodicChecker) Check(context.Context) error {
+	select {
+	case <-c.InitialStarted:
+		c.periodicOnce.Do(func() {
+			close(c.PeriodicStarted)
+		})
+		<-c.Release
+	default:
+		close(c.InitialStarted)
+	}
+
+	return nil
 }
 
 // WaitForStarted waits until started is closed.

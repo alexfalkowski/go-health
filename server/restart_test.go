@@ -14,7 +14,7 @@ import (
 //nolint:err113
 func TestRestartKeepsObserverReceivingTicks(t *testing.T) {
 	s := server.NewServer()
-	t.Cleanup(s.Stop)
+	t.Cleanup(func() { _ = s.Stop(context.Background()) })
 
 	errBeforeRestart := errors.New("before restart")
 	errAfterRestart := errors.New("after restart")
@@ -29,7 +29,7 @@ func TestRestartKeepsObserverReceivingTicks(t *testing.T) {
 	require.NoError(t, err)
 
 	// Confirm the observer receives the initial unhealthy state.
-	s.Start()
+	_ = s.Start(t.Context())
 	require.Eventually(t, func() bool {
 		return errors.Is(observer.Error(), errBeforeRestart)
 	}, time.Second, 10*time.Millisecond)
@@ -41,10 +41,10 @@ func TestRestartKeepsObserverReceivingTicks(t *testing.T) {
 	}, time.Second, 10*time.Millisecond)
 
 	// Restart the server with a different probe result.
-	s.Stop()
+	_ = s.Stop(t.Context())
 
 	checker.Set(errAfterRestart)
-	s.Start()
+	_ = s.Start(t.Context())
 
 	// Confirm the existing observer receives ticks after restart.
 	require.Eventually(t, func() bool {

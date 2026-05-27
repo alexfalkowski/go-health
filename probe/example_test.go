@@ -1,6 +1,7 @@
 package probe_test
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -10,11 +11,15 @@ import (
 
 func ExampleNewProbe() {
 	p := probe.NewProbe("noop", 20*time.Millisecond, checker.NewNoopChecker())
-	ticks := p.Start()
+	ticks, err := p.Start(context.Background())
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	tick := <-ticks
 
 	fmt.Println(tick.Name(), tick.Error() == nil)
 
-	p.Stop()
+	_ = p.Stop(context.Background())
 	// Output: noop true
 }
