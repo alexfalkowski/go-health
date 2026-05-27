@@ -4,3 +4,5 @@ test/reports/*.xml
 test/reports/*.prof
 test/reports/*.html
 *.test
+.source-key
+ISSUES.md

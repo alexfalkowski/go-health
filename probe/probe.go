@@ -26,6 +26,7 @@ type Probe struct {
 	checker checker.Checker
 	ticker  *time.Ticker
 	ch      chan *Tick
+	ready   <-chan struct{}
 	cancel  context.CancelFunc
 	name    string
 	period  time.Duration
@@ -51,7 +52,7 @@ func (p *Probe) ensureStarted() (<-chan *Tick, <-chan struct{}) {
 	defer p.mux.Unlock()
 
 	if p.cancel != nil {
-		return p.ch, nil
+		return p.ch, p.ready
 	}
 
 	ch := make(chan *Tick, 1)
@@ -68,6 +69,7 @@ func (p *Probe) ensureStarted() (<-chan *Tick, <-chan struct{}) {
 	ticker := time.NewTicker(p.period)
 
 	p.ch = ch
+	p.ready = ready
 	p.ticker = ticker
 	p.cancel = cancel
 
@@ -95,6 +97,7 @@ func (p *Probe) Stop() {
 	cancel := p.cancel
 
 	p.ch = nil
+	p.ready = nil
 	p.ticker = nil
 	p.cancel = nil
 

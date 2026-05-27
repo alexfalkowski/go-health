@@ -117,6 +117,8 @@ func (s *Service) Stop() {
 	defer s.mux.Unlock()
 
 	if !s.running {
+		s.closeSubscriptions()
+		s.waitObservers()
 		return
 	}
 
@@ -136,9 +138,7 @@ func (s *Service) Stop() {
 	s.subscriberWG.Wait()
 
 	// Ensure observers have finished draining their subscriber channels before a restart.
-	for _, observer := range s.observers {
-		observer.Wait()
-	}
+	s.waitObservers()
 
 	s.running = false
 }
@@ -148,6 +148,18 @@ func (s *Service) subscribe(kind string, names ...string) *subscriber.Subscriber
 	s.subscriptions[kind] = sub
 	s.subscribers = append(s.subscribers, sub)
 	return sub
+}
+
+func (s *Service) closeSubscriptions() {
+	for _, sub := range s.subscriptions {
+		sub.Close()
+	}
+}
+
+func (s *Service) waitObservers() {
+	for _, observer := range s.observers {
+		observer.Wait()
+	}
 }
 
 func (s *Service) startProbes() []<-chan *probe.Tick {

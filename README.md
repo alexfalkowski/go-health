@@ -117,8 +117,6 @@ func main() {
 	s.Start()
 	defer s.Stop()
 
-	readyChecker.Ready()
-
 	livez, err := s.Observer("payments", "livez")
 	if err != nil {
 		log.Fatal(err)
@@ -127,6 +125,17 @@ func main() {
 	readyz, err := s.Observer("payments", "readyz")
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	readyChecker.Ready()
+
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		if readyz.Error() == nil {
+			break
+		}
+
+		time.Sleep(10 * time.Millisecond)
 	}
 
 	if err := livez.Error(); err != nil {
