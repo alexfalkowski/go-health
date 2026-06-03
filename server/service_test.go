@@ -50,6 +50,25 @@ func TestServiceObserveRejectsUnknownProbes(t *testing.T) {
 	require.ErrorIs(t, err, server.ErrObserverNotFound)
 }
 
+func TestServiceObserveKeepsOriginalProbeSetForExistingKind(t *testing.T) {
+	s := server.NewService()
+
+	first := server.NewRegistration("first", time.Hour, checker.NewNoopChecker())
+	second := server.NewRegistration("second", time.Hour, checker.NewNoopChecker())
+	s.Register(first, second)
+
+	require.NoError(t, s.Observe("livez", first.Name))
+	observer, err := s.Observer("livez")
+	require.NoError(t, err)
+
+	require.NoError(t, s.Observe("livez", second.Name))
+	sameObserver, err := s.Observer("livez")
+	require.NoError(t, err)
+
+	require.Same(t, observer, sameObserver)
+	require.Equal(t, []string{first.Name}, sameObserver.Names())
+}
+
 //nolint:err113
 func TestServiceStopBeforeStartClosesObservers(t *testing.T) {
 	s := server.NewService()
@@ -116,4 +135,35 @@ func TestServiceStartRunsInitialChecksConcurrently(t *testing.T) {
 	require.Eventually(t, func() bool {
 		return test.ChannelClosed(started)
 	}, time.Second, 10*time.Millisecond)
+}
+
+func TestServiceStartFailureCleansUpStartedProbesAndObservers(t *testing.T) {
+	s := server.NewService()
+	started := testchecker.NewCancelablePeriodicChecker()
+	blocking := testchecker.NewBlockingChecker()
+
+	startedRegistration := server.NewRegistration("started", time.Millisecond, started)
+	blockingRegistration := server.NewRegistration("blocking", time.Hour, blocking)
+	s.Register(startedRegistration, blockingRegistration)
+	require.NoError(t, s.Observe("livez", startedRegistration.Name))
+
+	observer, err := s.Observer("livez")
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithCancel(t.Context())
+	errc := make(chan error, 1)
+	go func() {
+		errc <- s.Start(ctx)
+	}()
+
+	testchecker.WaitForStarted(t, blocking.Started)
+	testchecker.WaitForStarted(t, started.PeriodicStarted)
+
+	cancel()
+
+	require.ErrorIs(t, <-errc, context.Canceled)
+	testchecker.WaitForCanceled(t, blocking.Canceled)
+	testchecker.WaitForCanceled(t, started.PeriodicCanceled)
+	testsubscriber.RequireObserverStopped(t, observer)
+	require.NoError(t, s.Stop(t.Context()))
 }

@@ -36,6 +36,15 @@ type BlockingPeriodicChecker struct {
 	periodicOnce    sync.Once
 }
 
+// CancelablePeriodicChecker returns once, then blocks future checks until the context is canceled.
+type CancelablePeriodicChecker struct {
+	InitialStarted   chan struct{}
+	PeriodicStarted  chan struct{}
+	PeriodicCanceled chan struct{}
+	canceledOnce     sync.Once
+	periodicOnce     sync.Once
+}
+
 // NewBlockingChecker returns a BlockingChecker with initialized channels.
 func NewBlockingChecker() *BlockingChecker {
 	return &BlockingChecker{
@@ -66,6 +75,15 @@ func NewBlockingPeriodicChecker() *BlockingPeriodicChecker {
 		InitialStarted:  make(chan struct{}),
 		PeriodicStarted: make(chan struct{}),
 		Release:         make(chan struct{}),
+	}
+}
+
+// NewCancelablePeriodicChecker returns a CancelablePeriodicChecker with initialized channels.
+func NewCancelablePeriodicChecker() *CancelablePeriodicChecker {
+	return &CancelablePeriodicChecker{
+		InitialStarted:   make(chan struct{}),
+		PeriodicStarted:  make(chan struct{}),
+		PeriodicCanceled: make(chan struct{}),
 	}
 }
 
@@ -116,6 +134,24 @@ func (c *BlockingPeriodicChecker) Check(context.Context) error {
 	}
 
 	return nil
+}
+
+// Check returns immediately the first time, then waits for context cancellation.
+func (c *CancelablePeriodicChecker) Check(ctx context.Context) error {
+	select {
+	case <-c.InitialStarted:
+		c.periodicOnce.Do(func() {
+			close(c.PeriodicStarted)
+		})
+		<-ctx.Done()
+		c.canceledOnce.Do(func() {
+			close(c.PeriodicCanceled)
+		})
+		return ctx.Err()
+	default:
+		close(c.InitialStarted)
+		return nil
+	}
 }
 
 // WaitForStarted waits until started is closed.

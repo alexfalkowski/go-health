@@ -60,3 +60,53 @@ func TestOnlineCheckerReturnsOnFirstHealthyURL(t *testing.T) {
 		}
 	}, time.Second, 10*time.Millisecond)
 }
+
+func TestOnlineCheckerStatusCodes(t *testing.T) {
+	tests := []struct {
+		name          string
+		status        int
+		wantNotOnline bool
+	}{
+		{name: "ok", status: http.StatusOK},
+		{name: "no content", status: http.StatusNoContent},
+		{name: "not modified", status: http.StatusNotModified, wantNotOnline: true},
+		{name: "server error", status: http.StatusInternalServerError, wantNotOnline: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(tt.status)
+			}))
+			t.Cleanup(upstream.Close)
+
+			check := checker.NewOnlineChecker(time.Second, checker.WithURLs(upstream.URL))
+
+			err := check.Check(t.Context())
+
+			if !tt.wantNotOnline {
+				require.NoError(t, err)
+				return
+			}
+			require.ErrorIs(t, err, checker.ErrNotOnline)
+		})
+	}
+}
+
+func TestOnlineCheckerReturnsNotOnlineWhenEveryURLFails(t *testing.T) {
+	unhealthy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	t.Cleanup(unhealthy.Close)
+
+	missing := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	t.Cleanup(missing.Close)
+
+	check := checker.NewOnlineChecker(time.Second, checker.WithURLs(unhealthy.URL, missing.URL, "://bad-url"))
+
+	err := check.Check(t.Context())
+
+	require.ErrorIs(t, err, checker.ErrNotOnline)
+}

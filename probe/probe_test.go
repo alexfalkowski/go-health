@@ -39,6 +39,23 @@ func TestStopCancelsInFlightCheck(t *testing.T) {
 	require.False(t, ok)
 }
 
+func TestStopCancelsPeriodicInFlightCheck(t *testing.T) {
+	ch := testchecker.NewCancelablePeriodicChecker()
+	p := probe.NewProbe("blocking", time.Millisecond, ch)
+
+	ticks, err := p.Start(t.Context())
+	require.NoError(t, err)
+	require.NotNil(t, <-ticks)
+	testchecker.WaitForStarted(t, ch.PeriodicStarted)
+
+	stopped := testprobe.StopProbe(p)
+	testprobe.WaitForStopped(t, stopped)
+	testchecker.WaitForCanceled(t, ch.PeriodicCanceled)
+
+	_, ok := <-ticks
+	require.False(t, ok)
+}
+
 func TestConcurrentStartWaitsForInitialCheck(t *testing.T) {
 	ch := testchecker.NewReleasableChecker()
 	p := probe.NewProbe("blocking", time.Hour, ch)
@@ -132,19 +149,31 @@ func TestStopReturnsContextError(t *testing.T) {
 }
 
 func TestStartWithInvalidPeriodReturnsErrorTick(t *testing.T) {
-	p := probe.NewProbe("noop", 0, checker.NewNoopChecker())
+	tests := []struct {
+		name   string
+		period time.Duration
+	}{
+		{name: "zero", period: 0},
+		{name: "negative", period: -time.Second},
+	}
 
-	require.NotPanics(t, func() {
-		ticks, err := p.Start(t.Context())
-		require.NoError(t, err)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := probe.NewProbe("noop", tt.period, checker.NewNoopChecker())
 
-		tick, ok := <-ticks
-		require.True(t, ok)
-		require.Equal(t, "noop", tick.Name())
-		require.ErrorIs(t, tick.Error(), probe.ErrInvalidPeriod)
-		require.ErrorContains(t, tick.Error(), "0s")
+			require.NotPanics(t, func() {
+				ticks, err := p.Start(t.Context())
+				require.NoError(t, err)
 
-		_, ok = <-ticks
-		require.False(t, ok)
-	})
+				tick, ok := <-ticks
+				require.True(t, ok)
+				require.Equal(t, "noop", tick.Name())
+				require.ErrorIs(t, tick.Error(), probe.ErrInvalidPeriod)
+				require.ErrorContains(t, tick.Error(), tt.period.String())
+
+				_, ok = <-ticks
+				require.False(t, ok)
+			})
+		})
+	}
 }
