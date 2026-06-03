@@ -51,23 +51,23 @@ func WithURLs(urls ...string) Option {
 }
 
 func parseOptions(opts ...Option) *options {
-	os := &options{}
+	parsed := &options{}
 	for _, o := range opts {
-		o.apply(os)
+		o.apply(parsed)
 	}
-	if os.roundTripper == nil {
-		os.roundTripper = http.DefaultTransport
+	if parsed.roundTripper == nil {
+		parsed.roundTripper = http.DefaultTransport
 	}
-	if os.dialer == nil {
-		os.dialer = net.DefaultDialer
+	if parsed.dialer == nil {
+		parsed.dialer = net.DefaultDialer
 	}
-	if len(os.urls) == 0 {
-		os.urls = []string{
+	if len(parsed.urls) == 0 {
+		parsed.urls = []string{
 			"https://google.com/generate_204",
 			"https://cp.cloudflare.com/generate_204",
 			"https://connectivity-check.ubuntu.com",
 		}
 	}
 
-	return os
+	return parsed
 }

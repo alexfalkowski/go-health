@@ -44,7 +44,7 @@ func WaitForStart(t *testing.T, started <-chan StartResult, name string) StartRe
 	case result := <-started:
 		return result
 	case <-time.After(time.Second):
-		require.Fail(t, name+" did not return after release")
+		require.Fail(t, name+" did not return")
 		return StartResult{}
 	}
 }

@@ -365,7 +365,7 @@ func TestValidNoopChecker(t *testing.T) {
 	})
 }
 
-func TestInvalidObserver(t *testing.T) {
+func TestObserverReportsUnhealthyProbes(t *testing.T) {
 	s := server.NewServer()
 	defer func() { _ = s.Stop(context.Background()) }()
 

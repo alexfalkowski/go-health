@@ -19,11 +19,11 @@ var ErrInvalidStatusCode = errors.New("invalid status code")
 // package default of 30 seconds. Use WithRoundTripper to provide a custom
 // transport for tests or bespoke network behavior.
 func NewHTTPChecker(url string, t time.Duration, opts ...Option) *HTTPChecker {
-	os := parseOptions(opts...)
+	options := parseOptions(opts...)
 
 	return &HTTPChecker{
 		url:    url,
-		client: &http.Client{Transport: os.roundTripper, Timeout: timeout(t)},
+		client: &http.Client{Transport: options.roundTripper, Timeout: timeout(t)},
 	}
 }
 

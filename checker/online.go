@@ -19,11 +19,11 @@ var ErrNotOnline = errors.New("not online")
 // Passing 0 uses the package default timeout of 30 seconds. It uses the default
 // URL list unless overridden via WithURLs.
 func NewOnlineChecker(t time.Duration, opts ...Option) *OnlineChecker {
-	os := parseOptions(opts...)
+	options := parseOptions(opts...)
 
 	return &OnlineChecker{
-		urls:   os.urls,
-		client: &http.Client{Transport: os.roundTripper, Timeout: timeout(t)},
+		urls:   options.urls,
+		client: &http.Client{Transport: options.roundTripper, Timeout: timeout(t)},
 	}
 }
 
@@ -54,7 +54,7 @@ func (c *OnlineChecker) Check(ctx context.Context) error {
 	results := make(chan bool, len(c.urls))
 	for _, url := range c.urls {
 		go func() {
-			healthy := c.check(checkCtx, url)
+			healthy := c.checkURL(checkCtx, url)
 			if healthy {
 				cancel()
 			}
@@ -77,7 +77,7 @@ func (c *OnlineChecker) Check(ctx context.Context) error {
 	return fmt.Errorf("online checker: %w", ErrNotOnline)
 }
 
-func (c *OnlineChecker) check(ctx context.Context, url string) bool {
+func (c *OnlineChecker) checkURL(ctx context.Context, url string) bool {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
 	if err != nil {
 		return false

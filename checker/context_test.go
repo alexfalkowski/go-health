@@ -19,18 +19,21 @@ func TestCheckersReturnCanceledContext(t *testing.T) {
 	ctx, cancel := context.WithCancel(t.Context())
 	cancel()
 
-	checkers := map[string]checker.Checker{
-		"noop":   checker.NewNoopChecker(),
-		"ready":  checker.NewReadyChecker(errNotReady),
-		"http":   checker.NewHTTPChecker("://bad-url", time.Second),
-		"online": checker.NewOnlineChecker(time.Second, checker.WithURLs("://bad-url")),
-		"db":     checker.NewDBChecker(sql.CanceledPinger{}, time.Second),
-		"tcp":    checker.NewTCPChecker("example:80", time.Second, checker.WithDialer(net.CanceledDialer{})),
+	checkers := []struct {
+		check checker.Checker
+		name  string
+	}{
+		{check: checker.NewNoopChecker(), name: "noop"},
+		{check: checker.NewReadyChecker(errNotReady), name: "ready"},
+		{check: checker.NewHTTPChecker("://bad-url", time.Second), name: "http"},
+		{check: checker.NewOnlineChecker(time.Second, checker.WithURLs("://bad-url")), name: "online"},
+		{check: checker.NewDBChecker(sql.CanceledPinger{}, time.Second), name: "db"},
+		{check: checker.NewTCPChecker("example:80", time.Second, checker.WithDialer(net.CanceledDialer{})), name: "tcp"},
 	}
 
-	for name, check := range checkers {
-		t.Run(name, func(t *testing.T) {
-			err := check.Check(ctx)
+	for _, tt := range checkers {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.check.Check(ctx)
 
 			require.ErrorIs(t, err, context.Canceled)
 			require.NotErrorIs(t, err, errNotReady)

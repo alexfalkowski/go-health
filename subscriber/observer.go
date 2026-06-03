@@ -14,12 +14,12 @@ import (
 // ticks arrive.
 func NewObserver(names []string, sub *Subscriber) *Observer {
 	names = slices.Clone(names)
-	errors := make(Errors)
+	errs := make(Errors)
 	for _, n := range names {
-		errors[n] = nil
+		errs[n] = nil
 	}
 
-	ob := &Observer{errors: errors, names: names, mux: sync.RWMutex{}}
+	ob := &Observer{errors: errs, names: names, mux: sync.RWMutex{}}
 	ob.start(sub)
 
 	return ob
