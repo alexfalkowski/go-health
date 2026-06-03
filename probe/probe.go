@@ -14,11 +14,11 @@ import (
 // than or equal to zero.
 var ErrInvalidPeriod = errors.New("health: invalid period")
 
-// NewProbe returns a Probe that runs ch at the given period.
+// NewProbe returns a Probe that runs check at the given period.
 //
 // The probe does not start until Start is called.
-func NewProbe(name string, period time.Duration, ch checker.Checker) *Probe {
-	return &Probe{name: name, period: period, checker: ch, mux: sync.Mutex{}}
+func NewProbe(name string, period time.Duration, check checker.Checker) *Probe {
+	return &Probe{name: name, period: period, checker: check, mux: sync.Mutex{}}
 }
 
 // Probe periodically runs a Checker and emits ticks.

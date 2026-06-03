@@ -16,9 +16,9 @@ var _ Checker = (*TCPChecker)(nil)
 // uses the package default of 30 seconds. Use WithDialer to override the
 // dialing implementation.
 func NewTCPChecker(address string, t time.Duration, opts ...Option) *TCPChecker {
-	os := parseOptions(opts...)
+	options := parseOptions(opts...)
 
-	return &TCPChecker{address: address, timeout: timeout(t), dialer: os.dialer}
+	return &TCPChecker{address: address, timeout: timeout(t), dialer: options.dialer}
 }
 
 // TCPChecker checks TCP connectivity to an address.

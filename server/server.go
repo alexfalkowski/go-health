@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"iter"
-	"maps"
 
 	"github.com/alexfalkowski/go-health/v2/subscriber"
 	"github.com/alexfalkowski/go-sync"
@@ -44,7 +43,7 @@ func (s *Server) Register(name string, regs ...*Registration) {
 // Services that do not have that observer kind are skipped.
 func (s *Server) Observers(kind string) iter.Seq2[string, *subscriber.Observer] {
 	return func(yield func(string, *subscriber.Observer) bool) {
-		for name, service := range maps.All(s.services) {
+		for name, service := range s.services {
 			observer, err := service.Observer(kind)
 			if err != nil {
 				continue
@@ -122,7 +121,7 @@ func (s *Server) Stop(ctx context.Context) error {
 	}
 
 	services := make([]*Service, 0, len(s.services))
-	for service := range maps.Values(s.services) {
+	for _, service := range s.services {
 		services = append(services, service)
 	}
 	if err := stopServices(ctx, services...); err != nil {
@@ -133,7 +132,7 @@ func (s *Server) Stop(ctx context.Context) error {
 }
 
 func stopServices(ctx context.Context, services ...*Service) error {
-	errs := []error{}
+	errs := make([]error, 0, len(services))
 	for _, service := range services {
 		errs = append(errs, service.Stop(ctx))
 	}

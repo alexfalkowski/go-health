@@ -17,12 +17,6 @@ type ErrorObserver interface {
 	Error() error
 }
 
-// Fataler reports fatal test or benchmark failures.
-type Fataler interface {
-	Helper()
-	Fatal(args ...any)
-}
-
 // RequireObserverNoError waits until observer reports no error.
 func RequireObserverNoError(t *testing.T, observer ErrorObserver) {
 	t.Helper()
@@ -57,7 +51,7 @@ func RequireObserverStopped(t *testing.T, observer Waiter) {
 }
 
 // WaitObserverNoError waits until observer reports no error.
-func WaitObserverNoError(tb Fataler, observer ErrorObserver) {
+func WaitObserverNoError(tb testing.TB, observer ErrorObserver) {
 	tb.Helper()
 
 	deadline := time.Now().Add(time.Second)

@@ -22,11 +22,11 @@ func NewService() *Service {
 		registry:      make(map[string]*probe.Probe),
 		observers:     make(map[string]*subscriber.Observer),
 		subscriptions: make(map[string]*subscriber.Subscriber),
-		subscribers:   []*subscriber.Subscriber{},
+		done:          make(chan struct{}),
+		ticks:         make(chan *probe.Tick, 1),
 		registryWG:    &sync.WaitGroup{},
 		subscriberWG:  &sync.WaitGroup{},
-		ticks:         make(chan *probe.Tick, 1),
-		done:          make(chan struct{}),
+		subscribers:   []*subscriber.Subscriber{},
 	}
 }
 
@@ -106,13 +106,13 @@ func (s *Service) Start(ctx context.Context) error {
 
 	s.prepareStart()
 
-	chs, err := s.startProbes(ctx)
+	tickChannels, err := s.startProbes(ctx)
 	if err != nil {
 		s.cleanupStartFailure(ctx)
 		return err
 	}
 
-	s.mergeChannels(chs)
+	s.mergeChannels(tickChannels)
 	s.subscriberWG.Go(func() {
 		s.sendToSubscribers()
 	})
@@ -186,7 +186,7 @@ func (s *Service) waitObservers(ctx context.Context) error {
 }
 
 func (s *Service) startProbes(ctx context.Context) ([]<-chan *probe.Tick, error) {
-	chs := make([]<-chan *probe.Tick, len(s.registry))
+	tickChannels := make([]<-chan *probe.Tick, len(s.registry))
 	errs := make([]error, len(s.registry))
 	probes := make([]*probe.Probe, 0, len(s.registry))
 	for _, p := range s.registry {
@@ -196,7 +196,7 @@ func (s *Service) startProbes(ctx context.Context) ([]<-chan *probe.Tick, error)
 	var wg sync.WaitGroup
 	for i, p := range probes {
 		wg.Go(func() {
-			chs[i], errs[i] = p.Start(ctx)
+			tickChannels[i], errs[i] = p.Start(ctx)
 		})
 	}
 	wg.Wait()
@@ -208,11 +208,11 @@ func (s *Service) startProbes(ctx context.Context) ([]<-chan *probe.Tick, error)
 		return nil, err
 	}
 
-	return chs, nil
+	return tickChannels, nil
 }
 
-func (s *Service) mergeChannels(chs []<-chan *probe.Tick) {
-	for _, ch := range chs {
+func (s *Service) mergeChannels(tickChannels []<-chan *probe.Tick) {
+	for _, ch := range tickChannels {
 		s.registryWG.Go(func() {
 			s.sendTick(ch)
 		})

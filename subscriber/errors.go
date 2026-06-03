@@ -13,15 +13,11 @@ type Errors map[string]error
 //
 // Each non-nil error is wrapped with its probe name before being joined.
 func (e Errors) Error() error {
-	errs := make([]error, len(e))
-	i := 0
-
+	errs := make([]error, 0, len(e))
 	for k, err := range e {
 		if err != nil {
-			errs[i] = fmt.Errorf("%s: %w", k, err)
+			errs = append(errs, fmt.Errorf("%s: %w", k, err))
 		}
-
-		i++
 	}
 
 	return errors.Join(errs...)

@@ -107,11 +107,22 @@ func main() {
 
 	s.Register("payments", apiRegistration, cacheRegistration, readyRegistration)
 
-	if err := s.Observe("payments", "livez", apiRegistration.Name, cacheRegistration.Name); err != nil {
+	if err := s.Observe(
+		"payments",
+		"livez",
+		apiRegistration.Name,
+		cacheRegistration.Name,
+	); err != nil {
 		log.Fatal(err)
 	}
 
-	if err := s.Observe("payments", "readyz", apiRegistration.Name, cacheRegistration.Name, readyRegistration.Name); err != nil {
+	if err := s.Observe(
+		"payments",
+		"readyz",
+		apiRegistration.Name,
+		cacheRegistration.Name,
+		readyRegistration.Name,
+	); err != nil {
 		log.Fatal(err)
 	}
 

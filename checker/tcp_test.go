@@ -12,18 +12,18 @@ import (
 
 func TestTCPCheckerZeroTimeoutUsesDefault(t *testing.T) {
 	dialer := &recordingDialer{}
-	checker := checker.NewTCPChecker("example:80", 0, checker.WithDialer(dialer))
+	check := checker.NewTCPChecker("example:80", 0, checker.WithDialer(dialer))
 
-	require.NoError(t, checker.Check(context.Background()))
+	require.NoError(t, check.Check(context.Background()))
 	require.True(t, dialer.hasDeadline)
 	require.Greater(t, dialer.remaining, 25*time.Second)
 }
 
 func TestTCPCheckerClosesSuccessfulConnection(t *testing.T) {
 	dialer := &recordingDialer{}
-	checker := checker.NewTCPChecker("example:80", time.Second, checker.WithDialer(dialer))
+	check := checker.NewTCPChecker("example:80", time.Second, checker.WithDialer(dialer))
 
-	require.NoError(t, checker.Check(context.Background()))
+	require.NoError(t, check.Check(context.Background()))
 	require.True(t, dialer.conn.closed)
 }
 
