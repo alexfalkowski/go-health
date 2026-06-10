@@ -187,21 +187,21 @@ func (s *Service) waitObservers(ctx context.Context) error {
 
 func (s *Service) startProbes(ctx context.Context) ([]<-chan *probe.Tick, error) {
 	tickChannels := make([]<-chan *probe.Tick, len(s.registry))
-	errs := make([]error, len(s.registry))
 	probes := make([]*probe.Probe, 0, len(s.registry))
 	for _, p := range s.registry {
 		probes = append(probes, p)
 	}
 
-	var wg sync.WaitGroup
+	var g sync.ErrorsGroup
 	for i, p := range probes {
-		wg.Go(func() {
-			tickChannels[i], errs[i] = p.Start(ctx)
+		g.Go(func() error {
+			ch, err := p.Start(ctx)
+			tickChannels[i] = ch
+			return err
 		})
 	}
-	wg.Wait()
 
-	if err := errors.Join(errs...); err != nil {
+	if err := g.Wait(); err != nil {
 		if stopErr := s.stopProbes(context.WithoutCancel(ctx)); stopErr != nil {
 			return nil, errors.Join(err, stopErr)
 		}
@@ -246,23 +246,14 @@ func (s *Service) cleanupStartFailure(ctx context.Context) {
 }
 
 func (s *Service) stopProbes(ctx context.Context) error {
-	errs := make([]error, 0, len(s.registry))
-	errc := make(chan error, len(s.registry))
-
-	var wg sync.WaitGroup
+	var g sync.ErrorsGroup
 	for _, p := range s.registry {
-		wg.Go(func() {
-			errc <- p.Stop(ctx)
+		g.Go(func() error {
+			return p.Stop(ctx)
 		})
 	}
-	wg.Wait()
-	close(errc)
 
-	for err := range errc {
-		errs = append(errs, err)
-	}
-
-	return errors.Join(errs...)
+	return g.Wait()
 }
 
 func (s *Service) validateProbeNames(names ...string) error {
