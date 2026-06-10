@@ -132,10 +132,12 @@ func (s *Server) Stop(ctx context.Context) error {
 }
 
 func stopServices(ctx context.Context, services ...*Service) error {
-	errs := make([]error, 0, len(services))
+	var g sync.ErrorsGroup
 	for _, service := range services {
-		errs = append(errs, service.Stop(ctx))
+		g.Go(func() error {
+			return service.Stop(ctx)
+		})
 	}
 
-	return errors.Join(errs...)
+	return g.Wait()
 }
