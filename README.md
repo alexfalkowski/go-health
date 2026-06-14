@@ -63,11 +63,15 @@ import "github.com/alexfalkowski/go-health/v2/server"
 
 - `probe.Start` performs an immediate check before the periodic loop continues.
 - `probe.Start` is idempotent while running.
-- `probe.Stop` is safe before start, safe to call multiple times, cancels
-  in-flight checks, and waits for the probe worker to exit.
+- `probe.Stop` is safe before start, safe to call multiple times, cancels the
+  context for in-flight checks, and waits for the probe worker to exit.
 - `server.Start` waits for each service's initial checks before returning.
+  Observer state is updated asynchronously after those probe ticks are fanned
+  out.
 - `server.Start` and `server.Stop` are idempotent.
 - Call `Stop` after `Start` returns, typically during process shutdown.
+- If `Stop` returns the supplied context error, shutdown work did not finish
+  and should be retried or handled as incomplete cleanup.
 - A probe with an invalid period emits a single error tick and closes.
 
 ### 🧩 Registration and observers
@@ -94,6 +98,8 @@ import "github.com/alexfalkowski/go-health/v2/server"
 - All exported checker implementations are safe for concurrent use.
 - If you inject a shared transport, dialer, or pinger, that dependency should
   also be safe for the concurrent calls you expect.
+- Custom checkers shared across registrations should also be safe for
+  concurrent `Check` calls; service startup starts probes concurrently.
 - `HTTPChecker` treats HTTP status codes below `400` as healthy and wraps
   `checker.ErrInvalidStatusCode` for `4xx` and `5xx` responses.
 - `DBChecker` and `TCPChecker` use `checker.ErrTimeout` as the timeout cause for
@@ -236,7 +242,10 @@ By default it checks:
 - `https://cp.cloudflare.com/generate_204`
 - `https://connectivity-check.ubuntu.com`
 
-Use `checker.WithURLs` to replace that default list:
+Use `checker.WithURLs` with at least one URL to replace that default list. An
+empty replacement keeps the built-in defaults. The checker sends requests to all
+configured URLs concurrently and reports healthy as soon as any one returns
+`200 OK` or `204 No Content`; remaining requests are canceled.
 
 ```go
 check := checker.NewOnlineChecker(
@@ -258,7 +267,7 @@ if err := check.Check(context.Background()); err != nil {
 `*database/sql.DB` satisfies that interface, so you can use it directly:
 
 ```go
-var db *sql.DB
+var db *sql.DB // initialized by your application
 
 check := checker.NewDBChecker(db, 5*time.Second)
 
@@ -282,6 +291,9 @@ if err := ready.Check(context.Background()); err != nil {
 ready.Ready()
 ```
 
+Pass a non-nil sentinel error when the gate should start unhealthy. Passing
+`nil` makes the checker report healthy before `Ready` is called.
+
 ## ⏱️ Manual probe usage
 
 If you do not need the `server` package, you can work directly with a probe:
@@ -298,8 +310,11 @@ tick := <-ticks
 log.Printf("%s healthy=%t", tick.Name(), tick.Error() == nil)
 ```
 
-`Stop` cancels any check still running and waits for the probe goroutine to
-exit, or returns the supplied context error if that wait is canceled.
+If the probe should keep running, continue receiving from `ticks` until you call
+`Stop`; the direct probe channel is buffered but does not drop unread ticks.
+`Stop` cancels the context for any check still running and waits for the probe
+goroutine to exit, or returns the supplied context error if that wait is
+canceled.
 
 ## 👀 Working with observers
 
@@ -321,6 +336,9 @@ for name, observer := range s.Observers("readyz") {
 	log.Printf("%s ready=%t", name, observer.Error() == nil)
 }
 ```
+
+The iteration order is unspecified. Collect and sort the service names if you
+need stable endpoint output, logs, or tests.
 
 ## 🛠️ Development
 

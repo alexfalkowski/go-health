@@ -46,8 +46,11 @@ type activeProbe struct {
 // context error and no tick channel. If Stop cancels startup before the initial
 // result can be emitted, Start can return nil error with a closed tick channel
 // and no initial tick. Canceling ctx after Start returns does not stop the
-// probe; use Stop to end the probe lifecycle. If the probe is already running
-// and ctx remains valid through readiness, Start returns the existing channel.
+// probe; use Stop to end the probe lifecycle. Keep receiving from the returned
+// channel while the probe is running. If the period is zero or negative, Start
+// returns a closed channel containing one tick whose error wraps
+// ErrInvalidPeriod. If the probe is already running and ctx remains valid
+// through readiness, Start returns the existing channel.
 func (p *Probe) Start(ctx context.Context) (<-chan *Tick, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
@@ -106,8 +109,9 @@ func (p *Probe) ensureStarted(ctx context.Context) (<-chan *Tick, <-chan struct{
 // Stop stops the probe.
 //
 // Stop is safe to call before Start and safe to call multiple times. It cancels
-// any in-flight check, closes the tick channel once the worker exits, and waits
-// for the probe goroutine to finish.
+// the context for any in-flight check, closes the tick channel once the worker
+// exits, and waits for the probe goroutine to finish. If ctx expires while
+// waiting, Stop returns ctx.Err().
 func (p *Probe) Stop(ctx context.Context) error {
 	p.mux.Lock()
 

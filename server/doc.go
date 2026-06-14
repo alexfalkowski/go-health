@@ -14,9 +14,11 @@
 //
 // Register services and observers during setup, then call Start to run the
 // orchestration. Start waits for initial checks to finish or the supplied context
-// to be canceled before returning. Call Stop after Start has returned, typically
-// from process shutdown. Existing observers continue to work across service
-// restarts.
+// to be canceled before returning. Observer state is updated asynchronously from
+// probe ticks, so Start completion does not mean observers have processed the
+// initial result. Call Stop after Start has returned, typically from process
+// shutdown. Existing observers continue to work across service restarts and
+// retain their previous state until new ticks arrive.
 //
 // # Example
 //

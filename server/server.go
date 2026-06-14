@@ -40,7 +40,8 @@ func (s *Server) Register(name string, regs ...*Registration) {
 
 // Observers returns all observers of the given kind.
 //
-// Services that do not have that observer kind are skipped.
+// Services that do not have that observer kind are skipped. Iteration order is
+// unspecified.
 func (s *Server) Observers(kind string) iter.Seq2[string, *subscriber.Observer] {
 	return func(yield func(string, *subscriber.Observer) bool) {
 		for name, service := range s.services {
@@ -118,7 +119,9 @@ func (s *Server) Start(ctx context.Context) error {
 
 // Stop stops all registered services.
 //
-// Stop is idempotent.
+// Stop is idempotent. If ctx expires before shutdown work finishes, Stop returns
+// an error and keeps the server marked running so callers can retry with a valid
+// context.
 func (s *Server) Stop(ctx context.Context) error {
 	s.mux.Lock()
 	defer s.mux.Unlock()

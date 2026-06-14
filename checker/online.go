@@ -42,7 +42,8 @@ type OnlineChecker struct {
 //
 // Requests are issued concurrently with the supplied context. Individual request
 // errors are ignored unless every configured URL fails or returns an unexpected
-// status code.
+// status code. The checker cancels remaining requests after the first healthy
+// response.
 func (c *OnlineChecker) Check(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err

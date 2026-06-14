@@ -5,9 +5,9 @@
 //
 // # Example
 //
-//	import databasesql "database/sql"
+//	import "database/sql"
 //
-//	var db *databasesql.DB
+//	var db *sql.DB // initialized by your application
 //	check := checker.NewDBChecker(db, 5*time.Second)
 //
 //	if err := check.Check(context.Background()); err != nil {
