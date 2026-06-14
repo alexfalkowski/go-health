@@ -69,6 +69,9 @@ func (o *Observer) Restart(sub *Subscriber) {
 }
 
 // Wait blocks until the current observe loop exits.
+//
+// Direct callers should close the current subscriber before waiting; otherwise
+// Wait can block indefinitely.
 func (o *Observer) Wait() {
 	o.wg.Wait()
 }

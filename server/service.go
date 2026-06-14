@@ -93,11 +93,12 @@ func (s *Service) Observe(kind string, names ...string) error {
 // Start starts all registered probes and begins fan-out to subscribers.
 //
 // Existing observers continue receiving updates if the service is stopped and
-// started again later. Start waits for each probe's initial check before
-// returning. Repeated calls while the service is running are no-ops. Call Stop
-// after Start has returned during normal shutdown. If a probe fails to start,
-// Start cleans up partially started probes and subscriptions, leaves the service
-// stopped, and the service may be started again later.
+// started again later. Start runs probes concurrently and waits for each probe's
+// initial check before returning; observer state is updated asynchronously after
+// those ticks are fanned out. Repeated calls while the service is running are
+// no-ops. Call Stop after Start has returned during normal shutdown. If a probe
+// fails to start, Start cleans up partially started probes and subscriptions,
+// leaves the service stopped, and the service may be started again later.
 func (s *Service) Start(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err
@@ -132,7 +133,9 @@ func (s *Service) Start(ctx context.Context) error {
 // Stop is safe before Start and safe to call multiple times. It waits for
 // in-flight fan-in and fan-out work to finish before returning. Observer
 // instances are preserved; if the service is started again later, those
-// observers are attached to fresh subscribers.
+// observers are attached to fresh subscribers. If ctx expires before shutdown
+// work finishes, Stop returns an error and keeps the service marked running so
+// callers can retry with a valid context.
 func (s *Service) Stop(ctx context.Context) error {
 	s.mux.Lock()
 	defer s.mux.Unlock()

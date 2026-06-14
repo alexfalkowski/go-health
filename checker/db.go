@@ -12,6 +12,7 @@ var _ Checker = (*DBChecker)(nil)
 
 // NewDBChecker returns a DBChecker that pings pinger.
 //
+// The pinger must be a non-nil, initialized implementation of sql.Pinger.
 // The timeout is applied via [context.WithTimeoutCause] during Check. Passing 0
 // uses the package default of 30 seconds.
 func NewDBChecker(pinger sql.Pinger, t time.Duration) *DBChecker {

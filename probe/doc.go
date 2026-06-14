@@ -12,7 +12,9 @@
 //   - Error() returns the latest checker error, or nil when healthy.
 //
 // Ticks are delivered asynchronously on a channel so higher-level code can fan
-// them out to observers or aggregate them into service-level health.
+// them out to observers or aggregate them into service-level health. Direct
+// users should keep receiving from the channel while the probe is running; the
+// channel is buffered but does not drop unread ticks.
 //
 // # Scheduling behavior
 //
@@ -30,8 +32,8 @@
 //
 // Start is idempotent while a probe is running: repeated calls with a live
 // context return the same channel once startup has completed. Stop is also
-// idempotent and cancels any in-flight check before waiting for the probe
-// goroutine to exit or the supplied context to expire.
+// idempotent and cancels the context for any in-flight check before waiting for
+// the probe goroutine to exit or the supplied context to expire.
 //
 // # Example
 //
