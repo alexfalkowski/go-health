@@ -19,10 +19,12 @@
 // Start uses the supplied context for startup and the initial check before
 // returning the channel, then continues on the configured period until Stop is
 // called. If the context is canceled before startup completes, Start returns the
-// context error and no tick channel. Canceling that context after Start returns
-// does not stop the probe; use Stop to end the probe lifecycle. If the period is
-// zero or negative, Start returns a closed channel after emitting a single tick
-// whose error wraps ErrInvalidPeriod.
+// context error and no tick channel. If Stop cancels startup before the initial
+// result can be emitted, Start can return nil error with a closed tick channel
+// and no initial tick. Canceling that context after Start returns does not stop
+// the probe; use Stop to end the probe lifecycle. If the period is zero or
+// negative, Start returns a closed channel after emitting a single tick whose
+// error wraps ErrInvalidPeriod.
 //
 // # Lifecycle
 //

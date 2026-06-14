@@ -33,9 +33,9 @@ func NewService() *Service {
 // Service maintains probes, subscribers, and observers for a single service.
 //
 // Register and Observe are setup-time calls. Start begins running all probes,
-// waits for their initial checks, and fan-outs their ticks to subscribers. Stop
-// tears everything down after Start has returned and preserves observers so the
-// service can be started again later.
+// waits for their initial checks, and fan-outs their ticks to subscribers. Start
+// and Stop are idempotent. Stop is safe before Start and preserves observers so
+// the service can be started again later with the same observer instances.
 type Service struct {
 	registry      map[string]*probe.Probe
 	observers     map[string]*subscriber.Observer
@@ -94,10 +94,10 @@ func (s *Service) Observe(kind string, names ...string) error {
 //
 // Existing observers continue receiving updates if the service is stopped and
 // started again later. Start waits for each probe's initial check before
-// returning; call Stop after Start has returned during normal shutdown. If a
-// probe fails to start, Start cleans up partially started probes and
-// subscriptions, leaves the service stopped, and the service may be started
-// again later.
+// returning. Repeated calls while the service is running are no-ops. Call Stop
+// after Start has returned during normal shutdown. If a probe fails to start,
+// Start cleans up partially started probes and subscriptions, leaves the service
+// stopped, and the service may be started again later.
 func (s *Service) Start(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err
@@ -129,7 +129,10 @@ func (s *Service) Start(ctx context.Context) error {
 
 // Stop stops all probes and closes all subscribers.
 //
-// Stop waits for in-flight fan-in and fan-out work to finish before returning.
+// Stop is safe before Start and safe to call multiple times. It waits for
+// in-flight fan-in and fan-out work to finish before returning. Observer
+// instances are preserved; if the service is started again later, those
+// observers are attached to fresh subscribers.
 func (s *Service) Stop(ctx context.Context) error {
 	s.mux.Lock()
 	defer s.mux.Unlock()
