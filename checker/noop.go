@@ -4,10 +4,11 @@ import "context"
 
 var _ Checker = (*NoopChecker)(nil)
 
-// NewNoopChecker returns a Checker that always reports healthy.
+// NewNoopChecker returns a Checker that reports healthy unless the context
+// passed to Check is canceled.
 //
 // It is useful in tests, examples, or when a health group needs a placeholder
-// dependency that should never fail.
+// dependency that should have no dependency-specific failure mode.
 func NewNoopChecker() *NoopChecker {
 	return &NoopChecker{}
 }

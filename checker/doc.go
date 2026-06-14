@@ -16,7 +16,8 @@
 //   - OnlineChecker for best-effort external connectivity checks across a list
 //     of URLs.
 //   - ReadyChecker for application-managed readiness gates.
-//   - NoopChecker for always-healthy checks.
+//   - NoopChecker for checks that only fail when the supplied context is
+//     canceled.
 //
 // # Timeouts and defaults
 //
