@@ -40,8 +40,12 @@ type activeProbe struct {
 
 // Start begins running checks and returns a channel of ticks.
 //
-// Start performs an initial check before returning so callers can observe an
-// immediate result. If the probe is already running, Start returns the existing
+// Start performs an initial check with ctx before returning so callers can
+// observe an immediate result. The context controls startup and the initial
+// readiness wait; if it is canceled before startup completes, Start returns the
+// context error and no tick channel. Canceling ctx after Start returns does not
+// stop the probe; use Stop to end the probe lifecycle. If the probe is already
+// running and ctx remains valid through readiness, Start returns the existing
 // channel.
 func (p *Probe) Start(ctx context.Context) (<-chan *Tick, error) {
 	if err := ctx.Err(); err != nil {

@@ -16,16 +16,20 @@
 //
 // # Scheduling behavior
 //
-// Start performs an initial check with the supplied context before returning the
-// channel, then continues on the configured period until Stop is called. If the
-// period is zero or negative, Start returns a closed channel after emitting a
-// single tick whose error wraps ErrInvalidPeriod.
+// Start uses the supplied context for startup and the initial check before
+// returning the channel, then continues on the configured period until Stop is
+// called. If the context is canceled before startup completes, Start returns the
+// context error and no tick channel. Canceling that context after Start returns
+// does not stop the probe; use Stop to end the probe lifecycle. If the period is
+// zero or negative, Start returns a closed channel after emitting a single tick
+// whose error wraps ErrInvalidPeriod.
 //
 // # Lifecycle
 //
-// Start is idempotent while a probe is running: repeated calls return the same
-// channel. Stop is also idempotent and cancels any in-flight check before waiting
-// for the probe goroutine to exit or the supplied context to expire.
+// Start is idempotent while a probe is running: repeated calls with a live
+// context return the same channel once startup has completed. Stop is also
+// idempotent and cancels any in-flight check before waiting for the probe
+// goroutine to exit or the supplied context to expire.
 //
 // # Example
 //

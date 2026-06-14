@@ -53,5 +53,7 @@
 //
 //	readyChecker.Ready()
 //
-// All exported checker implementations are safe for concurrent use.
+// All exported checker implementations are safe for concurrent use when their
+// injected transport, dialer, or pinger is safe for the concurrent calls the
+// checker may make.
 package checker

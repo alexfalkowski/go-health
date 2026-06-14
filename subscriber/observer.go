@@ -11,7 +11,8 @@ import (
 // The observer starts consuming the subscriber immediately in a background
 // goroutine. The names slice is cloned and used to seed the error map with nil
 // values for all tracked probes, so the observer appears healthy until matching
-// ticks arrive.
+// ticks arrive. The observer trusts sub for tick filtering; pass a subscriber
+// configured with the same names when Names and Errors should stay aligned.
 func NewObserver(names []string, sub *Subscriber) *Observer {
 	names = slices.Clone(names)
 	errs := make(Errors)
@@ -25,7 +26,7 @@ func NewObserver(names []string, sub *Subscriber) *Observer {
 	return ob
 }
 
-// Observer maintains the latest health state for a set of probes.
+// Observer maintains the latest health state for probe ticks it receives.
 type Observer struct {
 	errors Errors
 	names  []string
@@ -58,7 +59,10 @@ func (o *Observer) Names() []string {
 
 // Restart waits for the current subscriber to finish and starts observing sub.
 //
-// Existing error state is retained until new ticks arrive.
+// Restart does not close the current subscriber. Callers must close it first so
+// the current observe loop can exit; the replacement subscriber starts only
+// after that channel closes. Existing error state is retained until new ticks
+// arrive.
 func (o *Observer) Restart(sub *Subscriber) {
 	o.wg.Wait()
 	o.start(sub)

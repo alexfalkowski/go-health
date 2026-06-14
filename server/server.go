@@ -57,6 +57,9 @@ func (s *Server) Observers(kind string) iter.Seq2[string, *subscriber.Observer] 
 }
 
 // Observer returns an observer for the service name and observer kind.
+//
+// It returns ErrServiceNotFound if name has not been registered, or
+// ErrObserverNotFound if the service does not have kind.
 func (s *Server) Observer(name, kind string) (*subscriber.Observer, error) {
 	service, ok := s.services[name]
 	if !ok {
@@ -70,6 +73,8 @@ func (s *Server) Observer(name, kind string) (*subscriber.Observer, error) {
 //
 // Observe is intended for setup before Start. The observer will track the probes
 // listed in names. Repeated calls with the same service and kind are idempotent.
+// It returns ErrServiceNotFound if name has not been registered, or
+// ErrProbeNotFound if any probe name is unknown.
 func (s *Server) Observe(name, kind string, names ...string) error {
 	service, ok := s.services[name]
 	if !ok {
@@ -82,7 +87,9 @@ func (s *Server) Observe(name, kind string, names ...string) error {
 // Start starts all registered services.
 //
 // Start is idempotent. It waits for each service's initial checks before
-// returning; call Stop after Start has returned during normal shutdown.
+// returning; call Stop after Start has returned during normal shutdown. If a
+// service fails to start, Start stops any services started during that attempt,
+// leaves the server stopped, and the server may be started again later.
 func (s *Server) Start(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err

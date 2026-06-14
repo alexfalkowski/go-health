@@ -9,7 +9,9 @@ import (
 // NewOnlineRegistration returns a registration for an online checker.
 //
 // The registration name is fixed to "online". If you need a different name, use
-// NewRegistration with checker.NewOnlineChecker directly.
+// NewRegistration with checker.NewOnlineChecker directly. The period must be
+// positive; non-positive periods are reported through observer state as
+// probe.ErrInvalidPeriod after the service starts.
 func NewOnlineRegistration(timeout, period time.Duration, opts ...checker.Option) *Registration {
 	return &Registration{
 		Name:    "online",
@@ -19,6 +21,9 @@ func NewOnlineRegistration(timeout, period time.Duration, opts ...checker.Option
 }
 
 // NewRegistration returns a registration for a checker.
+//
+// The period must be positive. Non-positive periods are reported through probe
+// and observer state as probe.ErrInvalidPeriod after the service starts.
 func NewRegistration(name string, period time.Duration, ch checker.Checker) *Registration {
 	return &Registration{Name: name, Period: period, Checker: ch}
 }
@@ -27,5 +32,6 @@ func NewRegistration(name string, period time.Duration, ch checker.Checker) *Reg
 type Registration struct {
 	Checker checker.Checker
 	Name    string
-	Period  time.Duration
+	// Period is the interval between checks and must be positive.
+	Period time.Duration
 }

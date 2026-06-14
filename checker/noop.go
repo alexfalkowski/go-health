@@ -12,7 +12,7 @@ func NewNoopChecker() *NoopChecker {
 	return &NoopChecker{}
 }
 
-// NoopChecker is a Checker that always returns nil.
+// NoopChecker reports healthy unless the supplied context is canceled.
 type NoopChecker struct{}
 
 // Check always returns nil unless ctx is canceled.
