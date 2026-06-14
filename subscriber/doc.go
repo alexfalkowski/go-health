@@ -3,7 +3,7 @@
 // Subscriber is the transport layer for ticks inside a service: it accepts probe
 // results for a configured set of names and forwards matching ticks to a channel.
 // Observer is the stateful layer on top of that channel: it consumes ticks in a
-// goroutine and remembers the latest error for each tracked probe.
+// goroutine and remembers the latest error for each received probe tick.
 //
 // This package is typically used indirectly through the server package, but the
 // types are also useful when you want to build custom aggregation or expose
@@ -23,7 +23,9 @@
 //
 // Subscriber.Send is best-effort and non-blocking. If the buffer is full, the
 // tick is dropped rather than back-pressuring the producer. This keeps probe
-// execution decoupled from slow observers.
+// execution decoupled from slow observers. Observer trusts its Subscriber for
+// tick filtering, so direct users should construct both with the same probe names
+// when they expect Names and Errors to describe the same set.
 //
 // # Example
 //

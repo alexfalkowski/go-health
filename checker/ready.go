@@ -12,12 +12,16 @@ var _ Checker = (*ReadyChecker)(nil)
 //
 // Until Ready is called, Check returns err. Callers typically pass a stable
 // sentinel error such as errors.New("not ready") so they can detect the reason
-// with errors.Is.
+// with errors.Is. Passing nil makes the checker report healthy before Ready is
+// called.
 func NewReadyChecker(err error) *ReadyChecker {
 	return &ReadyChecker{err: err}
 }
 
 // ReadyChecker reports a fixed error until it is marked ready.
+//
+// If the configured error is nil, Check reports healthy even before Ready is
+// called.
 //
 // Ready is a one-way transition; once marked ready the checker stays healthy for
 // the lifetime of the value.

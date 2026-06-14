@@ -60,6 +60,8 @@ func (s *Service) Register(regs ...*Registration) {
 }
 
 // Observer returns the observer for kind.
+//
+// It returns ErrObserverNotFound if kind has not been registered.
 func (s *Service) Observer(kind string) (*subscriber.Observer, error) {
 	observer, ok := s.observers[kind]
 	if !ok {
@@ -73,7 +75,8 @@ func (s *Service) Observer(kind string) (*subscriber.Observer, error) {
 //
 // Observe is intended for setup before Start. It returns an error if any probe
 // name has not been registered. Repeated calls with the same kind are idempotent
-// and keep the original probe set.
+// and keep the original probe set. Unknown probe names are reported with
+// ErrProbeNotFound; multiple unknown probes are joined into one error.
 func (s *Service) Observe(kind string, names ...string) error {
 	_, ok := s.observers[kind]
 	if !ok {
@@ -91,7 +94,10 @@ func (s *Service) Observe(kind string, names ...string) error {
 //
 // Existing observers continue receiving updates if the service is stopped and
 // started again later. Start waits for each probe's initial check before
-// returning; call Stop after Start has returned during normal shutdown.
+// returning; call Stop after Start has returned during normal shutdown. If a
+// probe fails to start, Start cleans up partially started probes and
+// subscriptions, leaves the service stopped, and the service may be started
+// again later.
 func (s *Service) Start(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err

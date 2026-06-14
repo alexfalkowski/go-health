@@ -347,6 +347,10 @@ Local test notes:
 - Some tests make real network calls.
 - Some tests expect a local status service on `STATUS_PORT`, defaulting to `6000`.
 - CircleCI starts `alexfalkowski/status:latest` for that service during CI.
+- For local `make specs` runs that need the status service, run `make start`
+  before the tests and `make stop` afterward. These commands use the shared
+  `bin/` Docker helper, which may require Docker, GitHub SSH access, and a
+  writable sibling `../docker` checkout.
 
 ## 📚 Documentation
 
