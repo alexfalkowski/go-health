@@ -24,6 +24,7 @@ Top-level packages:
 - `probe/`: periodic execution of a `checker.Checker`, producing `probe.Tick` values.
 - `subscriber/`: best-effort tick fan-out plus observer state tracking.
 - `server/`: orchestration for registering probes per service, creating observers, and managing start/stop lifecycle.
+- `watcher/`: shared subscription interface returned by observer and server watch entry points.
 - `net/`: small network-related interfaces used by checkers.
 - `sql/`: small SQL-related interfaces used by checkers.
 - `internal/test/`: test helpers such as building URLs for the local status service.
