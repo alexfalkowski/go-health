@@ -9,11 +9,12 @@ import (
 
 // NewObserver returns an Observer that tracks the latest errors for names.
 //
-// The observer starts consuming the subscriber immediately in a background
-// goroutine. The names slice is cloned and used to seed the error map with nil
-// values for all tracked probes, so the observer appears healthy until matching
-// ticks arrive. The observer trusts sub for tick filtering; pass a subscriber
-// configured with the same names when Names and Errors should stay aligned.
+// The subscriber must be non-nil. The observer starts consuming the subscriber
+// immediately in a background goroutine. The names slice is cloned and used to
+// seed the error map with nil values for all tracked probes, so the observer
+// appears healthy until matching ticks arrive. The observer trusts sub for tick
+// filtering; pass a subscriber configured with the same names when Names and
+// Errors should stay aligned.
 func NewObserver(names []string, sub *Subscriber) *Observer {
 	names = slices.Clone(names)
 	errs := make(Errors)
@@ -69,7 +70,8 @@ func (o *Observer) Names() []string {
 // The watcher receives the observer's current error immediately, then receives
 // the current error again after each matching probe tick is processed. Sends are
 // best-effort and coalesced to the latest error when the receiver is slow. Close
-// the watcher when the receiver no longer needs updates.
+// the watcher when the receiver no longer needs updates; the receive channel
+// closes when the watcher is closed, not when observation stops.
 func (o *Observer) Watch() watcher.Subscription {
 	sub := &subscription{
 		updates: make(chan error, 1),

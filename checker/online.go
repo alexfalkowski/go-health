@@ -10,7 +10,7 @@ import (
 
 var _ Checker = (*OnlineChecker)(nil)
 
-// ErrNotOnline is returned when none of the configured connectivity URLs appear healthy.
+// ErrNotOnline is wrapped when none of the configured connectivity URLs appear healthy.
 var ErrNotOnline = errors.New("not online")
 
 // NewOnlineChecker returns an OnlineChecker that checks whether any configured URL
@@ -27,8 +27,8 @@ func NewOnlineChecker(t time.Duration, opts ...Option) *OnlineChecker {
 	}
 }
 
-// OnlineChecker checks a list of URLs concurrently and returns ErrNotOnline if none
-// of them respond with 200 OK or 204 No Content.
+// OnlineChecker checks a list of URLs concurrently and wraps ErrNotOnline if
+// none of them respond with 200 OK or 204 No Content.
 //
 // The intent is to answer "can this process reach the outside world?" rather than
 // "is one specific upstream healthy?" Any single successful response is enough for
