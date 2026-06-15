@@ -54,6 +54,7 @@ import "github.com/alexfalkowski/go-health/v2/server"
 | `probe` | Periodically runs a checker and emits ticks. |
 | `subscriber` | Best-effort tick fan-out and latest-error tracking for selected probe names. |
 | `server` | Registers probes per service, creates observers, and manages lifecycle. |
+| `watcher` | Shared subscription interface returned by observer and server watch entry points. |
 | `net` | Small interfaces used to customize network dialing. |
 | `sql` | Small interfaces used to customize database pinging. |
 
@@ -87,6 +88,10 @@ import "github.com/alexfalkowski/go-health/v2/server"
   slow observer can miss intermediate ticks.
 - `subscriber.Observer` starts with `nil` errors for every tracked probe name
   and updates as ticks arrive.
+- `server.Error(kind)` joins the current errors for every service that has an
+  observer of that kind.
+- `server.Watch(kind)` streams the current error for that observer kind and
+  future tick-derived errors until the returned watcher is stopped.
 - `server.Service` and `server.Server` keep observer instances across
   stop/start cycles, so existing observers continue receiving ticks after a
   restart.
@@ -169,29 +174,17 @@ func main() {
 	}
 	defer s.Stop(context.Background())
 
-	livez, err := s.Observer("payments", "livez")
-	if err != nil {
-		log.Fatal(err)
+	if err := s.Error("livez"); err != nil {
+		log.Printf("livez unhealthy: %v", err)
+	}
+
+	if err := s.Error("readyz"); err != nil {
+		log.Printf("readyz unhealthy: %v", err)
 	}
 
 	readyz, err := s.Observer("payments", "readyz")
 	if err != nil {
 		log.Fatal(err)
-	}
-
-	readyChecker.Ready()
-
-	deadline := time.Now().Add(2 * time.Second)
-	for time.Now().Before(deadline) {
-		if readyz.Error() == nil {
-			break
-		}
-
-		time.Sleep(10 * time.Millisecond)
-	}
-
-	if err := livez.Error(); err != nil {
-		log.Printf("livez unhealthy: %v", err)
 	}
 
 	for name, err := range readyz.Errors() {
@@ -339,6 +332,33 @@ for name, observer := range s.Observers("readyz") {
 
 The iteration order is unspecified. Collect and sort the service names if you
 need stable endpoint output, logs, or tests.
+
+When a transport needs a single answer for all services with the same observer
+kind, use `Server.Error(kind)`:
+
+```go
+if err := s.Error("readyz"); err != nil {
+	log.Printf("readyz unhealthy: %v", err)
+}
+```
+
+To avoid polling, watch the observer kind and report each update. The stream
+sends the current state first, then future tick-derived states:
+
+```go
+func streamReady(s *server.Server, send func(bool) error) error {
+	watcher := s.Watch("readyz")
+	defer watcher.Close()
+
+	for err := range watcher.Receive() {
+		if err := send(err == nil); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+```
 
 ## 🛠️ Development
 

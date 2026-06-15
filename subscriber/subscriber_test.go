@@ -127,6 +127,61 @@ func TestObserverErrorsReturnsCopy(t *testing.T) {
 	require.ErrorIs(t, ob.Error(), errDB)
 }
 
+func TestObserverWatchSendsCurrentErrorAndUpdates(t *testing.T) {
+	s := subscriber.NewSubscriber([]string{dbProbeName})
+	ob := subscriber.NewObserver([]string{dbProbeName}, s)
+	t.Cleanup(func() {
+		s.Close()
+		ob.Wait()
+	})
+
+	watcher := ob.Watch()
+	defer watcher.Close()
+	updates := watcher.Receive()
+
+	require.NoError(t, receiveError(t, updates))
+
+	errDB := errors.New("db failed")
+	s.Send(probe.NewTick(dbProbeName, errDB))
+
+	require.ErrorIs(t, receiveError(t, updates), errDB)
+}
+
+func TestObserverWatchClosesWhenStopped(t *testing.T) {
+	s := subscriber.NewSubscriber([]string{dbProbeName})
+	ob := subscriber.NewObserver([]string{dbProbeName}, s)
+	t.Cleanup(func() {
+		s.Close()
+		ob.Wait()
+	})
+
+	watcher := ob.Watch()
+	updates := watcher.Receive()
+	require.NoError(t, receiveError(t, updates))
+
+	watcher.Close()
+	_, ok := receive(t, updates)
+	require.False(t, ok)
+}
+
+func TestObserverWatchSendsTicksWithoutStatusChange(t *testing.T) {
+	s := subscriber.NewSubscriber([]string{dbProbeName})
+	ob := subscriber.NewObserver([]string{dbProbeName}, s)
+	t.Cleanup(func() {
+		s.Close()
+		ob.Wait()
+	})
+
+	watcher := ob.Watch()
+	defer watcher.Close()
+	updates := watcher.Receive()
+	require.NoError(t, receiveError(t, updates))
+
+	s.Send(probe.NewTick(dbProbeName, nil))
+
+	require.NoError(t, receiveError(t, updates))
+}
+
 func TestErrorsErrorJoinsAnnotatedErrors(t *testing.T) {
 	errDB := errors.New("db failed")
 	errCache := errors.New("cache failed")
@@ -140,4 +195,25 @@ func TestErrorsErrorJoinsAnnotatedErrors(t *testing.T) {
 	require.ErrorIs(t, err, errCache)
 	require.ErrorContains(t, err, "db:")
 	require.ErrorContains(t, err, "cache:")
+}
+
+func receiveError(t *testing.T, updates <-chan error) error {
+	t.Helper()
+
+	err, ok := receive(t, updates)
+	require.True(t, ok)
+
+	return err
+}
+
+func receive(t *testing.T, updates <-chan error) (error, bool) {
+	t.Helper()
+
+	select {
+	case err, ok := <-updates:
+		return err, ok
+	case <-time.After(time.Second):
+		require.Fail(t, "timed out waiting for observer update")
+		return nil, false
+	}
 }

@@ -69,7 +69,39 @@ func TestServiceObserveKeepsOriginalProbeSetForExistingKind(t *testing.T) {
 	require.Equal(t, []string{first.Name}, sameObserver.Names())
 }
 
-//nolint:err113
+func TestServiceErrorReturnsObserverError(t *testing.T) {
+	s := server.NewService()
+	t.Cleanup(func() { _ = s.Stop(context.Background()) })
+
+	errNotReady := errors.New("not ready")
+	registration := server.NewRegistration("ready", time.Hour, checker.NewReadyChecker(errNotReady))
+	s.Register(registration)
+	require.NoError(t, s.Observe("readyz", registration.Name))
+	watcher, err := s.Watch("readyz")
+	require.NoError(t, err)
+	defer watcher.Close()
+	updates := watcher.Receive()
+	require.NoError(t, receiveError(t, updates))
+
+	require.NoError(t, s.Start(t.Context()))
+
+	require.Eventually(t, func() bool {
+		return errors.Is(s.Error("readyz"), errNotReady)
+	}, time.Second, 10*time.Millisecond)
+	require.ErrorIs(t, receiveMatchingError(t, updates, func(err error) bool {
+		return errors.Is(err, errNotReady)
+	}), errNotReady)
+}
+
+func TestServiceErrorAndWatchRejectUnknownObserver(t *testing.T) {
+	s := server.NewService()
+
+	require.ErrorIs(t, s.Error("readyz"), server.ErrObserverNotFound)
+
+	_, err := s.Watch("readyz")
+	require.ErrorIs(t, err, server.ErrObserverNotFound)
+}
+
 func TestServiceStopBeforeStartClosesObservers(t *testing.T) {
 	s := server.NewService()
 	errNotReady := errors.New("not ready")

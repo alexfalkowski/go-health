@@ -296,7 +296,6 @@ func TestValidDBChecker(t *testing.T) {
 	})
 }
 
-//nolint:err113
 func TestInvalidDBChecker(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		s := server.NewServer()
@@ -319,7 +318,6 @@ func TestInvalidDBChecker(t *testing.T) {
 	})
 }
 
-//nolint:err113
 func TestValidReadyChecker(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		s := server.NewServer()
@@ -484,6 +482,94 @@ func TestGRPCObservers(t *testing.T) {
 	require.Empty(t, names)
 }
 
+func TestServerErrorJoinsObserverErrorsForKind(t *testing.T) {
+	s := server.NewServer()
+	t.Cleanup(func() { _ = s.Stop(context.Background()) })
+
+	errPayments := errors.New("payments unavailable")
+	errSearch := errors.New("search unavailable")
+	errIgnored := errors.New("ignored unavailable")
+	paymentsReady := checker.NewReadyChecker(errPayments)
+	searchReady := checker.NewReadyChecker(errSearch)
+	ignoredReady := checker.NewReadyChecker(errIgnored)
+
+	paymentsRegistration := server.NewRegistration("ready", time.Hour, paymentsReady)
+	searchRegistration := server.NewRegistration("ready", time.Hour, searchReady)
+	ignoredRegistration := server.NewRegistration("ready", time.Hour, ignoredReady)
+
+	s.Register("payments", paymentsRegistration)
+	s.Register("search", searchRegistration)
+	s.Register("ignored", ignoredRegistration)
+
+	require.NoError(t, s.Observe("payments", "grpc", paymentsRegistration.Name))
+	require.NoError(t, s.Observe("search", "grpc", searchRegistration.Name))
+	require.NoError(t, s.Observe("ignored", "livez", ignoredRegistration.Name))
+
+	require.NoError(t, s.Start(t.Context()))
+
+	require.Eventually(t, func() bool {
+		err := s.Error("grpc")
+
+		return errors.Is(err, errPayments) && errors.Is(err, errSearch)
+	}, time.Second, 10*time.Millisecond)
+
+	err := s.Error("grpc")
+	require.ErrorContains(t, err, "payments:")
+	require.ErrorContains(t, err, "search:")
+	require.NotErrorIs(t, err, errIgnored)
+}
+
+func TestServerWatchWaitsForKindStatusChange(t *testing.T) {
+	s := server.NewServer()
+	t.Cleanup(func() { _ = s.Stop(context.Background()) })
+
+	checker := &dynamicChecker{}
+	registration := server.NewRegistration("dynamic", 10*time.Millisecond, checker)
+	s.Register("test", registration)
+
+	require.NoError(t, s.Observe("test", "grpc", registration.Name))
+	require.NoError(t, s.Start(t.Context()))
+
+	watcher := s.Watch("grpc")
+	defer watcher.Close()
+	updates := watcher.Receive()
+	require.NoError(t, receiveError(t, updates))
+
+	errChanged := errors.New("changed")
+	checker.Set(errChanged)
+
+	require.ErrorIs(t, receiveMatchingError(t, updates, func(err error) bool {
+		return errors.Is(err, errChanged)
+	}), errChanged)
+
+	watcher.Close()
+	receiveClosed(t, updates)
+}
+
+func TestServerWatcherCoalescesPendingUpdates(t *testing.T) {
+	s := server.NewServer()
+	t.Cleanup(func() { _ = s.Stop(context.Background()) })
+
+	errNotReady := errors.New("not ready")
+	checker := checker.NewReadyChecker(errNotReady)
+	registration := server.NewRegistration("ready", time.Hour, checker)
+	s.Register("test", registration)
+
+	require.NoError(t, s.Observe("test", "grpc", registration.Name))
+	require.NoError(t, s.Start(t.Context()))
+
+	require.Eventually(t, func() bool {
+		return errors.Is(s.Error("grpc"), errNotReady)
+	}, time.Second, 10*time.Millisecond)
+
+	watcher := s.Watch("grpc")
+	updates := watcher.Receive()
+
+	watcher.Close()
+	require.ErrorIs(t, receiveError(t, updates), errNotReady)
+	receiveClosed(t, updates)
+}
+
 func TestInvalidObservers(t *testing.T) {
 	s := server.NewServer()
 	defer func() { _ = s.Stop(context.Background()) }()
@@ -500,6 +586,54 @@ func TestInvalidObservers(t *testing.T) {
 	_ = s.Observe("test", "livez", r.Name)
 	_, err := s.Observer("bob", "livez")
 	require.Error(t, err)
+}
+
+func receiveError(t *testing.T, updates <-chan error) error {
+	t.Helper()
+
+	select {
+	case err, ok := <-updates:
+		require.True(t, ok)
+		return err
+	case <-time.After(time.Second):
+		require.Fail(t, "timed out waiting for observer update")
+		return nil
+	}
+}
+
+func receiveMatchingError(t *testing.T, updates <-chan error, match func(error) bool) error {
+	t.Helper()
+
+	timeout := time.After(time.Second)
+	for {
+		select {
+		case err, ok := <-updates:
+			require.True(t, ok)
+			if match(err) {
+				return err
+			}
+		case <-timeout:
+			require.Fail(t, "timed out waiting for matching observer update")
+			return nil
+		}
+	}
+}
+
+func receiveClosed(t *testing.T, updates <-chan error) {
+	t.Helper()
+
+	timeout := time.After(time.Second)
+	for {
+		select {
+		case _, ok := <-updates:
+			if !ok {
+				return
+			}
+		case <-timeout:
+			require.Fail(t, "timed out waiting for observer updates to close")
+			return
+		}
+	}
 }
 
 func BenchmarkValidHTTPChecker(b *testing.B) {

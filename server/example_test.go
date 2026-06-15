@@ -23,12 +23,6 @@ func ExampleNewServer() {
 		return
 	}
 
-	observer, err := s.Observer("payments", "readyz")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
 	if err := s.Start(context.Background()); err != nil {
 		fmt.Println(err)
 		return
@@ -37,29 +31,33 @@ func ExampleNewServer() {
 		_ = s.Stop(context.Background())
 	}()
 
-	fmt.Println(waitForCondition(func() bool {
-		return errors.Is(observer.Error(), errNotReady)
+	watcher := s.Watch("readyz")
+	defer watcher.Close()
+
+	fmt.Println(waitForUpdate(watcher.Receive(), func(err error) bool {
+		return errors.Is(err, errNotReady)
 	}))
 
 	ready.Ready()
 
-	fmt.Println(waitForCondition(func() bool {
-		return observer.Error() == nil
+	fmt.Println(waitForUpdate(watcher.Receive(), func(err error) bool {
+		return err == nil
 	}))
 	// Output:
 	// true
 	// true
 }
 
-func waitForCondition(fn func() bool) bool {
-	deadline := time.Now().Add(250 * time.Millisecond)
-	for time.Now().Before(deadline) {
-		if fn() {
-			return true
+func waitForUpdate(updates <-chan error, match func(error) bool) bool {
+	timeout := time.After(250 * time.Millisecond)
+	for {
+		select {
+		case err := <-updates:
+			if match(err) {
+				return true
+			}
+		case <-timeout:
+			return false
 		}
-
-		time.Sleep(5 * time.Millisecond)
 	}
-
-	return fn()
 }
