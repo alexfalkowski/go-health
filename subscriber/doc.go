@@ -19,6 +19,11 @@
 // Joined errors are annotated with the probe name so they are still useful when
 // logged or returned directly.
 //
+// Watch returns a watcher for an observer's current error and future
+// tick-derived errors. It is useful for transport implementations that need to
+// stream state updates without adding their own ticker. Watcher keeps only the
+// latest pending state so slow receivers do not block probe delivery.
+//
 // # Delivery semantics
 //
 // Subscriber.Send is best-effort and non-blocking. If the buffer is full, the

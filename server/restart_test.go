@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-//nolint:err113
 func TestRestartKeepsObserverReceivingTicks(t *testing.T) {
 	s := server.NewServer()
 	t.Cleanup(func() { _ = s.Stop(context.Background()) })

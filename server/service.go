@@ -71,6 +71,34 @@ func (s *Service) Observer(kind string) (*subscriber.Observer, error) {
 	return observer, nil
 }
 
+// Error returns the observer error for kind.
+//
+// It returns ErrObserverNotFound if kind has not been registered. A nil result
+// means the observer is currently healthy.
+func (s *Service) Error(kind string) error {
+	observer, err := s.Observer(kind)
+	if err != nil {
+		return err
+	}
+
+	return observer.Error()
+}
+
+// Watch returns a watcher for current and future observer errors for kind.
+//
+// It returns ErrObserverNotFound if kind has not been registered. The watcher
+// receives the observer's current error immediately, then receives the current
+// error again after each matching probe tick is processed. Close the watcher
+// when the receiver no longer needs updates.
+func (s *Service) Watch(kind string) (*subscriber.Watcher, error) {
+	observer, err := s.Observer(kind)
+	if err != nil {
+		return nil, err
+	}
+
+	return observer.Watch(), nil
+}
+
 // Observe registers an observer kind that tracks the probes listed in names.
 //
 // Observe is intended for setup before Start. It returns an error if any probe
