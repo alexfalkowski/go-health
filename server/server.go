@@ -21,6 +21,9 @@ func NewServer() *Server {
 
 // Server maintains registered services and can start or stop them as a group.
 //
+// Use NewServer to create a Server; the zero value is not initialized for
+// registration.
+//
 // Register and Observe are setup-time calls. Call Start once the server has
 // been configured, and Stop after Start has returned when the process is shutting
 // down.
@@ -81,8 +84,9 @@ func (s *Server) Error(kind string) error {
 // error immediately, then receives the current aggregate error again after any
 // observer of kind receives a probe tick. Sends are best-effort and coalesced to
 // the latest error when the receiver is slow. Close the watcher when the receiver
-// no longer needs updates. Register and Observe remain setup-time calls and are not
-// added to an existing watch.
+// no longer needs updates; stopping the server does not close existing watchers.
+// Register and Observe remain setup-time calls and are not added to an existing
+// watch.
 func (s *Server) Watch(kind string) watcher.Subscription {
 	sub := &subscription{
 		updates: make(chan error, 1),

@@ -29,9 +29,10 @@ func NewHTTPChecker(url string, t time.Duration, opts ...Option) *HTTPChecker {
 
 // HTTPChecker performs an HTTP GET request to a URL.
 //
-// Responses with status codes below 400 are considered healthy. Responses with
-// status codes in the 4xx or 5xx range return ErrInvalidStatusCode wrapped with
-// context.
+// HTTPChecker uses the standard net/http client redirect behavior before
+// evaluating the response returned by that client. Responses with status codes
+// below 400 are considered healthy. Responses with status codes in the 4xx or
+// 5xx range return ErrInvalidStatusCode wrapped with context.
 type HTTPChecker struct {
 	client *http.Client
 	url    string

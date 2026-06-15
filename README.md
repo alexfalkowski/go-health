@@ -5,10 +5,10 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/alexfalkowski/go-health/v2.svg)](https://pkg.go.dev/github.com/alexfalkowski/go-health/v2)
 [![Stability: Active](https://masterminds.github.io/stability/active.svg)](https://masterminds.github.io/stability/active.html)
 
-# 🩺 Health Monitoring Pattern
+# 🩺 go-health
 
-`go-health` is a small Go library for building asynchronous health monitoring.
-It separates the problem into four layers:
+`go-health` is a small Go library for building asynchronous health monitoring
+in Go services. It separates the problem into four layers:
 
 1. `checker`: how to test one dependency.
 2. `probe`: when to run that test.
@@ -89,9 +89,12 @@ import "github.com/alexfalkowski/go-health/v2/server"
 - `subscriber.Observer` starts with `nil` errors for every tracked probe name
   and updates as ticks arrive.
 - `server.Error(kind)` joins the current errors for every service that has an
-  observer of that kind.
+  observer of that kind. A `nil` result means every matching observer is
+  healthy, or no service has registered that observer kind.
 - `server.Watch(kind)` streams the current error for that observer kind and
-  future tick-derived errors until the returned watcher is stopped.
+  future tick-derived errors until the returned watcher is stopped. Validate
+  setup with `Observe` or `Observer` before exposing an aggregate endpoint so a
+  misspelled kind does not look healthy.
 - `server.Service` and `server.Server` keep observer instances across
   stop/start cycles, so existing observers continue receiving ticks after a
   restart.
@@ -133,28 +136,22 @@ import (
 )
 
 func main() {
-	const (
-		timeout = 5 * time.Second
-		period  = 30 * time.Second
-	)
+	const period = 100 * time.Millisecond
+
+	errNotReady := errors.New("starting up")
+	readyChecker := checker.NewReadyChecker(errNotReady)
 
 	s := server.NewServer()
 
-	readyChecker := checker.NewReadyChecker(errors.New("starting up"))
-	apiChecker := checker.NewHTTPChecker("https://example.com/health", timeout)
-	cacheChecker := checker.NewTCPChecker("cache.internal:6379", timeout)
+	liveRegistration := server.NewRegistration("live", period, checker.NewNoopChecker())
+	readyRegistration := server.NewRegistration("ready", period, readyChecker)
 
-	apiRegistration := server.NewRegistration("api", period, apiChecker)
-	cacheRegistration := server.NewRegistration("cache", period, cacheChecker)
-	readyRegistration := server.NewRegistration("ready", time.Second, readyChecker)
-
-	s.Register("payments", apiRegistration, cacheRegistration, readyRegistration)
+	s.Register("payments", liveRegistration, readyRegistration)
 
 	if err := s.Observe(
 		"payments",
 		"livez",
-		apiRegistration.Name,
-		cacheRegistration.Name,
+		liveRegistration.Name,
 	); err != nil {
 		log.Fatal(err)
 	}
@@ -162,8 +159,7 @@ func main() {
 	if err := s.Observe(
 		"payments",
 		"readyz",
-		apiRegistration.Name,
-		cacheRegistration.Name,
+		liveRegistration.Name,
 		readyRegistration.Name,
 	); err != nil {
 		log.Fatal(err)
@@ -172,7 +168,26 @@ func main() {
 	if err := s.Start(context.Background()); err != nil {
 		log.Fatal(err)
 	}
-	defer s.Stop(context.Background())
+	defer func() {
+		_ = s.Stop(context.Background())
+	}()
+
+	readyzWatcher := s.Watch("readyz")
+	defer readyzWatcher.Close()
+
+	if !waitForUpdate(readyzWatcher.Receive(), func(err error) bool {
+		return errors.Is(err, errNotReady)
+	}) {
+		log.Fatal("readyz did not report startup state")
+	}
+
+	readyChecker.Ready()
+
+	if !waitForUpdate(readyzWatcher.Receive(), func(err error) bool {
+		return err == nil
+	}) {
+		log.Fatal("readyz did not become healthy")
+	}
 
 	if err := s.Error("livez"); err != nil {
 		log.Printf("livez unhealthy: %v", err)
@@ -191,19 +206,37 @@ func main() {
 		log.Printf("readyz %s = %v", name, err)
 	}
 }
+
+func waitForUpdate(updates <-chan error, match func(error) bool) bool {
+	timeout := time.After(time.Second)
+	for {
+		select {
+		case err := <-updates:
+			if match(err) {
+				return true
+			}
+		case <-timeout:
+			return false
+		}
+	}
+}
 ```
 
 > [!NOTE]
 > - `Observe` validates that the service exists and every named probe was registered.
-> - The first meaningful observer state arrives after the initial probe tick is processed.
+> - `Start` waits for initial checks, but observer state is updated after those
+>   probe ticks are fanned out; wait for a watcher update before treating the
+>   first observer read as authoritative.
 > - Calling `Observe` again with the same service and kind is a no-op; it does not replace the existing observer.
 
 ## 🧪 Direct checker examples
 
 ### 🌐 HTTP checker
 
-`HTTPChecker` performs a `GET` request. Redirects and other status codes below
-`400` are considered healthy; `4xx` and `5xx` responses are unhealthy.
+`HTTPChecker` performs a `GET` request using the standard `net/http` client
+redirect behavior, then evaluates the response returned by that client. Status
+codes below `400` are considered healthy; `4xx` and `5xx` responses are
+unhealthy.
 
 ```go
 check := checker.NewHTTPChecker("https://example.com/health", 5*time.Second)
@@ -343,20 +376,28 @@ if err := s.Error("readyz"); err != nil {
 ```
 
 To avoid polling, watch the observer kind and report each update. The stream
-sends the current state first, then future tick-derived states:
+sends the current state first, then future tick-derived states. Close the
+watcher when the receiver is done; the receive channel closes when the watcher
+is closed, not when the server stops.
 
 ```go
-func streamReady(s *server.Server, send func(bool) error) error {
+func streamReady(ctx context.Context, s *server.Server, send func(bool) error) error {
 	watcher := s.Watch("readyz")
 	defer watcher.Close()
 
-	for err := range watcher.Receive() {
-		if err := send(err == nil); err != nil {
-			return err
+	for {
+		select {
+		case err, ok := <-watcher.Receive():
+			if !ok {
+				return nil
+			}
+			if err := send(err == nil); err != nil {
+				return err
+			}
+		case <-ctx.Done():
+			return ctx.Err()
 		}
 	}
-
-	return nil
 }
 ```
 
@@ -392,6 +433,7 @@ Local test notes:
 
 ## 📚 Documentation
 
+- API reference is published at [pkg.go.dev/github.com/alexfalkowski/go-health/v2](https://pkg.go.dev/github.com/alexfalkowski/go-health/v2).
 - Package documentation lives in `doc.go` files and exported symbol comments.
 - Runnable pkg.go.dev examples live in `example_test.go` files.
 - README examples should always import `github.com/alexfalkowski/go-health/v2/...`.

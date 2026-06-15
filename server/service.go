@@ -33,6 +33,9 @@ func NewService() *Service {
 
 // Service maintains probes, subscribers, and observers for a single service.
 //
+// Use NewService to create a Service; the zero value is not initialized for
+// registration.
+//
 // Register and Observe are setup-time calls. Start begins running all probes,
 // waits for their initial checks, and fan-outs their ticks to subscribers. Start
 // and Stop are idempotent. Stop is safe before Start and preserves observers so
@@ -90,7 +93,8 @@ func (s *Service) Error(kind string) error {
 // It returns ErrObserverNotFound if kind has not been registered. The watcher
 // receives the observer's current error immediately, then receives the current
 // error again after each matching probe tick is processed. Close the watcher
-// when the receiver no longer needs updates.
+// when the receiver no longer needs updates; stopping the service does not close
+// existing watchers.
 func (s *Service) Watch(kind string) (watcher.Subscription, error) {
 	observer, err := s.Observer(kind)
 	if err != nil {
