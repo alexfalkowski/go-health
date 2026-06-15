@@ -20,7 +20,12 @@ func NewObserver(names []string, sub *Subscriber) *Observer {
 		errs[n] = nil
 	}
 
-	ob := &Observer{errors: errs, names: names, mux: sync.RWMutex{}}
+	ob := &Observer{
+		errors:   errs,
+		names:    names,
+		watchers: make(map[*Watcher]struct{}),
+		mux:      sync.RWMutex{},
+	}
 	ob.start(sub)
 
 	return ob
@@ -28,10 +33,11 @@ func NewObserver(names []string, sub *Subscriber) *Observer {
 
 // Observer maintains the latest health state for probe ticks it receives.
 type Observer struct {
-	errors Errors
-	names  []string
-	mux    sync.RWMutex
-	wg     sync.WaitGroup
+	errors   Errors
+	watchers map[*Watcher]struct{}
+	names    []string
+	wg       sync.WaitGroup
+	mux      sync.RWMutex
 }
 
 // Error returns all non-nil errors combined into a single error.
@@ -55,6 +61,23 @@ func (o *Observer) Errors() Errors {
 // Names returns the probe names tracked by the observer.
 func (o *Observer) Names() []string {
 	return slices.Clone(o.names)
+}
+
+// Watch returns a watcher for current and future observer errors.
+//
+// The watcher receives the observer's current error immediately, then receives
+// the current error again after each matching probe tick is processed. Sends are
+// best-effort and coalesced to the latest error when the receiver is slow. Close
+// the watcher when the receiver no longer needs updates.
+func (o *Observer) Watch() *Watcher {
+	watcher := NewWatcher(o.close)
+
+	o.mux.Lock()
+	o.watchers[watcher] = struct{}{}
+	watcher.publish(o.errors.Error())
+	o.mux.Unlock()
+
+	return watcher
 }
 
 // Restart waits for the current subscriber to finish and starts observing sub.
@@ -86,6 +109,20 @@ func (o *Observer) observe(sub *Subscriber) {
 	for t := range sub.Receive() {
 		o.mux.Lock()
 		o.errors.Set(t.Name(), t.Error())
+		err := o.errors.Error()
+		o.send(err)
 		o.mux.Unlock()
 	}
+}
+
+func (o *Observer) send(err error) {
+	for watcher := range o.watchers {
+		watcher.publish(err)
+	}
+}
+
+func (o *Observer) close(watcher *Watcher) {
+	o.mux.Lock()
+	delete(o.watchers, watcher)
+	o.mux.Unlock()
 }

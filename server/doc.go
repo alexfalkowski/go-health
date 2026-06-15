@@ -20,6 +20,11 @@
 // shutdown. Existing observers continue to work across service restarts and
 // retain their previous state until new ticks arrive.
 //
+// Server.Error summarizes the current health for every service that registered
+// a given observer kind. Server.Watch returns a watcher for the current error
+// for that kind and future tick-derived errors so transport implementations can
+// report state updates without adding their own ticker.
+//
 // # Example
 //
 //	s := server.NewServer()
@@ -38,12 +43,7 @@
 //	}
 //	defer s.Stop(context.Background())
 //
-//	ob, err := s.Observer("payments", "livez")
-//	if err != nil {
-//		log.Fatal(err)
-//	}
-//
-//	if err := ob.Error(); err != nil {
+//	if err := s.Error("livez"); err != nil {
 //		log.Printf("payments unhealthy: %v", err)
 //	}
 package server
