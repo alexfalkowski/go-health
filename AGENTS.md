@@ -11,7 +11,6 @@ build reusable health checks, schedule them periodically, aggregate their latest
 results, and expose multiple health views such as `livez` and `readyz`.
 
 - Module path: `github.com/alexfalkowski/go-health/v2`
-- Go version: `1.26.0`
 - Primary CI: CircleCI via `.circleci/config.yml`
 
 ## Repository layout
@@ -67,26 +66,24 @@ Most workflows go through `make`. The root `Makefile` includes:
 
 Many `make` targets rely on scripts in `bin/`, so initialize the submodule first:
 
-```sh
-git submodule sync
-git submodule update --init
-```
+Use `make submodule` once the shared `bin` checkout is present; see
+`bin/AGENTS.md` for fresh-clone bootstrap details.
 
 CircleCI runs those commands before any build steps.
 
 ### Common commands
 
 ```sh
-make dep          # go mod download + tidy + vendor
-make clean-dep    # go clean -cache -testcache -fuzzcache -modcache
+make dep
+make clean-dep
 make clean-lint   # clear golangci-lint cache through the bin helper
 make clean        # repo-specific clean helper from bin/build/go/clean
 
-make format       # go fmt ./...
-make lint         # fieldalignment + golangci-lint
+make format
+make lint
 make fix-lint     # auto-fix what can be fixed
-make sec          # govulncheck -show verbose -test ./...
-make specs        # gotestsum + go test -race -mod vendor + coverage
+make sec
+make specs
 make coverage     # generate HTML and function coverage summaries
 ```
 
@@ -98,23 +95,16 @@ make coverage     # generate HTML and function coverage summaries
 
 ### Useful focused verification
 
-When you only change docs, examples, or small package behavior, targeted `go test`
-commands are often faster than the full `make specs` run. Examples:
-
-```sh
-go test ./checker ./probe ./subscriber ./net ./sql
-go test ./probe -run Example -count=1
-go test ./server -run TestRestartKeepsObserverReceivingTicks -count=1
-```
-
-Use the vendored or CI-style flow when you want parity with the main build.
+Use `make specs` for behavior validation. Direct package-level test commands
+are ad hoc diagnostics and should not replace the repository Make target when
+reporting validation.
 
 ## Testing gotchas
 
 - Some tests make real network calls, including requests to `https://www.google.com/`.
 - Some tests expect a local status service on `STATUS_PORT`; if unset, the default is `6000`.
 - `internal/test.StatusURL` builds URLs like `http://localhost:<port>/v1/status/<code>`.
-- CircleCI starts `alexfalkowski/status:latest` to provide that service during the `build` job.
+- CircleCI starts the status service dependency during the `build` job.
 
 If tests fail with connection errors to `localhost:6000`, the status service is
 probably not running locally.
