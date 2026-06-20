@@ -1,19 +1,37 @@
 version: 2.1
 
-jobs:
-  build:
+commands:
+  sync-submodules:
+    steps:
+      - run: git submodule sync
+      - run: git submodule update --init
+  checkout-submodules:
+    steps:
+      - checkout:
+          method: blobless
+      - sync-submodules
+
+executors:
+  go-with-status:
     docker:
       - image: alexfalkowski/go:4.20
       - image: alexfalkowski/status:latest
         command: server -config env:CONFIG
         environment:
           CONFIG: yml:ZW52aXJvbm1lbnQ6IGRldmVsb3BtZW50CmhlYWx0aDoKICBkdXJhdGlvbjogMXMKICB0aW1lb3V0OiAxcwppZDoKICBraW5kOiB1dWlkCnRlbGVtZXRyeToKICBsb2dnZXI6CiAgICBraW5kOiB0ZXh0CiAgICBsZXZlbDogaW5mbwp0cmFuc3BvcnQ6CiAgaHR0cDoKICAgIGFkZHJlc3M6IHRjcDovLzo2MDAwCiAgICByZXRyeToKICAgICAgYmFja29mZjogMTAwbXMKICAgICAgdGltZW91dDogMXMKICAgICAgYXR0ZW1wdHM6IDMKICAgIHRpbWVvdXQ6IDEwcwo=
+  release:
+    docker:
+      - image: alexfalkowski/release:8.18
+  alpine:
+    docker:
+      - image: alpine:latest
+
+jobs:
+  build:
+    executor: go-with-status
     working_directory: ~/go-health
     steps:
-      - checkout:
-          method: blobless
-      - run: git submodule sync
-      - run: git submodule update --init
+      - checkout-submodules
       - run: make source-key
       - restore_cache:
           name: restore go cache
@@ -59,31 +77,22 @@ jobs:
       - run: make codecov-upload
     resource_class: arm.large
   sync:
-    docker:
-      - image: alexfalkowski/release:8.18
+    executor: release
     working_directory: ~/go-health
     steps:
-      - checkout:
-          method: blobless
-      - run: git submodule sync
-      - run: git submodule update --init
+      - checkout-submodules
       - run: make sync push
     resource_class: arm.large
   version:
-    docker:
-      - image: alexfalkowski/release:8.18
+    executor: release
     working_directory: ~/go-health
     steps:
-      - checkout:
-          method: blobless
-      - run: git submodule sync
-      - run: git submodule update --init
+      - checkout-submodules
       - run: version
       - run: package
     resource_class: arm.large
   wait-all:
-    docker:
-      - image: alpine:latest
+    executor: alpine
     resource_class: small
     steps:
       - run: echo "all applicable jobs finished"
