@@ -41,3 +41,25 @@ func TestHTTPCheckerStatusCodes(t *testing.T) {
 		})
 	}
 }
+
+func TestHTTPCheckerHeaders(t *testing.T) {
+	headers := make(chan http.Header, 1)
+	upstream := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		headers <- r.Header.Clone()
+	}))
+	t.Cleanup(upstream.Close)
+
+	check := checker.NewHTTPChecker(
+		upstream.URL,
+		time.Second,
+		checker.WithHeader("Authorization", "Bearer token"),
+		checker.WithHeader("X-Health-Check", "readyz"),
+		checker.WithHeader("X-Health-Check", "livez"),
+	)
+
+	require.NoError(t, check.Check(t.Context()))
+
+	requestHeaders := <-headers
+	require.Equal(t, "Bearer token", requestHeaders.Get("Authorization"))
+	require.Equal(t, []string{"readyz", "livez"}, requestHeaders.Values("X-Health-Check"))
+}

@@ -261,6 +261,17 @@ check := checker.NewHTTPChecker(
 )
 ```
 
+Use `checker.WithHeader` when the health endpoint requires static request
+headers:
+
+```go
+check := checker.NewHTTPChecker(
+	"https://example.com/health",
+	5*time.Second,
+	checker.WithHeader("X-Health-Token", token),
+)
+```
+
 ### 🌍 Online checker
 
 `OnlineChecker` is useful when the question is "can this process reach the
