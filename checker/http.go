@@ -17,13 +17,15 @@ var ErrInvalidStatusCode = errors.New("invalid status code")
 //
 // The timeout is applied to the underlying http.Client. Passing 0 uses the
 // package default of 30 seconds. Use WithRoundTripper to provide a custom
-// transport for tests or bespoke network behavior.
+// transport for tests or bespoke network behavior. Use WithHeader to attach
+// static request headers to every check.
 func NewHTTPChecker(url string, t time.Duration, opts ...Option) *HTTPChecker {
 	options := parseOptions(opts...)
 
 	return &HTTPChecker{
-		url:    url,
-		client: &http.Client{Transport: options.roundTripper, Timeout: timeout(t)},
+		url:     url,
+		headers: options.headers.Clone(),
+		client:  &http.Client{Transport: options.roundTripper, Timeout: timeout(t)},
 	}
 }
 
@@ -34,8 +36,9 @@ func NewHTTPChecker(url string, t time.Duration, opts ...Option) *HTTPChecker {
 // below 400 are considered healthy. Responses with status codes in the 4xx or
 // 5xx range return ErrInvalidStatusCode wrapped with context.
 type HTTPChecker struct {
-	client *http.Client
-	url    string
+	client  *http.Client
+	headers http.Header
+	url     string
 }
 
 // Check performs the HTTP GET request with the supplied context.
@@ -47,6 +50,9 @@ func (c *HTTPChecker) Check(ctx context.Context) error {
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, c.url, http.NoBody)
 	if err != nil {
 		return fmt.Errorf("http checker: %w", err)
+	}
+	if len(c.headers) > 0 {
+		request.Header = c.headers.Clone()
 	}
 
 	response, err := c.client.Do(request)

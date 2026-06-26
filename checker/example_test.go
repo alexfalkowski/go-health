@@ -23,6 +23,27 @@ func ExampleNewHTTPChecker() {
 	// Output: true
 }
 
+func ExampleWithHeader() {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("X-Health-Token") != "secret" {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer upstream.Close()
+
+	check := checker.NewHTTPChecker(
+		upstream.URL,
+		time.Second,
+		checker.WithHeader("X-Health-Token", "secret"),
+	)
+
+	fmt.Println(check.Check(context.Background()) == nil)
+	// Output: true
+}
+
 func ExampleNewOnlineChecker() {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusNoContent)

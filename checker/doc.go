@@ -28,9 +28,9 @@
 // expires, the resulting error matches [ErrTimeout].
 //
 // OnlineChecker uses a built-in list of connectivity endpoints unless you
-// override it with WithURLs. HTTPChecker and OnlineChecker use
-// http.DefaultTransport by default, and TCPChecker uses net.DefaultDialer by
-// default.
+// override it with WithURLs. HTTPChecker can attach static request headers with
+// WithHeader. HTTPChecker and OnlineChecker use http.DefaultTransport by
+// default, and TCPChecker uses net.DefaultDialer by default.
 //
 // # Options
 //
@@ -38,6 +38,7 @@
 // injected without wrapping the checker:
 //
 //   - WithRoundTripper customizes the HTTP transport.
+//   - WithHeader adds a static header value to HTTPChecker requests.
 //   - WithDialer customizes TCP dialing.
 //   - WithURLs replaces the OnlineChecker URL list.
 //

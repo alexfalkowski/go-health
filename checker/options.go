@@ -18,6 +18,7 @@ type Option interface {
 type options struct {
 	roundTripper http.RoundTripper
 	dialer       net.Dialer
+	headers      http.Header
 	urls         []string
 }
 
@@ -31,6 +32,17 @@ func (f optionFunc) apply(o *options) {
 func WithRoundTripper(rt http.RoundTripper) Option {
 	return optionFunc(func(o *options) {
 		o.roundTripper = rt
+	})
+}
+
+// WithHeader adds a header value used by HTTPChecker.
+func WithHeader(name, value string) Option {
+	return optionFunc(func(o *options) {
+		if o.headers == nil {
+			o.headers = make(http.Header)
+		}
+
+		o.headers.Add(name, value)
 	})
 }
 
