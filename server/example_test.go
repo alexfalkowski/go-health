@@ -31,7 +31,11 @@ func ExampleNewServer() {
 		_ = s.Stop(context.Background())
 	}()
 
-	watcher := s.Watch("readyz")
+	watcher, err := s.Watch("readyz")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	defer watcher.Close()
 
 	fmt.Println(waitForUpdate(watcher.Receive(), func(err error) bool {
