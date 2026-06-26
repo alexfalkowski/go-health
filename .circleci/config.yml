@@ -36,13 +36,13 @@ jobs:
       - restore_cache:
           name: restore go cache
           keys:
-            - go-health-go-cache-{{ checksum "go.sum" }}-{{ checksum "~/.go-version" }}-{{ checksum ".source-key" }}
+            - go-health-go-cache-{{ checksum "go.sum" }}-{{ checksum "~/.go-version" }}
             - go-health-go-cache-
       - run: make clean
       - run: make dep
       - save_cache:
           name: save go cache
-          key: go-health-go-cache-{{ checksum "go.sum" }}-{{ checksum "~/.go-version" }}-{{ checksum ".source-key" }}
+          key: go-health-go-cache-{{ checksum "go.sum" }}-{{ checksum "~/.go-version" }}
           paths:
             - ~/go/pkg/mod
       - restore_cache:
