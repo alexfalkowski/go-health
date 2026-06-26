@@ -65,9 +65,14 @@ func (s *Server) Observers(kind string) iter.Seq2[string, *subscriber.Observer] 
 // Error returns all non-nil observer errors for kind joined into one error.
 //
 // Services without kind are skipped. Each service error is annotated with the
-// service name before being joined. A nil result means every registered observer
-// for kind is currently healthy, or no service has registered kind.
+// service name before being joined. It returns ErrObserverNotFound when no
+// service has registered kind. A nil result means every registered observer for
+// kind is currently healthy.
 func (s *Server) Error(kind string) error {
+	if !s.hasObserver(kind) {
+		return ErrObserverNotFound
+	}
+
 	errs := make([]error, 0)
 	for name, observer := range s.Observers(kind) {
 		if err := observer.Error(); err != nil {
@@ -80,14 +85,19 @@ func (s *Server) Error(kind string) error {
 
 // Watch returns a watcher for current and future aggregate observer errors for kind.
 //
-// Services without kind are skipped. The watcher receives the current aggregate
-// error immediately, then receives the current aggregate error again after any
-// observer of kind receives a probe tick. Sends are best-effort and coalesced to
-// the latest error when the receiver is slow. Close the watcher when the receiver
-// no longer needs updates; stopping the server does not close existing watchers.
+// Services without kind are skipped. It returns ErrObserverNotFound when no
+// service has registered kind. The watcher receives the current aggregate error
+// immediately, then receives the current aggregate error again after any observer
+// of kind receives a probe tick. Sends are best-effort and coalesced to the
+// latest error when the receiver is slow. Close the watcher when the receiver no
+// longer needs updates; stopping the server does not close existing watchers.
 // Register and Observe remain setup-time calls and are not added to an existing
 // watch.
-func (s *Server) Watch(kind string) watcher.Subscription {
+func (s *Server) Watch(kind string) (watcher.Subscription, error) {
+	if !s.hasObserver(kind) {
+		return nil, ErrObserverNotFound
+	}
+
 	sub := &subscription{
 		updates: make(chan error, 1),
 		server:  s,
@@ -95,16 +105,15 @@ func (s *Server) Watch(kind string) watcher.Subscription {
 	}
 	sub.start()
 
-	return sub
+	return sub, nil
 }
 
-func (s *Server) observers(kind string) []*subscriber.Observer {
-	observers := make([]*subscriber.Observer, 0)
-	for _, observer := range s.Observers(kind) {
-		observers = append(observers, observer)
+func (s *Server) hasObserver(kind string) bool {
+	for range s.Observers(kind) {
+		return true
 	}
 
-	return observers
+	return false
 }
 
 // Observer returns an observer for the service name and observer kind.

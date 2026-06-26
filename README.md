@@ -90,11 +90,12 @@ import "github.com/alexfalkowski/go-health/v2/server"
   and updates as ticks arrive.
 - `server.Error(kind)` joins the current errors for every service that has an
   observer of that kind. A `nil` result means every matching observer is
-  healthy, or no service has registered that observer kind.
+  healthy; `server.ErrObserverNotFound` means no service has registered that
+  observer kind.
 - `server.Watch(kind)` streams the current error for that observer kind and
-  future tick-derived errors until the returned watcher is stopped. Validate
-  setup with `Observe` or `Observer` before exposing an aggregate endpoint so a
-  misspelled kind does not look healthy.
+  future tick-derived errors until the returned watcher is stopped. It returns
+  `server.ErrObserverNotFound` when no service has registered that observer
+  kind.
 - `server.Service` and `server.Server` keep observer instances across
   stop/start cycles, so existing observers continue receiving ticks after a
   restart.
@@ -172,7 +173,10 @@ func main() {
 		_ = s.Stop(context.Background())
 	}()
 
-	readyzWatcher := s.Watch("readyz")
+	readyzWatcher, err := s.Watch("readyz")
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer readyzWatcher.Close()
 
 	if !waitForUpdate(readyzWatcher.Receive(), func(err error) bool {
@@ -367,7 +371,8 @@ The iteration order is unspecified. Collect and sort the service names if you
 need stable endpoint output, logs, or tests.
 
 When a transport needs a single answer for all services with the same observer
-kind, use `Server.Error(kind)`:
+kind, use `Server.Error(kind)`. It returns `server.ErrObserverNotFound` when no
+service has registered that kind.
 
 ```go
 if err := s.Error("readyz"); err != nil {
@@ -378,11 +383,15 @@ if err := s.Error("readyz"); err != nil {
 To avoid polling, watch the observer kind and report each update. The stream
 sends the current state first, then future tick-derived states. Close the
 watcher when the receiver is done; the receive channel closes when the watcher
-is closed, not when the server stops.
+is closed, not when the server stops. `Server.Watch` returns
+`server.ErrObserverNotFound` when no service has registered that kind.
 
 ```go
 func streamReady(ctx context.Context, s *server.Server, send func(bool) error) error {
-	watcher := s.Watch("readyz")
+	watcher, err := s.Watch("readyz")
+	if err != nil {
+		return err
+	}
 	defer watcher.Close()
 
 	for {

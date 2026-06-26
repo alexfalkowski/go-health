@@ -480,6 +480,11 @@ func TestGRPCObservers(t *testing.T) {
 	}
 
 	require.Empty(t, names)
+	require.ErrorIs(t, s.Error("grpc"), server.ErrObserverNotFound)
+
+	watcher, err := s.Watch("grpc")
+	require.ErrorIs(t, err, server.ErrObserverNotFound)
+	require.Nil(t, watcher)
 }
 
 func TestServerErrorJoinsObserverErrorsForKind(t *testing.T) {
@@ -530,7 +535,8 @@ func TestServerWatchWaitsForKindStatusChange(t *testing.T) {
 	require.NoError(t, s.Observe("test", "grpc", registration.Name))
 	require.NoError(t, s.Start(t.Context()))
 
-	watcher := s.Watch("grpc")
+	watcher, err := s.Watch("grpc")
+	require.NoError(t, err)
 	defer watcher.Close()
 	updates := watcher.Receive()
 	require.NoError(t, receiveError(t, updates))
@@ -562,7 +568,8 @@ func TestServerWatcherCoalescesPendingUpdates(t *testing.T) {
 		return errors.Is(s.Error("grpc"), errNotReady)
 	}, time.Second, 10*time.Millisecond)
 
-	watcher := s.Watch("grpc")
+	watcher, err := s.Watch("grpc")
+	require.NoError(t, err)
 	updates := watcher.Receive()
 
 	watcher.Close()

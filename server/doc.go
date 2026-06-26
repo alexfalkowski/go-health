@@ -23,7 +23,8 @@
 // Server.Error summarizes the current health for every service that registered
 // a given observer kind. Server.Watch returns a watcher for the current error
 // for that kind and future tick-derived errors so transport implementations can
-// report state updates without adding their own ticker.
+// report state updates without adding their own ticker. Unknown aggregate
+// observer kinds return ErrObserverNotFound instead of reporting healthy.
 //
 // # Example
 //

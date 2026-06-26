@@ -38,7 +38,7 @@ func (s *subscription) Close() {
 func (s *subscription) start() {
 	s.publish(s.snapshot())
 
-	for _, observer := range s.server.observers(s.kind) {
+	for _, observer := range s.server.Observers(s.kind) {
 		s.watch(observer)
 	}
 }
