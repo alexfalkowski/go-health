@@ -92,7 +92,8 @@ func (s *Service) Error(kind string) error {
 //
 // It returns ErrObserverNotFound if kind has not been registered. The watcher
 // receives the observer's current error immediately, then receives the current
-// error again after each matching probe tick is processed. Close the watcher
+// error again after each matching probe tick is processed. Sends are best-effort
+// and coalesced to the latest error when the receiver is slow. Close the watcher
 // when the receiver no longer needs updates; stopping the service does not close
 // existing watchers.
 func (s *Service) Watch(kind string) (watcher.Subscription, error) {
@@ -106,9 +107,10 @@ func (s *Service) Watch(kind string) (watcher.Subscription, error) {
 
 // Observe registers an observer kind that tracks the probes listed in names.
 //
-// Observe is intended for setup before Start. It returns an error if any probe
-// name has not been registered. Repeated calls with the same kind are idempotent
-// and keep the original probe set. Unknown probe names are reported with
+// Observe is intended for setup before Start. When creating a new observer kind,
+// it returns an error if any probe name has not been registered. Repeated calls
+// with the same kind are idempotent, keep the original probe set, and do not
+// validate the new names. Unknown probe names for a new kind are reported with
 // ErrProbeNotFound; multiple unknown probes are joined into one error.
 func (s *Service) Observe(kind string, names ...string) error {
 	_, ok := s.observers[kind]

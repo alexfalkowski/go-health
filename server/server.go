@@ -131,10 +131,12 @@ func (s *Server) Observer(name, kind string) (*subscriber.Observer, error) {
 
 // Observe registers an observer kind for the service name.
 //
-// Observe is intended for setup before Start. The observer will track the probes
-// listed in names. Repeated calls with the same service and kind are idempotent.
-// It returns ErrServiceNotFound if name has not been registered, or
-// ErrProbeNotFound if any probe name is unknown.
+// Observe is intended for setup before Start. When creating a new observer kind,
+// the observer will track the probes listed in names. Repeated calls with the
+// same service and kind are idempotent, keep the original probe set, and do not
+// validate the new names. It returns ErrServiceNotFound if name has not been
+// registered, or ErrProbeNotFound if any probe name is unknown for a new
+// observer kind.
 func (s *Server) Observe(name, kind string, names ...string) error {
 	service, ok := s.services[name]
 	if !ok {

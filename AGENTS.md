@@ -59,6 +59,7 @@ Important behavior details:
 
 Most workflows go through `make`. The root `Makefile` includes:
 
+- `bin/build/make/help.mak`
 - `bin/build/make/go.mak`
 - `bin/build/make/git.mak`
 
@@ -74,6 +75,7 @@ CircleCI runs those commands before any build steps.
 ### Common commands
 
 ```sh
+make help
 make dep
 make clean-dep
 make clean-lint   # clear golangci-lint cache through the bin helper
