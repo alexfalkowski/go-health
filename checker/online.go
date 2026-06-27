@@ -16,8 +16,11 @@ var ErrNotOnline = errors.New("not online")
 // NewOnlineChecker returns an OnlineChecker that checks whether any configured URL
 // is reachable.
 //
-// Passing 0 uses the package default timeout of 30 seconds. It uses the default
-// URL list unless overridden via WithURLs.
+// Passing 0 uses the package default timeout of 30 seconds. Without WithURLs it
+// checks:
+//   - https://google.com/generate_204
+//   - https://cp.cloudflare.com/generate_204
+//   - https://connectivity-check.ubuntu.com
 func NewOnlineChecker(t time.Duration, opts ...Option) *OnlineChecker {
 	options := parseOptions(opts...)
 

@@ -27,10 +27,16 @@
 // If their underlying dependency returns [context.Cause] after that timeout
 // expires, the resulting error matches [ErrTimeout].
 //
-// OnlineChecker uses a built-in list of connectivity endpoints unless you
-// override it with WithURLs. HTTPChecker can attach static request headers with
-// WithHeader. HTTPChecker and OnlineChecker use http.DefaultTransport by
-// default, and TCPChecker uses net.DefaultDialer by default.
+// OnlineChecker uses this built-in list of connectivity endpoints unless you
+// override it with WithURLs:
+//
+//   - https://google.com/generate_204
+//   - https://cp.cloudflare.com/generate_204
+//   - https://connectivity-check.ubuntu.com
+//
+// HTTPChecker can attach static request headers with WithHeader. HTTPChecker
+// and OnlineChecker use http.DefaultTransport by default, and TCPChecker uses
+// net.DefaultDialer by default.
 //
 // # Options
 //

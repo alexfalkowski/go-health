@@ -55,7 +55,8 @@ func WithDialer(dialer net.Dialer) Option {
 
 // WithURLs sets the list of URLs used by OnlineChecker.
 //
-// Providing at least one URL replaces the package defaults entirely.
+// Providing at least one URL replaces the package defaults entirely. Providing
+// no URLs leaves the default connectivity endpoint list in place.
 func WithURLs(urls ...string) Option {
 	return optionFunc(func(o *options) {
 		o.urls = slices.Clone(urls)
