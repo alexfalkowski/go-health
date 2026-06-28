@@ -13,6 +13,8 @@ import (
 )
 
 func TestStopWithoutStartDoesNotPanic(t *testing.T) {
+	t.Parallel()
+
 	p := probe.NewProbe("noop", 10*time.Millisecond, checker.NewNoopChecker())
 
 	require.NotPanics(t, func() {
@@ -77,6 +79,8 @@ func TestConcurrentStartWaitsForInitialCheck(t *testing.T) {
 }
 
 func TestStartWithCanceledContextReturnsContextError(t *testing.T) {
+	t.Parallel()
+
 	p := probe.NewProbe("noop", time.Hour, checker.NewNoopChecker())
 	ctx, cancel := context.WithCancel(t.Context())
 	cancel()
@@ -149,6 +153,8 @@ func TestStopReturnsContextError(t *testing.T) {
 }
 
 func TestStartWithInvalidPeriodReturnsErrorTick(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name   string
 		period time.Duration
@@ -159,6 +165,8 @@ func TestStartWithInvalidPeriodReturnsErrorTick(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			p := probe.NewProbe("noop", tt.period, checker.NewNoopChecker())
 
 			require.NotPanics(t, func() {
