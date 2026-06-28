@@ -11,6 +11,8 @@ import (
 )
 
 func TestOnlineCheckerClonesURLs(t *testing.T) {
+	t.Parallel()
+
 	healthy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 	}))
@@ -62,6 +64,8 @@ func TestOnlineCheckerReturnsOnFirstHealthyURL(t *testing.T) {
 }
 
 func TestOnlineCheckerStatusCodes(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name          string
 		status        int
@@ -75,6 +79,8 @@ func TestOnlineCheckerStatusCodes(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				w.WriteHeader(tt.status)
 			}))
@@ -94,6 +100,8 @@ func TestOnlineCheckerStatusCodes(t *testing.T) {
 }
 
 func TestOnlineCheckerReturnsNotOnlineWhenEveryURLFails(t *testing.T) {
+	t.Parallel()
+
 	unhealthy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}))

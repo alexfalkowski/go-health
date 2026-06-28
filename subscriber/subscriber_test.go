@@ -42,6 +42,8 @@ func TestCloseWhileSendingDoesNotPanic(t *testing.T) {
 }
 
 func TestSubscriberClonesNames(t *testing.T) {
+	t.Parallel()
+
 	names := []string{"a"}
 	s := subscriber.NewSubscriber(names)
 
@@ -66,6 +68,8 @@ func TestSubscriberClonesNames(t *testing.T) {
 }
 
 func TestSubscriberDropsTicksWhenBufferIsFull(t *testing.T) {
+	t.Parallel()
+
 	s := subscriber.NewSubscriber([]string{"a"})
 	first := probe.NewTick("a", nil)
 	second := probe.NewTick("a", nil)
@@ -93,6 +97,8 @@ func TestSubscriberDropsTicksWhenBufferIsFull(t *testing.T) {
 }
 
 func TestObserverStartsWithNilErrorsForTrackedNames(t *testing.T) {
+	t.Parallel()
+
 	s := subscriber.NewSubscriber([]string{dbProbeName, cacheProbeName})
 	ob := subscriber.NewObserver([]string{dbProbeName, cacheProbeName}, s)
 	s.Close()
@@ -108,6 +114,8 @@ func TestObserverStartsWithNilErrorsForTrackedNames(t *testing.T) {
 }
 
 func TestObserverErrorsReturnsCopy(t *testing.T) {
+	t.Parallel()
+
 	s := subscriber.NewSubscriber([]string{dbProbeName, cacheProbeName})
 	ob := subscriber.NewObserver([]string{dbProbeName, cacheProbeName}, s)
 	errDB := errors.New("db failed")
@@ -183,6 +191,8 @@ func TestObserverWatchSendsTicksWithoutStatusChange(t *testing.T) {
 }
 
 func TestErrorsErrorJoinsAnnotatedErrors(t *testing.T) {
+	t.Parallel()
+
 	errDB := errors.New("db failed")
 	errCache := errors.New("cache failed")
 	err := subscriber.Errors{

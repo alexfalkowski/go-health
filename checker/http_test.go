@@ -11,6 +11,8 @@ import (
 )
 
 func TestHTTPCheckerStatusCodes(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name              string
 		status            int
@@ -24,6 +26,8 @@ func TestHTTPCheckerStatusCodes(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				w.WriteHeader(tt.status)
 			}))
@@ -43,6 +47,8 @@ func TestHTTPCheckerStatusCodes(t *testing.T) {
 }
 
 func TestHTTPCheckerHeaders(t *testing.T) {
+	t.Parallel()
+
 	headers := make(chan http.Header, 1)
 	upstream := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
 		headers <- r.Header.Clone()

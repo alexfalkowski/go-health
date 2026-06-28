@@ -15,6 +15,8 @@ import (
 )
 
 func TestCheckersReturnCanceledContext(t *testing.T) {
+	t.Parallel()
+
 	errNotReady := errors.New("not ready")
 	ctx, cancel := context.WithCancel(t.Context())
 	cancel()
@@ -33,6 +35,8 @@ func TestCheckersReturnCanceledContext(t *testing.T) {
 
 	for _, tt := range checkers {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			err := tt.check.Check(ctx)
 
 			require.ErrorIs(t, err, context.Canceled)

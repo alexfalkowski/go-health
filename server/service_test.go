@@ -38,6 +38,8 @@ func TestServiceStartStopGuards(t *testing.T) {
 }
 
 func TestServiceObserveRejectsUnknownProbes(t *testing.T) {
+	t.Parallel()
+
 	s := server.NewService()
 
 	registration := server.NewRegistration("noop", 10*time.Millisecond, checker.NewNoopChecker())
@@ -51,6 +53,8 @@ func TestServiceObserveRejectsUnknownProbes(t *testing.T) {
 }
 
 func TestServiceObserveKeepsOriginalProbeSetForExistingKind(t *testing.T) {
+	t.Parallel()
+
 	s := server.NewService()
 
 	first := server.NewRegistration("first", time.Hour, checker.NewNoopChecker())
@@ -94,6 +98,8 @@ func TestServiceErrorReturnsObserverError(t *testing.T) {
 }
 
 func TestServiceErrorAndWatchRejectUnknownObserver(t *testing.T) {
+	t.Parallel()
+
 	s := server.NewService()
 
 	require.ErrorIs(t, s.Error("readyz"), server.ErrObserverNotFound)

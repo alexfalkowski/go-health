@@ -11,6 +11,8 @@ import (
 )
 
 func TestTCPCheckerZeroTimeoutUsesDefault(t *testing.T) {
+	t.Parallel()
+
 	dialer := &recordingDialer{}
 	check := checker.NewTCPChecker("example:80", 0, checker.WithDialer(dialer))
 
@@ -20,6 +22,8 @@ func TestTCPCheckerZeroTimeoutUsesDefault(t *testing.T) {
 }
 
 func TestTCPCheckerClosesSuccessfulConnection(t *testing.T) {
+	t.Parallel()
+
 	dialer := &recordingDialer{}
 	check := checker.NewTCPChecker("example:80", time.Second, checker.WithDialer(dialer))
 

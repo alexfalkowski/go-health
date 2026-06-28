@@ -52,6 +52,8 @@ func TestDoubleStart(t *testing.T) {
 }
 
 func TestStartWithCanceledContextReturnsContextError(t *testing.T) {
+	t.Parallel()
+
 	s := server.NewServer()
 	registration := server.NewRegistration("noop", time.Hour, checker.NewNoopChecker())
 	s.Register("test", registration)
@@ -173,6 +175,8 @@ func TestInvalidURLHTTPChecker(t *testing.T) {
 }
 
 func TestMalformedURLHTTPChecker(t *testing.T) {
+	t.Parallel()
+
 	s := server.NewServer()
 	defer func() { _ = s.Stop(context.Background()) }()
 
@@ -221,6 +225,8 @@ func TestTimeoutHTTPChecker(t *testing.T) {
 }
 
 func TestInvalidPeriod(t *testing.T) {
+	t.Parallel()
+
 	s := server.NewServer()
 	defer func() { _ = s.Stop(context.Background()) }()
 
@@ -418,6 +424,8 @@ func TestOneInvalidObserver(t *testing.T) {
 }
 
 func TestObserveUnknownProbeNames(t *testing.T) {
+	t.Parallel()
+
 	s := server.NewServer()
 	defer func() { _ = s.Stop(context.Background()) }()
 
@@ -437,6 +445,8 @@ func TestObserveUnknownProbeNames(t *testing.T) {
 }
 
 func TestLivezObservers(t *testing.T) {
+	t.Parallel()
+
 	s := server.NewServer()
 	defer func() { _ = s.Stop(context.Background()) }()
 
@@ -460,6 +470,8 @@ func TestLivezObservers(t *testing.T) {
 }
 
 func TestGRPCObservers(t *testing.T) {
+	t.Parallel()
+
 	s := server.NewServer()
 	defer func() { _ = s.Stop(context.Background()) }()
 
@@ -488,6 +500,8 @@ func TestGRPCObservers(t *testing.T) {
 }
 
 func TestServerErrorJoinsObserverErrorsForKind(t *testing.T) {
+	t.Parallel()
+
 	s := server.NewServer()
 	t.Cleanup(func() { _ = s.Stop(context.Background()) })
 
@@ -525,6 +539,8 @@ func TestServerErrorJoinsObserverErrorsForKind(t *testing.T) {
 }
 
 func TestServerWatchWaitsForKindStatusChange(t *testing.T) {
+	t.Parallel()
+
 	s := server.NewServer()
 	t.Cleanup(func() { _ = s.Stop(context.Background()) })
 
@@ -553,6 +569,8 @@ func TestServerWatchWaitsForKindStatusChange(t *testing.T) {
 }
 
 func TestServerWatcherCoalescesPendingUpdates(t *testing.T) {
+	t.Parallel()
+
 	s := server.NewServer()
 	t.Cleanup(func() { _ = s.Stop(context.Background()) })
 
@@ -578,6 +596,8 @@ func TestServerWatcherCoalescesPendingUpdates(t *testing.T) {
 }
 
 func TestInvalidObservers(t *testing.T) {
+	t.Parallel()
+
 	s := server.NewServer()
 	defer func() { _ = s.Stop(context.Background()) }()
 
@@ -639,32 +659,6 @@ func receiveClosed(t *testing.T, updates <-chan error) {
 		case <-timeout:
 			require.Fail(t, "timed out waiting for observer updates to close")
 			return
-		}
-	}
-}
-
-func BenchmarkValidHTTPChecker(b *testing.B) {
-	b.ReportAllocs()
-
-	s := server.NewServer()
-	defer func() { _ = s.Stop(context.Background()) }()
-
-	checker := checker.NewHTTPChecker("https://www.google.com/", period)
-
-	r := server.NewRegistration("google", period, checker)
-	s.Register("test", r)
-
-	_ = s.Observe("test", "livez", r.Name)
-	ob, _ := s.Observer("test", "livez")
-
-	_ = s.Start(b.Context())
-	testsubscriber.WaitObserverNoError(b, ob)
-
-	b.ResetTimer()
-
-	for b.Loop() {
-		if err := ob.Error(); err != nil {
-			b.Fatal(err)
 		}
 	}
 }
