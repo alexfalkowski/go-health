@@ -16,7 +16,7 @@ import (
 func FuzzHTTPCheckerRequestAndStatus(f *testing.F) {
 	f.Add("https://example.com/health", 200, "X-Health-Check", "readyz")
 	f.Add("https://example.com/health", 204, "Authorization", "Bearer token")
-	f.Add("https://example.com/health", 399, "X-Health-Check", "livez")
+	f.Add("https://example.com/health", 302, "X-Health-Check", "livez")
 	f.Add("https://example.com/health", 400, "X-Health-Check", "readyz")
 	f.Add("https://example.com/health", 500, "X-Health-Check", "readyz")
 	f.Add("://bad-url", 200, "X-Health-Check", "readyz")
@@ -44,7 +44,7 @@ func FuzzHTTPCheckerRequestAndStatus(f *testing.F) {
 		if headerName != "" {
 			require.Equal(t, headerValue, transport.request.Header.Get(headerName))
 		}
-		if status >= http.StatusBadRequest {
+		if status < http.StatusOK || status >= http.StatusMultipleChoices {
 			require.ErrorIs(t, err, checker.ErrInvalidStatusCode)
 			return
 		}
