@@ -37,9 +37,9 @@ func NewService() *Service {
 // registration.
 //
 // Register and Observe are setup-time calls. Start begins running all probes,
-// waits for their initial checks, and fan-outs their ticks to subscribers. Start
-// and Stop are idempotent. Stop is safe before Start and preserves observers so
-// the service can be started again later with the same observer instances.
+// waits for their initial checks, and fan-outs their ticks to subscribers. Call
+// Start once after setup, then call Stop once after Start returns during
+// shutdown.
 type Service struct {
 	registry      map[string]*probe.Probe
 	observers     map[string]*subscriber.Observer
@@ -127,13 +127,11 @@ func (s *Service) Observe(kind string, names ...string) error {
 
 // Start starts all registered probes and begins fan-out to subscribers.
 //
-// Existing observers continue receiving updates if the service is stopped and
-// started again later. Start runs probes concurrently and waits for each probe's
-// initial check before returning; observer state is updated asynchronously after
-// those ticks are fanned out. Repeated calls while the service is running are
-// no-ops. Call Stop after Start has returned during normal shutdown. If a probe
-// fails to start, Start cleans up partially started probes and subscriptions,
-// leaves the service stopped, and the service may be started again later.
+// Start runs probes concurrently and waits for each probe's initial check before
+// returning; observer state is updated asynchronously after those ticks are
+// fanned out. Call Stop once after Start has returned during normal shutdown. If
+// a probe fails to start, Start cleans up partially started probes and
+// subscriptions and leaves the service stopped.
 func (s *Service) Start(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err
@@ -165,12 +163,10 @@ func (s *Service) Start(ctx context.Context) error {
 
 // Stop stops all probes and closes all subscribers.
 //
-// Stop is safe before Start and safe to call multiple times. It waits for
-// in-flight fan-in and fan-out work to finish before returning. Observer
-// instances are preserved; if the service is started again later, those
-// observers are attached to fresh subscribers. If ctx expires before shutdown
-// work finishes, Stop returns an error and keeps the service marked running so
-// callers can retry with a valid context.
+// Stop waits for in-flight fan-in and fan-out work to finish before returning.
+// It is intended to be called once after Start returns. Use a context that can
+// remain valid until cleanup completes; if ctx expires before shutdown work
+// finishes, Stop returns ctx.Err().
 func (s *Service) Stop(ctx context.Context) error {
 	s.mux.Lock()
 	defer s.mux.Unlock()
@@ -199,7 +195,7 @@ func (s *Service) Stop(ctx context.Context) error {
 		return err
 	}
 
-	// Ensure observers have finished draining their subscriber channels before a restart.
+	// Ensure observers have finished draining their subscriber channels before shutdown completes.
 	if err := s.waitObservers(ctx); err != nil {
 		return err
 	}

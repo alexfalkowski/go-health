@@ -69,10 +69,10 @@ import "github.com/alexfalkowski/go-health/v2/server"
 - `server.Start` waits for each service's initial checks before returning.
   Observer state is updated asynchronously after those probe ticks are fanned
   out.
-- `server.Start` and `server.Stop` are idempotent.
-- Call `Stop` after `Start` returns, typically during process shutdown.
-- If `Stop` returns the supplied context error, shutdown work did not finish
-  and should be retried or handled as incomplete cleanup.
+- Call `server.Start` once after setup, then call `server.Stop` once after
+  `Start` returns, typically during process shutdown.
+- Use a shutdown context that can remain valid until `Stop` finishes cleanup; if
+  `Stop` returns the supplied context error, cleanup did not complete.
 - A probe with an invalid period emits a single error tick and closes.
 
 ### 🧩 Registration and observers
@@ -96,9 +96,6 @@ import "github.com/alexfalkowski/go-health/v2/server"
   future tick-derived errors until the returned watcher is stopped. It returns
   `server.ErrObserverNotFound` when no service has registered that observer
   kind.
-- `server.Service` and `server.Server` keep observer instances across
-  stop/start cycles, so existing observers continue receiving ticks after a
-  restart.
 
 ### ✅ Checker defaults
 

@@ -16,9 +16,9 @@
 // orchestration. Start waits for initial checks to finish or the supplied context
 // to be canceled before returning. Observer state is updated asynchronously from
 // probe ticks, so Start completion does not mean observers have processed the
-// initial result. Call Stop after Start has returned, typically from process
-// shutdown. Existing observers continue to work across service restarts and
-// retain their previous state until new ticks arrive.
+// initial result. Call Stop once after Start has returned, typically from
+// process shutdown, using a context that can remain valid until cleanup
+// completes.
 //
 // Server.Error summarizes the current health for every service that registered
 // a given observer kind. Server.Watch returns a watcher for the current error
