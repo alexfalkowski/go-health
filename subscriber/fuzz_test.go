@@ -8,8 +8,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// FuzzErrorsAggregationAndCopy explores names and failure states because Errors owns named aggregation
+// and defensive map copies.
 func FuzzErrorsAggregationAndCopy(f *testing.F) {
-	// Fuzz names and failure states because Errors owns named aggregation and defensive map copies.
 	f.Add("db", true, "cache", true, "search", false)
 	f.Add("", true, "cache", false, "search", true)
 	f.Add("db:primary", true, "cache\nprimary", true, "search primary", true)
