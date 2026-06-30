@@ -12,6 +12,7 @@ import (
 )
 
 func FuzzServiceObserveValidation(f *testing.F) {
+	// Fuzz registration and observer names because Service owns observer validation and idempotent probe sets.
 	f.Add("livez", "db", "cache", "db", "cache", "ignored")
 	f.Add("readyz", "db", "cache", "db", "missing", "cache")
 	f.Add("", "", "cache", "", "cache", "missing")

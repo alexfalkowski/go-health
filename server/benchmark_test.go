@@ -3,34 +3,30 @@ package server_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/alexfalkowski/go-health/v2/checker"
-	testsubscriber "github.com/alexfalkowski/go-health/v2/internal/test/subscriber"
 	"github.com/alexfalkowski/go-health/v2/server"
+	"github.com/stretchr/testify/require"
 )
 
-func BenchmarkValidHTTPChecker(b *testing.B) {
+func BenchmarkServerErrorHealthyObserver(b *testing.B) {
+	// Benchmark the public aggregate health read path with initialized observer state.
 	b.ReportAllocs()
 
 	s := server.NewServer()
-	defer func() { _ = s.Stop(context.Background()) }()
-
-	checker := checker.NewHTTPChecker("https://www.google.com/", period)
-
-	r := server.NewRegistration("google", period, checker)
-	s.Register("test", r)
-
-	_ = s.Observe("test", "livez", r.Name)
-	ob, _ := s.Observer("test", "livez")
-
-	_ = s.Start(b.Context())
-	testsubscriber.WaitObserverNoError(b, ob)
+	registration := server.NewRegistration("noop", time.Hour, checker.NewNoopChecker())
+	s.Register("test", registration)
+	require.NoError(b, s.Observe("test", "livez", registration.Name))
 
 	b.ResetTimer()
 
 	for b.Loop() {
-		if err := ob.Error(); err != nil {
-			b.Fatal(err)
+		if err := s.Error("livez"); err != nil {
+			require.NoError(b, err)
 		}
 	}
+
+	b.StopTimer()
+	require.NoError(b, s.Stop(context.Background()))
 }

@@ -86,6 +86,8 @@ make lint
 make fix-lint     # auto-fix what can be fixed
 make sec
 make specs
+make benchmark    # defaults to package=server; set package=... to override
+make fuzz package=checker name=FuzzHTTPCheckerRequestAndStatus
 make coverage     # generate HTML and function coverage summaries
 ```
 

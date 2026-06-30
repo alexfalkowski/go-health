@@ -12,6 +12,7 @@ import (
 )
 
 func FuzzHTTPCheckerRequestAndStatus(f *testing.F) {
+	// Fuzz URL, status, and header combinations because HTTPChecker owns request construction and status handling.
 	f.Add("https://example.com/health", 200, "X-Health-Check", "readyz")
 	f.Add("https://example.com/health", 204, "Authorization", "Bearer token")
 	f.Add("https://example.com/health", 399, "X-Health-Check", "livez")
@@ -51,6 +52,7 @@ func FuzzHTTPCheckerRequestAndStatus(f *testing.F) {
 }
 
 func FuzzOnlineCheckerURLsAndStatuses(f *testing.F) {
+	// Fuzz URL and status combinations because OnlineChecker owns fallback across caller-supplied endpoints.
 	f.Add("https://example.com/first", 200, "https://example.com/second", 500, "://bad-url", 404)
 	f.Add("https://example.com/first", 204, "https://example.com/second", 404, "https://example.com/third", 500)
 	f.Add("https://example.com/first", 500, "https://example.com/second", 404, "https://example.com/third", 399)
