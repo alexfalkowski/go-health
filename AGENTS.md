@@ -89,7 +89,7 @@ make specs
 make package=server benchmark
 make benchmarks   # aggregate benchmark target
 make fuzz package=checker name=FuzzHTTPCheckerRequestAndStatus
-make fuzzes       # bounded fuzz smoke tests; set fuzztime=... to override
+make fuzzes       # bounded fuzz smoke tests; set fuzztime=<count>x to override
 make coverage     # generate HTML and function coverage summaries
 ```
 
