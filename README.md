@@ -106,8 +106,8 @@ import "github.com/alexfalkowski/go-health/v2/server"
   also be safe for the concurrent calls you expect.
 - Custom checkers shared across registrations should also be safe for
   concurrent `Check` calls; service startup starts probes concurrently.
-- `HTTPChecker` treats HTTP status codes below `400` as healthy and wraps
-  `checker.ErrInvalidStatusCode` for `4xx` and `5xx` responses.
+- `HTTPChecker` treats `2xx` HTTP status codes as healthy, does not follow
+  redirects, and wraps `checker.ErrInvalidStatusCode` for other responses.
 - `DBChecker` and `TCPChecker` use `checker.ErrTimeout` as the timeout cause for
   their derived per-call contexts.
 - `OnlineChecker` reports healthy if any configured URL returns `200 OK` or
@@ -234,10 +234,9 @@ func waitForUpdate(updates <-chan error, match func(error) bool) bool {
 
 ### 🌐 HTTP checker
 
-`HTTPChecker` performs a `GET` request using the standard `net/http` client
-redirect behavior, then evaluates the response returned by that client. Status
-codes below `400` are considered healthy; `4xx` and `5xx` responses are
-unhealthy.
+`HTTPChecker` performs a `GET` request and evaluates the direct response from
+that endpoint. It does not follow redirects. `2xx` status codes are considered
+healthy; other responses are unhealthy.
 
 ```go
 check := checker.NewHTTPChecker("https://example.com/health", 5*time.Second)

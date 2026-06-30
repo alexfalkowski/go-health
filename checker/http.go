@@ -10,7 +10,7 @@ import (
 
 var _ Checker = (*HTTPChecker)(nil)
 
-// ErrInvalidStatusCode is returned when the response status code is in the 4xx or 5xx range.
+// ErrInvalidStatusCode is returned when the response status code is outside the 2xx range.
 var ErrInvalidStatusCode = errors.New("invalid status code")
 
 // NewHTTPChecker returns an HTTPChecker that performs an HTTP GET request to url.
@@ -25,16 +25,19 @@ func NewHTTPChecker(url string, t time.Duration, opts ...Option) *HTTPChecker {
 	return &HTTPChecker{
 		url:     url,
 		headers: options.headers.Clone(),
-		client:  &http.Client{Transport: options.roundTripper, Timeout: timeout(t)},
+		client: &http.Client{
+			Transport:     options.roundTripper,
+			Timeout:       timeout(t),
+			CheckRedirect: noRedirect,
+		},
 	}
 }
 
 // HTTPChecker performs an HTTP GET request to a URL.
 //
-// HTTPChecker uses the standard net/http client redirect behavior before
-// evaluating the response returned by that client. Responses with status codes
-// below 400 are considered healthy. Responses with status codes in the 4xx or
-// 5xx range return ErrInvalidStatusCode wrapped with context.
+// HTTPChecker does not follow redirects. Responses with status codes in the 2xx
+// range are considered healthy. Other responses return ErrInvalidStatusCode
+// wrapped with context.
 type HTTPChecker struct {
 	client  *http.Client
 	headers http.Header
@@ -65,9 +68,13 @@ func (c *HTTPChecker) Check(ctx context.Context) error {
 	}
 	defer response.Body.Close()
 
-	if response.StatusCode >= http.StatusBadRequest {
+	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
 		return fmt.Errorf("http checker: %w", ErrInvalidStatusCode)
 	}
 
 	return nil
+}
+
+func noRedirect(*http.Request, []*http.Request) error {
+	return http.ErrUseLastResponse
 }

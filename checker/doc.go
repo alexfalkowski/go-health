@@ -35,8 +35,9 @@
 //   - https://connectivity-check.ubuntu.com
 //
 // HTTPChecker can attach static request headers with WithHeader. HTTPChecker
-// and OnlineChecker use http.DefaultTransport by default, and TCPChecker uses
-// net.DefaultDialer by default.
+// does not follow redirects. HTTPChecker and OnlineChecker use
+// http.DefaultTransport by default, and TCPChecker uses net.DefaultDialer by
+// default.
 //
 // # Options
 //
