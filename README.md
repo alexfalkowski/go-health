@@ -452,7 +452,7 @@ make fuzzes
 make checker-fuzz
 make subscriber-fuzz
 make server-fuzz
-make package=checker name=FuzzHTTPCheckerRequestAndStatus fuzztime=10s fuzz
+make package=checker name=FuzzHTTPCheckerRequestAndStatus fuzztime=1000x fuzz
 ```
 
 Local test notes:
