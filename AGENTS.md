@@ -86,10 +86,10 @@ make lint
 make fix-lint     # auto-fix what can be fixed
 make sec
 make specs
-make benchmark    # defaults to package=server; set package=... to override
+make package=server benchmark
 make benchmarks   # aggregate benchmark target
 make fuzz package=checker name=FuzzHTTPCheckerRequestAndStatus
-make fuzz-smoke   # bounded fuzz smoke tests; set fuzztime=... to override
+make fuzzes       # bounded fuzz smoke tests; set fuzztime=... to override
 make coverage     # generate HTML and function coverage summaries
 ```
 

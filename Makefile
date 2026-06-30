@@ -1,12 +1,6 @@
-REQUESTED_PACKAGE := $(value package)
-
 include bin/build/make/help.mak
 include bin/build/make/go.mak
 include bin/build/make/git.mak
-
-ifeq ($(REQUESTED_PACKAGE),)
-benchmark benchmark-pprof: package = server
-endif
 
 # Run all the benchmarks.
 benchmarks: server-benchmarks
@@ -15,7 +9,7 @@ server-benchmarks:
 	@$(MAKE) package=server benchtime=100x benchmark
 
 # Run bounded fuzz smoke tests. Set fuzztime=<duration> to override the default 1s per target.
-fuzz-smoke: checker-fuzz subscriber-fuzz server-fuzz
+fuzzes: checker-fuzz subscriber-fuzz server-fuzz
 
 checker-fuzz:
 	@$(MAKE) package=checker name=FuzzHTTPCheckerRequestAndStatus fuzztime=$(or $(fuzztime),1s) fuzz
