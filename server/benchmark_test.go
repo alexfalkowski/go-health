@@ -10,8 +10,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// BenchmarkServerErrorHealthyObserver measures the public aggregate health read path with initialized
+// observer state.
 func BenchmarkServerErrorHealthyObserver(b *testing.B) {
-	// Benchmark the public aggregate health read path with initialized observer state.
 	b.ReportAllocs()
 
 	s := server.NewServer()

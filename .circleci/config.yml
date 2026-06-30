@@ -64,6 +64,7 @@ jobs:
             - ~/.cache/golangci-lint
       - run: make sec
       - run: make specs
+      - run: make benchmarks
       - save_cache:
           name: save go build cache
           key: go-health-go-build-cache-{{ checksum "go.sum" }}-{{ checksum "~/.go-version" }}-{{ checksum ".source-key" }}

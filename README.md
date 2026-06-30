@@ -438,8 +438,25 @@ make dep
 make lint
 make sec
 make specs
-make benchmark # defaults to the server package; set package=... to override
 make coverage
+```
+
+Benchmarks:
+
+```sh
+make benchmark # defaults to the server package; set package=... to override
+make benchmarks
+make server-benchmarks
+```
+
+Fuzz smoke tests:
+
+```sh
+make fuzz-smoke
+make checker-fuzz
+make subscriber-fuzz
+make server-fuzz
+make package=checker name=FuzzHTTPCheckerRequestAndStatus fuzztime=10s fuzz
 ```
 
 Local test notes:

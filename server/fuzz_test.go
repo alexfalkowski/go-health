@@ -11,8 +11,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// FuzzServiceObserveValidation explores registration and observer names because Service owns observer
+// validation and idempotent probe sets.
 func FuzzServiceObserveValidation(f *testing.F) {
-	// Fuzz registration and observer names because Service owns observer validation and idempotent probe sets.
 	f.Add("livez", "db", "cache", "db", "cache", "ignored")
 	f.Add("readyz", "db", "cache", "db", "missing", "cache")
 	f.Add("", "", "cache", "", "cache", "missing")

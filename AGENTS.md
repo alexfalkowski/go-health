@@ -87,7 +87,9 @@ make fix-lint     # auto-fix what can be fixed
 make sec
 make specs
 make benchmark    # defaults to package=server; set package=... to override
+make benchmarks   # aggregate benchmark target
 make fuzz package=checker name=FuzzHTTPCheckerRequestAndStatus
+make fuzz-smoke   # bounded fuzz smoke tests; set fuzztime=... to override
 make coverage     # generate HTML and function coverage summaries
 ```
 
@@ -134,8 +136,9 @@ The main CircleCI `build` job does the following, in order:
 7. Runs `make lint`.
 8. Runs `make sec`.
 9. Runs `make specs`.
-10. Runs `make coverage`.
-11. Uploads coverage and stores test reports.
+10. Runs `make benchmarks`.
+11. Runs `make coverage`.
+12. Uploads coverage and stores test reports.
 
 There are also `sync`, `version`, and `wait-all` jobs in `.circleci/config.yml`.
 
