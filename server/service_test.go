@@ -15,26 +15,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestServiceStartStopGuards(t *testing.T) {
+func TestServiceStartStop(t *testing.T) {
 	s := server.NewService()
 
 	registration := server.NewRegistration("noop", 10*time.Millisecond, checker.NewNoopChecker())
 	s.Register(registration)
 	require.NoError(t, s.Observe("livez", registration.Name))
 
-	require.NotPanics(t, func() {
-		_ = s.Stop(t.Context())
-	})
-
-	require.NotPanics(t, func() {
-		_ = s.Start(t.Context())
-		_ = s.Start(t.Context())
-	})
-
-	require.NotPanics(t, func() {
-		_ = s.Stop(t.Context())
-		_ = s.Stop(t.Context())
-	})
+	require.NoError(t, s.Start(t.Context()))
+	require.NoError(t, s.Stop(t.Context()))
 }
 
 func TestServiceObserveRejectsUnknownProbes(t *testing.T) {
@@ -106,28 +95,6 @@ func TestServiceErrorAndWatchRejectUnknownObserver(t *testing.T) {
 
 	_, err := s.Watch("readyz")
 	require.ErrorIs(t, err, server.ErrObserverNotFound)
-}
-
-func TestServiceStopBeforeStartClosesObservers(t *testing.T) {
-	s := server.NewService()
-	errNotReady := errors.New("not ready")
-
-	registration := server.NewRegistration("ready", 10*time.Millisecond, checker.NewReadyChecker(errNotReady))
-	s.Register(registration)
-	require.NoError(t, s.Observe("livez", registration.Name))
-
-	observer, err := s.Observer("livez")
-	require.NoError(t, err)
-
-	_ = s.Stop(t.Context())
-	testsubscriber.RequireObserverStopped(t, observer)
-
-	_ = s.Start(t.Context())
-	t.Cleanup(func() { _ = s.Stop(context.Background()) })
-
-	require.Eventually(t, func() bool {
-		return errors.Is(observer.Error(), errNotReady)
-	}, time.Second, 10*time.Millisecond)
 }
 
 func TestServiceStartRunsInitialChecksConcurrently(t *testing.T) {

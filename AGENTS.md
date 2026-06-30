@@ -52,7 +52,7 @@ Important behavior details:
 - `probe.Start` waits for the initial check to finish before returning the tick channel.
 - A probe with a non-positive period emits one error tick wrapping `probe.ErrInvalidPeriod` and then closes.
 - `subscriber.Observer` initializes tracked probe names with `nil` errors until ticks arrive.
-- `server.Service` and `server.Server` preserve observer instances across stop/start cycles.
+- `server.Service` and `server.Server` are documented for setup, one `Start`, and one `Stop`.
 - `server.Server.Observe` and `server.Service.Observe` are idempotent for an existing observer kind; they do not replace the original probe set.
 
 ## Build, test, and lint
@@ -186,7 +186,7 @@ Documentation expectations:
 - Prefer examples that compile and run locally without external services when possible.
 - If an example depends on asynchronous state, make the wait explicit in the example.
 - Call out important defaults such as the `30s` timeout and `STATUS_PORT=6000`.
-- Mention behaviors that are easy to miss, such as observer state starting at `nil` and restart-safe observers.
+- Mention behaviors that are easy to miss, such as observer state starting at `nil` and one-shot server lifecycle expectations.
 
 ## External tooling notes
 

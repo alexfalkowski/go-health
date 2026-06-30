@@ -148,10 +148,10 @@ func (s *Server) Observe(name, kind string, names ...string) error {
 
 // Start starts all registered services.
 //
-// Start is idempotent. It waits for each service's initial checks before
-// returning; call Stop after Start has returned during normal shutdown. If a
-// service fails to start, Start stops any services started during that attempt,
-// leaves the server stopped, and the server may be started again later.
+// Start is intended to be called once after setup. It waits for each service's
+// initial checks before returning; call Stop once after Start has returned
+// during normal shutdown. If a service fails to start, Start stops any services
+// started during that attempt and leaves the server stopped.
 func (s *Server) Start(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err
@@ -180,9 +180,9 @@ func (s *Server) Start(ctx context.Context) error {
 
 // Stop stops all registered services.
 //
-// Stop is idempotent. If ctx expires before shutdown work finishes, Stop returns
-// an error and keeps the server marked running so callers can retry with a valid
-// context.
+// Stop is intended to be called once after Start returns. Use a context that can
+// remain valid until cleanup completes; if ctx expires before shutdown work
+// finishes, Stop returns ctx.Err().
 func (s *Server) Stop(ctx context.Context) error {
 	s.mux.Lock()
 	defer s.mux.Unlock()

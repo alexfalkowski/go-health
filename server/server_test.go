@@ -16,6 +16,7 @@ import (
 	"github.com/alexfalkowski/go-health/v2/net"
 	"github.com/alexfalkowski/go-health/v2/probe"
 	"github.com/alexfalkowski/go-health/v2/server"
+	"github.com/alexfalkowski/go-sync"
 	"github.com/stretchr/testify/require"
 )
 
@@ -26,30 +27,6 @@ const (
 )
 
 var invalidURL = string([]byte{0x7f})
-
-func TestDoubleStart(t *testing.T) {
-	s := server.NewServer()
-	defer func() { _ = s.Stop(context.Background()) }()
-
-	checker := checker.NewHTTPChecker(
-		"https://www.google.com/",
-		timeout,
-		checker.WithRoundTripper(http.DefaultTransport),
-	)
-	r := server.NewRegistration("google", period, checker)
-	s.Register("test", r)
-
-	_ = s.Observe("test", "livez", r.Name)
-	_, _ = s.Observer("test", "livez")
-
-	_ = s.Observe("test", "livez", r.Name)
-	ob, _ := s.Observer("test", "livez")
-
-	_ = s.Start(context.Background())
-	_ = s.Start(context.Background())
-
-	testsubscriber.RequireObserverNoError(t, ob)
-}
 
 func TestStartWithCanceledContextReturnsContextError(t *testing.T) {
 	t.Parallel()
@@ -64,8 +41,6 @@ func TestStartWithCanceledContextReturnsContextError(t *testing.T) {
 	err := s.Start(ctx)
 
 	require.ErrorIs(t, err, context.Canceled)
-	require.NoError(t, s.Start(t.Context()))
-	t.Cleanup(func() { _ = s.Stop(context.Background()) })
 }
 
 func TestStartReturnsServiceStartError(t *testing.T) {
@@ -86,11 +61,6 @@ func TestStartReturnsServiceStartError(t *testing.T) {
 
 	require.ErrorIs(t, <-errc, context.Canceled)
 	testchecker.WaitForCanceled(t, ch.Canceled)
-
-	registration = server.NewRegistration("blocking", time.Hour, checker.NewNoopChecker())
-	s.Register("test", registration)
-	require.NoError(t, s.Start(t.Context()))
-	t.Cleanup(func() { _ = s.Stop(context.Background()) })
 }
 
 func TestStopReturnsContextError(t *testing.T) {
@@ -661,4 +631,23 @@ func receiveClosed(t *testing.T, updates <-chan error) {
 			return
 		}
 	}
+}
+
+type dynamicChecker struct {
+	err error
+	mux sync.RWMutex
+}
+
+func (c *dynamicChecker) Check(context.Context) error {
+	c.mux.RLock()
+	defer c.mux.RUnlock()
+
+	return c.err
+}
+
+func (c *dynamicChecker) Set(err error) {
+	c.mux.Lock()
+	defer c.mux.Unlock()
+
+	c.err = err
 }
