@@ -131,7 +131,8 @@ func (s *Service) Observe(kind string, names ...string) error {
 // returning; observer state is updated asynchronously after those ticks are
 // fanned out. Call Stop once after Start has returned during normal shutdown. If
 // a probe fails to start, Start cleans up partially started probes and
-// subscriptions and leaves the service stopped.
+// subscriptions and leaves the service stopped. Calling Start again with a live
+// context while the service is already running is a no-op that returns nil.
 func (s *Service) Start(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err
@@ -166,7 +167,9 @@ func (s *Service) Start(ctx context.Context) error {
 // Stop waits for in-flight fan-in and fan-out work to finish before returning.
 // It is intended to be called once after Start returns. Use a context that can
 // remain valid until cleanup completes; if ctx expires before shutdown work
-// finishes, Stop returns ctx.Err().
+// finishes, Stop returns ctx.Err(). Calling Stop before Start or after a prior
+// Stop still releases observers created by Observe and returns nil, or ctx.Err()
+// if ctx expires first.
 func (s *Service) Stop(ctx context.Context) error {
 	s.mux.Lock()
 	defer s.mux.Unlock()
