@@ -73,6 +73,10 @@ import "github.com/alexfalkowski/go-health/v2/server"
   `Start` returns, typically during process shutdown.
 - Use a shutdown context that can remain valid until `Stop` finishes cleanup; if
   `Stop` returns the supplied context error, cleanup did not complete.
+- Repeat lifecycle calls are safe: calling `server.Start` again while running is
+  a no-op, and calling `server.Stop` before `Start` or after a prior `Stop` is a
+  no-op. The same applies to `server.Service`, and `Service.Stop` without a prior
+  `Start` still releases observers created by `Observe`.
 - A probe with an invalid period emits a single error tick and closes.
 
 ### 🧩 Registration and observers

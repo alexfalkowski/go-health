@@ -151,7 +151,9 @@ func (s *Server) Observe(name, kind string, names ...string) error {
 // Start is intended to be called once after setup. It waits for each service's
 // initial checks before returning; call Stop once after Start has returned
 // during normal shutdown. If a service fails to start, Start stops any services
-// started during that attempt and leaves the server stopped.
+// started during that attempt and leaves the server stopped. Calling Start
+// again with a live context while the server is already running is a no-op that
+// returns nil.
 func (s *Server) Start(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err
@@ -182,7 +184,8 @@ func (s *Server) Start(ctx context.Context) error {
 //
 // Stop is intended to be called once after Start returns. Use a context that can
 // remain valid until cleanup completes; if ctx expires before shutdown work
-// finishes, Stop returns ctx.Err().
+// finishes, Stop returns ctx.Err(). Calling Stop before Start or after a prior
+// Stop is a no-op and returns nil.
 func (s *Server) Stop(ctx context.Context) error {
 	s.mux.Lock()
 	defer s.mux.Unlock()
