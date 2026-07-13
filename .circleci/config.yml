@@ -21,7 +21,7 @@ executors:
           CONFIG: yml:ZW52aXJvbm1lbnQ6IGRldmVsb3BtZW50CmhlYWx0aDoKICBkdXJhdGlvbjogMXMKICB0aW1lb3V0OiAxcwppZDoKICBraW5kOiB1dWlkCnRlbGVtZXRyeToKICBsb2dnZXI6CiAgICBraW5kOiB0ZXh0CiAgICBsZXZlbDogaW5mbwp0cmFuc3BvcnQ6CiAgaHR0cDoKICAgIGFkZHJlc3M6IHRjcDovLzo2MDAwCiAgICB0aW1lb3V0OiAxMHMK
   release:
     docker:
-      - image: alexfalkowski/release:8.23
+      - image: alexfalkowski/release:8.24
   alpine:
     docker:
       - image: alpine:latest
