@@ -238,7 +238,9 @@ func (s *Service) startProbes(ctx context.Context) ([]<-chan *probe.Tick, error)
 		probes = append(probes, p)
 	}
 
-	var g sync.ErrorsGroup
+	g := &sync.ErrorsGroup{}
+	g.SetLimit(len(probes))
+
 	for i, p := range probes {
 		g.Go(func() error {
 			ch, err := p.Start(ctx)
@@ -292,7 +294,9 @@ func (s *Service) cleanupStartFailure(ctx context.Context) {
 }
 
 func (s *Service) stopProbes(ctx context.Context) error {
-	var g sync.ErrorsGroup
+	g := &sync.ErrorsGroup{}
+	g.SetLimit(len(s.registry))
+
 	for _, p := range s.registry {
 		g.Go(func() error {
 			return p.Stop(ctx)

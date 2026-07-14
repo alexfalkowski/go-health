@@ -206,7 +206,9 @@ func (s *Server) Stop(ctx context.Context) error {
 }
 
 func stopServices(ctx context.Context, services ...*Service) error {
-	var g sync.ErrorsGroup
+	g := &sync.ErrorsGroup{}
+	g.SetLimit(len(services))
+
 	for _, service := range services {
 		g.Go(func() error {
 			return service.Stop(ctx)

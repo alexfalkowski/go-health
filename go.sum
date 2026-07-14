@@ -1,5 +1,5 @@
-github.com/alexfalkowski/go-sync v1.30.0 h1:DcNUSV9UgZGIkxE9SJiQcUgdmd1AANK+qeoQmSJsf4k=
-github.com/alexfalkowski/go-sync v1.30.0/go.mod h1:IzEbtMNtoLHdIfoO6Z+f7azto4wjLuj6ZgAOrpKLZbY=
+github.com/alexfalkowski/go-sync v1.32.0 h1:krvQ2BPzq5NcU+24XhSK0YN+lP+Wd6OlOg6Aq6s7wY4=
+github.com/alexfalkowski/go-sync v1.32.0/go.mod h1:IzEbtMNtoLHdIfoO6Z+f7azto4wjLuj6ZgAOrpKLZbY=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
