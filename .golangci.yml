@@ -13,6 +13,8 @@ linters:
     - exhaustruct
     - funcorder
     - gochecknoglobals
+    - gomodguard
+    - gomodguard_v2
     - ireturn
     - mnd
     - nlreturn
