@@ -14,7 +14,7 @@ commands:
 executors:
   go-with-status:
     docker:
-      - image: alexfalkowski/go:5.0
+      - image: alexfalkowski/go:5.1
       - image: alexfalkowski/status:latest
         command: server -config env:CONFIG
         environment:
