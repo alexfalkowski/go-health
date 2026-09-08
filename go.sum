@@ -1,8 +1,8 @@
-github.com/alexfalkowski/go-sync v1.34.0 h1:wSc9gvvYLagEWF+aVyarvEL1txCpAUqf5vYiEgPyNAU=
-github.com/alexfalkowski/go-sync v1.34.0/go.mod h1:Ow6m4ZWEOCELv5bEFl0bIj3nwnA4rs87lrkU4ZTwT+g=
+github.com/alexfalkowski/go-sync v1.35.0 h1:xbA5tj3u4kiAjcCIxMDmBhgzMuzxJpXTKBHN4K/fbWA=
+github.com/alexfalkowski/go-sync v1.35.0/go.mod h1:yO80ajGQcCzDR6qD8LDstvj2LI+VZQUla/5uyTEIFSM=
 github.com/stretchr/testify v1.12.1 h1:EuwCh5fleGS7H32xRwO3wRGT7DxrDhLAT6FF8MpWDWE=
 github.com/stretchr/testify v1.12.1/go.mod h1:MDEgiDPPsNp5cuIrHPPCyornHKgEVbtFUmoNlxoYthg=
 go.yaml.in/yaml/v3 v3.0.5 h1:N6y/pJk8buWs9NY5ERU2HSMfm+IuD/OtfdAnq6kESPw=
 go.yaml.in/yaml/v3 v3.0.5/go.mod h1:HVTZu1O7/Vkt2N+BFy8Zza+lnLsABggaTM2ZpNIGuKg=
-golang.org/x/sync v0.22.0 h1:SZjpbeLmrCk4xhRSZFNZW5gFUeCeFgjekvI/+gfScek=
-golang.org/x/sync v0.22.0/go.mod h1:9xrNwdLfx4jkKbNva9FpL6vEN7evnE43NNNJQ2LF3+0=
+golang.org/x/sync v0.23.0 h1:KameEIfc1IkluZyXWLn39Wd4tURc6GbCiISGiZm2bQk=
+golang.org/x/sync v0.23.0/go.mod h1:sUUOizhqBxiL6pEWpqNLUiaJn1ShEbZ6BBqskPbjZm0=
