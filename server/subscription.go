@@ -79,7 +79,7 @@ func (s *subscription) send(err error) bool {
 
 func (s *subscription) drop() {
 	select {
-	case <-s.updates:
+	case <-s.updates: //nolint:errcheck // Discard the pending error snapshot to make room for the latest.
 	default:
 	}
 }
