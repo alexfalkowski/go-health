@@ -2,6 +2,8 @@ package probe_test
 
 import (
 	"context"
+	"errors"
+	"runtime"
 	"testing"
 	"time"
 
@@ -39,6 +41,23 @@ func TestStopCancelsInFlightCheck(t *testing.T) {
 
 	_, ok := <-result.Ticks
 	require.False(t, ok)
+}
+
+func TestStopCanBeRepeated(t *testing.T) {
+	t.Parallel()
+
+	p := probe.NewProbe("noop", time.Hour, checker.NewNoopChecker())
+	t.Cleanup(func() { _ = p.Stop(context.Background()) })
+
+	ticks, err := p.Start(t.Context())
+	require.NoError(t, err)
+	require.NotNil(t, <-ticks)
+
+	require.NoError(t, p.Stop(t.Context()))
+	require.NoError(t, p.Stop(t.Context()))
+
+	_, ok := <-ticks
+	require.False(t, ok, "Stop must close the tick channel")
 }
 
 func TestStopCancelsPeriodicInFlightCheck(t *testing.T) {
@@ -133,6 +152,51 @@ func TestCanceledConcurrentStartDoesNotStopExistingStart(t *testing.T) {
 	require.NotNil(t, <-result.Ticks)
 }
 
+func TestCanceledStartDoesNotStopReplacement(t *testing.T) {
+	for attempt := range 1000 {
+		ch := testchecker.NewRetryChecker()
+		p := probe.NewProbe("retry", time.Millisecond, ch)
+		t.Cleanup(func() { _ = p.Stop(context.Background()) })
+
+		ctx, cancel := context.WithCancel(t.Context())
+		started := make(chan testprobe.StartResult, 1)
+		go func() {
+			ticks, err := p.Start(ctx)
+			started <- testprobe.StartResult{Ticks: ticks, Err: err}
+		}()
+		testchecker.WaitForStarted(t, ch.Started)
+		cancel()
+
+		var ticks <-chan *probe.Tick
+		for {
+			var err error
+			ticks, err = p.Start(t.Context())
+			require.NoError(t, err)
+			if ch.Calls.Load() > 1 {
+				break
+			}
+			// A concurrent Start can still join the canceled run; retry until a new check starts.
+			runtime.Gosched()
+		}
+
+		result := testprobe.WaitForStart(t, started, "canceled start")
+		require.ErrorIs(t, result.Err, context.Canceled)
+		require.Nil(t, result.Ticks)
+
+		// Receive beyond the single buffered startup tick to prove the replacement keeps running.
+		for range 2 {
+			select {
+			case tick, ok := <-ticks:
+				require.True(t, ok, "canceled startup stopped replacement on attempt %d", attempt)
+				require.NoError(t, tick.Error())
+			case <-time.After(time.Second):
+				require.FailNow(t, "replacement did not produce a tick", "attempt %d", attempt)
+			}
+		}
+		require.NoError(t, p.Stop(t.Context()))
+	}
+}
+
 func TestStopReturnsContextError(t *testing.T) {
 	ch := testchecker.NewBlockingPeriodicChecker()
 	p := probe.NewProbe("blocking", time.Millisecond, ch)
@@ -150,6 +214,14 @@ func TestStopReturnsContextError(t *testing.T) {
 	defer cancel()
 
 	require.ErrorIs(t, p.Stop(ctx), context.DeadlineExceeded)
+
+	waitErr := errors.New("stop waiting")
+	waitCtx, cancelWait := context.WithCancelCause(t.Context())
+	cancelWait(waitErr)
+
+	err = p.Stop(waitCtx)
+	require.ErrorIs(t, err, context.Canceled)
+	require.NotErrorIs(t, err, waitErr)
 }
 
 func TestStartWithInvalidPeriodReturnsErrorTick(t *testing.T) {

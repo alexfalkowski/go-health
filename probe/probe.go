@@ -35,7 +35,7 @@ type activeProbe struct {
 	ch     chan *Tick
 	ready  chan struct{}
 	cancel context.CancelFunc
-	wg     *sync.WaitGroup
+	task   *sync.Task
 }
 
 // Start begins running checks and returns a channel of ticks.
@@ -60,28 +60,26 @@ func (p *Probe) Start(ctx context.Context) (<-chan *Tick, error) {
 	if ready != nil {
 		select {
 		case <-ctx.Done():
-			if started {
-				_ = p.Stop(context.WithoutCancel(ctx))
-			}
-			return nil, ctx.Err()
 		case <-ready:
-			if err := ctx.Err(); err != nil {
-				if started {
-					_ = p.Stop(context.WithoutCancel(ctx))
-				}
-				return nil, err
+		}
+		if err := ctx.Err(); err != nil {
+			if started != nil {
+				// Startup cleanup belongs to this run, even if a replacement has already started.
+				started.cancel()
+				<-started.task.Done()
 			}
+			return nil, err
 		}
 	}
 	return ch, nil
 }
 
-func (p *Probe) ensureStarted(ctx context.Context) (<-chan *Tick, <-chan struct{}, bool) {
+func (p *Probe) ensureStarted(ctx context.Context) (<-chan *Tick, <-chan struct{}, *activeProbe) {
 	p.mux.Lock()
 	defer p.mux.Unlock()
 
 	if p.active != nil {
-		return p.active.ch, p.active.ready, false
+		return p.active.ch, p.active.ready, nil
 	}
 
 	ch := make(chan *Tick, 1)
@@ -91,19 +89,24 @@ func (p *Probe) ensureStarted(ctx context.Context) (<-chan *Tick, <-chan struct{
 		ch <- NewTick(p.name, fmt.Errorf("%w: %s", ErrInvalidPeriod, p.period))
 		close(ch)
 		close(ready)
-		return ch, ready, false
+		return ch, ready, nil
 	}
 
-	runCtx, cancel := context.WithCancel(context.Background())
+	runCtx, cancel := context.WithCancel(context.WithoutCancel(ctx))
 	ticker := time.NewTicker(p.period)
-	wg := &sync.WaitGroup{}
 
-	p.active = &activeProbe{ch: ch, ready: ready, ticker: ticker, cancel: cancel, wg: wg}
-	wg.Go(func() {
+	active := &activeProbe{ch: ch, ready: ready, ticker: ticker, cancel: cancel}
+	p.active = active
+	active.task = sync.Go(runCtx, func(runCtx context.Context) error {
+		defer p.clearActive(active)
+		defer cancel()
+		defer ticker.Stop()
+
 		p.start(runCtx, ctx, ch, ticker, ready)
+		return nil
 	})
 
-	return ch, ready, true
+	return ch, ready, active
 }
 
 // Stop stops the probe.
@@ -125,17 +128,10 @@ func (p *Probe) Stop(ctx context.Context) error {
 	active.ticker.Stop()
 	p.mux.Unlock()
 
-	done := make(chan struct{})
-	go func() {
-		active.wg.Wait()
-		p.clearActive(active)
-		close(done)
-	}()
-
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
-	case <-done:
+	case <-active.task.Done():
 		return nil
 	}
 }

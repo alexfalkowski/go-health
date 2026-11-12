@@ -15,6 +15,12 @@ type BlockingChecker struct {
 	Canceled chan struct{}
 }
 
+// RetryChecker waits for cancellation on its first check, then reports healthy.
+type RetryChecker struct {
+	Started chan struct{}
+	Calls   sync.Int32
+}
+
 // ReleasableChecker blocks until Release is closed or the context is canceled.
 type ReleasableChecker struct {
 	Started chan struct{}
@@ -51,6 +57,11 @@ func NewBlockingChecker() *BlockingChecker {
 		Started:  make(chan struct{}),
 		Canceled: make(chan struct{}),
 	}
+}
+
+// NewRetryChecker returns a RetryChecker with an initialized start channel.
+func NewRetryChecker() *RetryChecker {
+	return &RetryChecker{Started: make(chan struct{})}
 }
 
 // NewReleasableChecker returns a ReleasableChecker with initialized channels.
@@ -93,6 +104,16 @@ func (c *BlockingChecker) Check(ctx context.Context) error {
 	<-ctx.Done()
 	close(c.Canceled)
 	return ctx.Err()
+}
+
+// Check waits for cancellation on the first call and returns nil on subsequent calls.
+func (c *RetryChecker) Check(ctx context.Context) error {
+	if c.Calls.Add(1) == 1 {
+		close(c.Started)
+		<-ctx.Done()
+		return ctx.Err()
+	}
+	return nil
 }
 
 // Check reports that it started, then waits for release or cancellation.
