@@ -21,6 +21,9 @@ func TestCheckersReturnCanceledContext(t *testing.T) {
 	ctx, cancel := context.WithCancel(t.Context())
 	cancel()
 
+	db := sql.OpenDB(nil)
+	t.Cleanup(func() { _ = db.Close() })
+
 	checkers := []struct {
 		check checker.Checker
 		name  string
@@ -29,7 +32,7 @@ func TestCheckersReturnCanceledContext(t *testing.T) {
 		{check: checker.NewReadyChecker(errNotReady), name: "ready"},
 		{check: checker.NewHTTPChecker("://bad-url", time.Second), name: "http"},
 		{check: checker.NewOnlineChecker(time.Second, checker.WithURLs("://bad-url")), name: "online"},
-		{check: checker.NewDBChecker(sql.CanceledPinger{}, time.Second), name: "db"},
+		{check: checker.NewDBChecker(db, time.Second), name: "db"},
 		{check: checker.NewTCPChecker("example:80", time.Second, checker.WithDialer(net.CanceledDialer{})), name: "tcp"},
 	}
 

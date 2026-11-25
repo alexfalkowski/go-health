@@ -5,22 +5,30 @@ import (
 	"net"
 	"net/http"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/alexfalkowski/go-health/v2/checker"
-	"github.com/alexfalkowski/go-health/v2/sql"
+	"github.com/alexfalkowski/go-health/v2/internal/test/sql"
 	"github.com/alexfalkowski/go-sync"
 	"github.com/stretchr/testify/require"
 )
 
 func TestDBCheckerTimeoutCause(t *testing.T) {
-	c := checker.NewDBChecker(timeoutPinger{}, time.Microsecond)
+	synctest.Test(t, func(t *testing.T) {
+		db := sql.OpenDB(func(ctx context.Context) error {
+			<-ctx.Done()
+			return ctx.Err()
+		})
+		t.Cleanup(func() { _ = db.Close() })
+		c := checker.NewDBChecker(db, time.Second)
 
-	err := c.Check(t.Context())
+		err := c.Check(t.Context())
 
-	require.ErrorIs(t, err, checker.ErrTimeout)
-	require.ErrorIs(t, err, sync.ErrTimeout)
-	require.ErrorIs(t, err, context.DeadlineExceeded)
+		require.ErrorIs(t, err, checker.ErrTimeout)
+		require.ErrorIs(t, err, sync.ErrTimeout)
+		require.ErrorIs(t, err, context.DeadlineExceeded)
+	})
 }
 
 func TestTCPCheckerTimeoutCause(t *testing.T) {
@@ -34,11 +42,17 @@ func TestTCPCheckerTimeoutCause(t *testing.T) {
 }
 
 func TestDBCheckerZeroTimeoutUsesDefault(t *testing.T) {
-	pinger := &recordingPinger{}
-	c := checker.NewDBChecker(pinger, 0)
+	var deadline time.Time
+	var hasDeadline bool
+	db := sql.OpenDB(func(ctx context.Context) error {
+		deadline, hasDeadline = ctx.Deadline()
+		return nil
+	})
+	t.Cleanup(func() { _ = db.Close() })
+	c := checker.NewDBChecker(db, 0)
 
 	require.NoError(t, c.Check(t.Context()))
-	requireDefaultDeadline(t, pinger.hasDeadline, pinger.remaining)
+	requireDefaultDeadline(t, hasDeadline, time.Until(deadline))
 }
 
 func TestHTTPCheckerZeroTimeoutUsesDefault(t *testing.T) {
@@ -65,35 +79,11 @@ func requireDefaultDeadline(t *testing.T, hasDeadline bool, remaining time.Durat
 	require.Less(t, remaining, 31*time.Second, "expected deadline to stay near the 30s default")
 }
 
-type timeoutPinger struct{}
-
-func (timeoutPinger) PingContext(ctx context.Context) error {
-	<-ctx.Done()
-	return context.Cause(ctx)
-}
-
-var _ sql.Pinger = timeoutPinger{}
-
 type timeoutDialer struct{}
 
 func (timeoutDialer) DialContext(ctx context.Context, _, _ string) (net.Conn, error) {
 	<-ctx.Done()
 	return nil, context.Cause(ctx)
-}
-
-type recordingPinger struct {
-	hasDeadline bool
-	remaining   time.Duration
-}
-
-func (p *recordingPinger) PingContext(ctx context.Context) error {
-	deadline, ok := ctx.Deadline()
-	p.hasDeadline = ok
-	if ok {
-		p.remaining = time.Until(deadline)
-	}
-
-	return nil
 }
 
 type deadlineRoundTripper struct {

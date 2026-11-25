@@ -12,7 +12,7 @@
 //
 //   - HTTPChecker for HTTP GET health endpoints.
 //   - TCPChecker for simple TCP connectivity checks.
-//   - DBChecker for SQL-like dependencies that expose PingContext.
+//   - DBChecker for running SELECT 1 on a database/sql handle.
 //   - OnlineChecker for best-effort external connectivity checks across a list
 //     of URLs.
 //   - ReadyChecker for application-managed readiness gates.
@@ -63,6 +63,6 @@
 //	readyChecker.Ready()
 //
 // All exported checker implementations are safe for concurrent use when their
-// injected transport, dialer, or pinger is safe for the concurrent calls the
-// checker may make.
+// injected transport or dialer is safe for the concurrent calls the checker
+// may make.
 package checker

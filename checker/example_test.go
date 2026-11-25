@@ -9,7 +9,18 @@ import (
 	"time"
 
 	"github.com/alexfalkowski/go-health/v2/checker"
+	"github.com/alexfalkowski/go-health/v2/internal/test/sql"
 )
+
+func ExampleNewDBChecker() {
+	db := sql.OpenDB(nil)
+	defer func() { _ = db.Close() }()
+
+	check := checker.NewDBChecker(db, time.Second)
+
+	fmt.Println(check.Check(context.Background()) == nil)
+	// Output: true
+}
 
 func ExampleNewHTTPChecker() {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {

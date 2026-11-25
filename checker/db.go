@@ -2,36 +2,33 @@ package checker
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
-
-	"github.com/alexfalkowski/go-health/v2/sql"
 )
 
 var _ Checker = (*DBChecker)(nil)
 
-// NewDBChecker returns a DBChecker that pings pinger.
+// NewDBChecker returns a DBChecker that runs SELECT 1 using db.
 //
-// The pinger must be a non-nil, initialized implementation of sql.Pinger.
-// The timeout is applied via [context.WithTimeoutCause] during Check. Passing 0
+// The caller supplies an initialized, non-nil database handle and manages its
+// lifetime. The database must support SELECT 1 without a FROM clause. For other
+// dialects, implement [Checker] with a query the database accepts. Passing 0
 // uses the package default of 30 seconds.
-func NewDBChecker(pinger sql.Pinger, t time.Duration) *DBChecker {
-	return &DBChecker{pinger: pinger, timeout: timeout(t)}
+func NewDBChecker(db *sql.DB, t time.Duration) *DBChecker {
+	return &DBChecker{db: db, timeout: timeout(t)}
 }
 
-// DBChecker checks a SQL database connection.
-//
-// It depends on the small sql.Pinger interface so callers can use database/sql
-// DB values directly or provide a test double.
+// DBChecker checks whether a SQL database can execute a query and return a row.
 type DBChecker struct {
-	pinger  sql.Pinger
+	db      *sql.DB
 	timeout time.Duration
 }
 
-// Check pings the database with a per-call timeout.
+// Check runs SELECT 1 and reads the result with a per-call timeout.
 //
-// If the timeout expires and the pinger returns [context.Cause], the returned
-// error matches [ErrTimeout].
+// If the query fails after the checker's deadline expires, the returned error
+// matches [ErrTimeout].
 func (c *DBChecker) Check(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err
@@ -40,7 +37,8 @@ func (c *DBChecker) Check(ctx context.Context) error {
 	ctx, cancel := context.WithTimeoutCause(ctx, c.timeout, ErrTimeout)
 	defer cancel()
 
-	if err := c.pinger.PingContext(ctx); err != nil {
+	var one int
+	if err := c.db.QueryRowContext(ctx, "SELECT 1").Scan(&one); err != nil {
 		if ctx.Err() != nil {
 			return context.Cause(ctx)
 		}

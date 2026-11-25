@@ -50,13 +50,12 @@ import "github.com/alexfalkowski/go-health/v2/server"
 
 | Package | Purpose |
 | --- | --- |
-| `checker` | Reusable health checks for HTTP, TCP, SQL ping, online connectivity, readiness gates, and no-op checks. |
+| `checker` | Reusable health checks for HTTP, TCP, SQL queries, online connectivity, readiness gates, and no-op checks. |
 | `probe` | Periodically runs a checker and emits ticks. |
 | `subscriber` | Best-effort tick fan-out and latest-error tracking for selected probe names. |
 | `server` | Registers probes per service, creates observers, and manages lifecycle. |
 | `watcher` | Shared subscription interface returned by observer and server watch entry points. |
 | `net` | Small interfaces used to customize network dialing. |
-| `sql` | Small interfaces used to customize database pinging. |
 
 ## 🔑 Key behaviors
 
@@ -106,7 +105,7 @@ import "github.com/alexfalkowski/go-health/v2/server"
 - `HTTPChecker`, `TCPChecker`, `DBChecker`, and `OnlineChecker` use a default
   timeout of `30s` when you pass `0`.
 - All exported checker implementations are safe for concurrent use.
-- If you inject a shared transport, dialer, or pinger, that dependency should
+- If you inject a shared transport or dialer, that dependency should
   also be safe for the concurrent calls you expect.
 - Custom checkers shared across registrations should also be safe for
   concurrent `Check` calls; service startup starts probes concurrently.
@@ -304,8 +303,9 @@ if err := check.Check(context.Background()); err != nil {
 
 ### 🗄️ Database checker
 
-`DBChecker` depends on the small `sql.Pinger` interface. A standard
-`*database/sql.DB` satisfies that interface, so you can use it directly:
+`DBChecker` runs `SELECT 1` on your application's `*database/sql.DB` and reads
+the result. It requires support for `SELECT 1` without a `FROM` clause, as in
+DuckDB, PostgreSQL, and MySQL. The query requires no application tables.
 
 ```go
 var db *sql.DB // initialized by your application
@@ -316,6 +316,13 @@ if err := check.Check(context.Background()); err != nil {
 	log.Printf("database unhealthy: %v", err)
 }
 ```
+
+Callers migrating from a custom `sql.Pinger` can pass their `*database/sql.DB`
+directly if their database supports that query. If the database requires a
+different query, implement `checker.Checker` using the SQL it accepts. For
+example, use `SELECT 1 FROM DUAL` with [Oracle Database 19c][oracle-dual].
+
+[oracle-dual]: https://docs.oracle.com/en/database/oracle/oracle-database/19/sqlrf/Selecting-from-the-DUAL-Table.html
 
 ### 🚪 Readiness gate
 
