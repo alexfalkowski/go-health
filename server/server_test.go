@@ -255,30 +255,45 @@ func TestInvalidAddressTCPChecker(t *testing.T) {
 
 func TestValidDBChecker(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
+		db := sql.OpenDB(nil)
+		db.SetMaxOpenConns(1)
+		t.Cleanup(func() { _ = db.Close() })
 		s := server.NewServer()
 		t.Cleanup(func() { _ = s.Stop(context.Background()) })
 
-		checker := checker.NewDBChecker(sql.OKPinger{}, timeout)
+		checker := checker.NewDBChecker(db, timeout)
 		r := server.NewRegistration("db", period, checker)
 		s.Register("test", r)
 
 		_ = s.Observe("test", "livez", r.Name)
 		ob, _ := s.Observer("test", "livez")
 
-		_ = s.Start(t.Context())
+		require.NoError(t, s.Start(t.Context()))
 		synctest.Wait()
 
 		require.NoError(t, ob.Error())
+
+		ctx, cancel := context.WithTimeout(t.Context(), timeout)
+		defer cancel()
+
+		var one int
+		require.NoError(t, db.QueryRowContext(ctx, "SELECT 1").Scan(&one))
+		require.Equal(t, 1, one)
 	})
 }
 
 func TestInvalidDBChecker(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
+		errQuery := errors.New("query failed")
+		db := sql.OpenDB(func(context.Context) error {
+			return errQuery
+		})
+		t.Cleanup(func() { _ = db.Close() })
 		s := server.NewServer()
 		t.Cleanup(func() { _ = s.Stop(context.Background()) })
 
-		errPing := errors.New("ping failed")
-		checker := checker.NewDBChecker(sql.ErrorPinger{Err: errPing}, timeout)
+		require.NoError(t, db.PingContext(t.Context()))
+		checker := checker.NewDBChecker(db, timeout)
 		r := server.NewRegistration("db", period, checker)
 		s.Register("test", r)
 
@@ -289,8 +304,8 @@ func TestInvalidDBChecker(t *testing.T) {
 		synctest.Wait()
 
 		require.Error(t, ob.Error())
-		require.ErrorIs(t, ob.Error(), errPing)
-		require.ErrorIs(t, ob.Errors()["db"], errPing)
+		require.ErrorIs(t, ob.Error(), errQuery)
+		require.ErrorIs(t, ob.Errors()["db"], errQuery)
 	})
 }
 

@@ -23,7 +23,6 @@ Top-level packages:
 - `server/`: orchestration for registering probes per service, creating observers, and managing start/stop lifecycle.
 - `watcher/`: shared subscription interface returned by observer and server watch entry points.
 - `net/`: small network-related interfaces used by checkers.
-- `sql/`: small SQL-related interfaces used by checkers.
 - `internal/test/`: test helpers such as building URLs for the local status service.
 
 Notable non-code paths:
@@ -148,6 +147,7 @@ There are also `sync`, `version`, and `wait-all` jobs in `.circleci/config.yml`.
 
 - Checkers wrap underlying failures with context, usually using `fmt.Errorf("<checker>: %w", err)`.
 - `checker.DBChecker` and `checker.TCPChecker` use `checker.ErrTimeout` as the cause for their derived timeout contexts.
+- `checker.DBChecker` runs `SELECT 1` through a caller-owned `*database/sql.DB` and reads the result.
 - Aggregated observer errors use `errors.Join`.
 - `subscriber.Errors.Error` annotates each joined error with the probe name.
 
