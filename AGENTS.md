@@ -4,6 +4,13 @@
 
 Use `bin/AGENTS.md` for shared skills and cross-repository defaults.
 
+## Accepted design
+
+Read the [accepted-design index](docs/agents/accepted-design.md) and the relevant
+area files before proposing a change or recording a finding or audit entry.
+Apply each decision within its recorded scope and record new owner-accepted
+decisions in the relevant area file.
+
 ## Project overview
 
 This repository is a Go library for asynchronous health monitoring. It lets you
@@ -45,14 +52,6 @@ docs or examples:
 4. A `subscriber.Observer` tracks the latest error for each configured probe name.
 5. A `server.Service` wires probes to subscribers and observers for one service.
 6. A `server.Server` manages multiple services.
-
-Important behavior details:
-
-- `probe.Start` waits for the initial check to finish before returning the tick channel.
-- A probe with a non-positive period emits one error tick wrapping `probe.ErrInvalidPeriod` and then closes.
-- `subscriber.Observer` initializes tracked probe names with `nil` errors until ticks arrive.
-- `server.Service` and `server.Server` are documented for setup, one `Start`, and one `Stop`.
-- `server.Server.Observe` and `server.Service.Observe` are idempotent for an existing observer kind; they do not replace the original probe set.
 
 ## Build, test, and lint
 
@@ -114,14 +113,6 @@ reporting validation.
 If tests fail with connection errors to `localhost:6000`, the status service is
 probably not running locally.
 
-### Intentional test coverage
-
-- Server tests intentionally include live external-network checks for real HTTP,
-  TCP, DNS, and default online-checker behavior. Do not flag those tests merely
-  for using `google.com`, default connectivity-check URLs, or outbound network
-  access. Only report them if the task is specifically about removing live
-  integration coverage or if there is a separate concrete bug.
-
 ## CI notes
 
 The main CircleCI `build` job does the following, in order:
@@ -147,7 +138,6 @@ There are also `sync`, `version`, and `wait-all` jobs in `.circleci/config.yml`.
 
 - Checkers wrap underlying failures with context, usually using `fmt.Errorf("<checker>: %w", err)`.
 - `checker.DBChecker` and `checker.TCPChecker` use `checker.ErrTimeout` as the cause for their derived timeout contexts.
-- `checker.DBChecker` runs `SELECT 1` through a caller-owned `*database/sql.DB` and reads the result.
 - Aggregated observer errors use `errors.Join`.
 - `subscriber.Errors.Error` annotates each joined error with the probe name.
 
@@ -157,13 +147,6 @@ There are also `sync`, `version`, and `wait-all` jobs in `.circleci/config.yml`.
 - `checker.WithRoundTripper` affects `HTTPChecker` and `OnlineChecker`.
 - `checker.WithDialer` affects `TCPChecker`.
 - `checker.WithURLs` replaces the `OnlineChecker` default URL list.
-
-### Concurrency model
-
-- `probe.Probe` runs its scheduling loop in a goroutine and cancels in-flight checks on `Stop`.
-- `subscriber.Subscriber` is intentionally best-effort and may drop ticks if its buffer is full.
-- `subscriber.Observer` consumes subscriber ticks in a goroutine and protects reads with an RW mutex.
-- `server.Service` fans in probe tick channels and then fans ticks out to subscribers.
 
 ### Formatting
 
@@ -179,6 +162,7 @@ When changing code, keep these documentation surfaces aligned:
 3. Runnable examples in `example_test.go`.
 4. Top-level usage guidance in `README.md`.
 5. Agent-specific maintenance guidance in this file.
+6. Relevant [accepted-design decisions](docs/agents/accepted-design.md).
 
 Documentation expectations:
 
